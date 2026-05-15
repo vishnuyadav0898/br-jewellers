@@ -1,0 +1,63 @@
+export const routes = {
+  root: "/",
+  appHome: "/app",
+  appProducts: "/app/products",
+  appProductDetails: (productId = ":productId") => `/app/products/${productId}`,
+  appAbout: "/app/about",
+  appContact: "/app/contact",
+  appCart: "/app/cart",
+  appFavorites: "/app/favorites",
+  appOrders: "/app/orders",
+  appOrderTracking: (orderId = ":orderId") => `/app/orders/${orderId}/tracking`,
+  appReturns: "/app/returns",
+  appProfile: "/app/profile",
+  adminDashboard: "/admin/dashboard",
+  adminProductsList: "/admin/products/list",
+  adminCategories: "/admin/products/categories",
+  adminFeaturedProducts: "/admin/products/featured",
+  adminBulkUpload: "/admin/products/bulk-upload",
+  adminUsersList: "/admin/users/list",
+  adminUserDetails: (userId = ":userId") => `/admin/users/details/${userId}`,
+  adminOrdersAll: "/admin/orders/all",
+  adminOrdersPending: "/admin/orders/pending",
+  adminOrderTracking: "/admin/orders/tracking",
+  adminRefundRequests: "/admin/refunds/requests",
+  adminRefundStatus: "/admin/refunds/status",
+  adminContentHome: "/admin/content/home",
+  adminContentAbout: "/admin/content/about",
+  adminContentContact: "/admin/content/contact",
+  adminContentBanners: "/admin/content/banners",
+  adminContentBlogs: "/admin/content/blogs",
+  adminAnalytics: "/admin/analytics",
+  adminFinance: "/admin/analytics/finance",
+  adminSettings: "/admin/settings",
+};
+
+export const userNavigation = [
+  { labelKey: "nav.home", to: routes.appHome },
+  { labelKey: "nav.products", to: routes.appProducts },
+  { labelKey: "nav.about", to: routes.appAbout },
+  { labelKey: "nav.contact", to: routes.appContact },
+];
+
+export const userRouteRedirects = [
+  { from: "/products", to: routes.appProducts },
+  { from: "/about", to: routes.appAbout },
+  { from: "/contact", to: routes.appContact },
+  { from: "/cart", to: routes.appCart },
+  { from: "/favorites", to: routes.appFavorites },
+  { from: "/orders", to: routes.appOrders },
+  { from: "/returns", to: routes.appReturns },
+  { from: "/profile", to: routes.appProfile },
+];
+
+export const adminRouteRedirects = [
+  { from: "products", to: routes.adminProductsList },
+  { from: "categories", to: routes.adminCategories },
+  { from: "users", to: routes.adminUsersList },
+  { from: "users/details", to: routes.adminUsersList },
+  { from: "orders", to: routes.adminOrdersAll },
+  { from: "refunds", to: routes.adminRefundRequests },
+  { from: "content", to: routes.adminContentHome },
+  { from: "finance", to: routes.adminFinance },
+];

@@ -1,0 +1,232 @@
+{
+  "brand": {
+    "name": "BR Jewellers",
+    "tagline": "Modern heirlooms, scalable frontend"
+  },
+  "common": {
+    "login": "लॉगिन",
+    "register": "खाता बनाएं",
+    "logout": "साइन आउट",
+    "save": "बदलाव सहेजें",
+    "cancel": "रद्द करें",
+    "loading": "BR Jewellers लोड हो रहा है...",
+    "profile": "प्रोफ़ाइल",
+    "changePassword": "पासवर्ड बदलें",
+    "apply": "लागू करें",
+    "empty": "यहाँ अभी कुछ नहीं है",
+    "currency": "मुद्रा",
+    "language": "भाषा",
+    "welcome": "फिर से स्वागत है",
+    "admin": "एडमिन",
+    "customer": "ग्राहक",
+    "favorites": "फेवरेट्स",
+    "account": "खाता",
+    "trackOrder": "ऑर्डर ट्रैक करें"
+  },
+  "nav": {
+    "home": "होम",
+    "products": "उत्पाद",
+    "cart": "कार्ट",
+    "orders": "ऑर्डर",
+    "returns": "रिटर्न",
+    "about": "हमारे बारे में",
+    "contact": "संपर्क करें"
+  },
+  "header": {
+    "adminPanel": "एडमिन पैनल",
+    "accountSettings": "खाता सेटिंग्स"
+  },
+  "auth": {
+    "title": "अपने BR workspace में जाएँ",
+    "loginSubtitle": "ईमेल + पासवर्ड या mock Google flow का उपयोग करें।",
+    "registerSubtitle": "पेज छोड़े बिना नया ग्राहक खाता बनाएं।",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "name": "पूरा नाम",
+    "phone": "फ़ोन",
+    "address": "पता",
+    "google": "Google से जारी रखें",
+    "demo": "डेमो ग्राहक: aarohi@brdemo.com / demo123 | डेमो एडमिन: admin@brdemo.com / demo123"
+  },
+  "home": {
+    "eyebrow": "आर्किटेक्चर रिफ्रेश",
+    "title": "ऐसा फ्रंटएंड जो आज प्रीमियम लगे और बाद में backend-ready भी रहे।",
+    "subtitle": "Shared state, scalable mock services, multi-language support और admin-friendly commerce flows.",
+    "ctaPrimary": "उत्पाद देखें",
+    "ctaSecondary": "एडमिन खोलें",
+    "percentOff": "{{value}}% छूट",
+    "bannerFallbackTag": "फ़ीचर्ड",
+    "featuredEyebrow": "फ़ीचर्ड",
+    "featuredTitle": "Currency-aware pricing के साथ shared catalogue",
+    "samplePrice": "नमूना कीमत: {{value}}"
+  },
+  "products": {
+    "eyebrow": "कैटलॉग",
+    "title": "उत्पाद कैटलॉग",
+    "subtitle": "Scalable pricing, coupons और lazy loading के साथ mock inventory खोजें।",
+    "search": "नाम या category से खोजें"
+  },
+  "productCard": {
+    "addToFavorites": "फेवरेट्स में जोड़ें",
+    "removeFromFavorites": "फेवरेट्स से हटाएँ",
+    "favoriteSaved": "फेवरेट्स में सहेजा गया।",
+    "favoriteRemoved": "फेवरेट्स से हटाया गया।",
+    "favoritesUpdated": "फेवरेट्स अपडेट हुए",
+    "viewDetails": "विवरण देखें",
+    "addToCart": "कार्ट में जोड़ें",
+    "addedToCart": "कार्ट में जोड़ दिया गया।",
+    "cartUpdated": "कार्ट अपडेट हुआ"
+  },
+  "cart": {
+    "eyebrow": "चेकआउट-रेडी कार्ट",
+    "title": "कार्ट",
+    "subtitle": "Coupon लागू करें, total देखें, और pricing को future-ready रखें।",
+    "couponPlaceholder": "कूपन कोड डालें",
+    "emptyTitle": "आपका कार्ट खाली है",
+    "emptyDescription": "Coupon और pricing flow देखने के लिए catalogue से products जोड़ें।",
+    "couponsEyebrow": "कूपन",
+    "couponsTitle": "Discount engine",
+    "couponApplied": "कूपन {{code}} लागू हो गया।",
+    "couponAppliedTitle": "कूपन लागू हुआ",
+    "summary": {
+      "subtotal": "सबटोटल",
+      "discount": "छूट",
+      "shipping": "शिपिंग",
+      "total": "कुल",
+      "activeCoupon": "{{code}} पर {{discount}}% छूट सक्रिय है।"
+    }
+  },
+  "orders": {
+    "eyebrow": "पोस्ट-परचेज़",
+    "title": "ऑर्डर",
+    "subtitle": "खरीदें ट्रैक करें और mock return request भेजें।",
+    "requestReturn": "रिटर्न अनुरोध करें",
+    "emptyTitle": "अभी कोई ऑर्डर नहीं है",
+    "emptyDescription": "Seeded orders या future checkout flows यहाँ दिखेंगे।",
+    "refundStatus": "रिफंड: {{status}}",
+    "total": "कुल:",
+    "returnModalTitle": "रिटर्न का अनुरोध करें",
+    "returnReason": "कारण",
+    "returnReasonPlaceholder": "एडमिन टीम को बताएं कि रिटर्न क्यों चाहिए।",
+    "submitReturn": "रिटर्न अनुरोध भेजें",
+    "returnSubmitted": "रिटर्न अनुरोध जमा हो गया।",
+    "returnSubmittedTitle": "रिटर्न अनुरोध बनाया गया"
+  },
+  "returns": {
+    "eyebrow": "सपोर्ट वर्कफ़्लो",
+    "title": "रिटर्न और रिफंड",
+    "subtitle": "हर request की स्थिति देखें।",
+    "emptyTitle": "कोई रिटर्न अनुरोध नहीं",
+    "emptyDescription": "Orders page से बनाए गए return requests यहाँ refund status के साथ दिखेंगे।",
+    "requestedOn": "{{date}} को अनुरोध किया गया",
+    "refundAmount": "रिफंड राशि:",
+    "adminNote": "एडमिन नोट:",
+    "awaitingReview": "समीक्षा की प्रतीक्षा में",
+    "statusDescription": "स्थिति एडमिन workflow द्वारा अपडेट होती है।"
+  },
+  "profile": {
+    "title": "प्रोफ़ाइल प्रबंधन",
+    "subtitle": "खाता विवरण अपडेट करें, compressed image अपलोड करें और password बदलें।",
+    "oldPassword": "पुराना पासवर्ड",
+    "newPassword": "नया पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "uploadImage": "इमेज अपलोड करें",
+    "imageHint": "Mock profile store में जाने से पहले images compress की जाती हैं।",
+    "securitySubtitle": "Validation को mock service के करीब रखा गया है ताकि future API वही contract reuse कर सके।",
+    "fields": {
+      "name": "नाम",
+      "email": "ईमेल",
+      "phone": "फ़ोन",
+      "address": "पता"
+    }
+  },
+  "notifications": {
+    "title": "नोटिफिकेशन",
+    "unreadSingle": "{{count}} अनरीड अपडेट",
+    "unreadMultiple": "{{count}} अनरीड अपडेट्स",
+    "caughtUp": "आप पूरी तरह अपडेट हैं।",
+    "readAll": "सब पढ़ें",
+    "clear": "साफ़ करें",
+    "emptyTitle": "अभी कोई नोटिफिकेशन नहीं",
+    "emptyDescription": "नई account activity और system updates यहाँ दिखेंगी।",
+    "justNow": "अभी"
+  },
+  "session": {
+    "loginSuccess": "फिर से स्वागत है, {{name}}।",
+    "loginTitle": "सफलतापूर्वक साइन इन हुआ",
+    "registerSuccess": "खाता सफलतापूर्वक बन गया।",
+    "registerTitle": "BR Jewellers में आपका स्वागत है",
+    "googleSuccess": "Google demo mode से साइन इन हुआ।",
+    "googleTitle": "Google sign-in पूरा हुआ",
+    "profileUpdated": "प्रोफ़ाइल अपडेट हो गई।",
+    "profileUpdatedTitle": "खाते के बदलाव सहेजे गए",
+    "passwordUpdated": "पासवर्ड अपडेट हो गया।",
+    "passwordUpdatedTitle": "सिक्योरिटी अपडेट हुई",
+    "logoutSuccess": "सफलतापूर्वक साइन आउट हुआ।",
+    "logoutTitle": "सेशन समाप्त हुआ"
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "डैशबोर्ड",
+      "products": "उत्पाद",
+      "productList": "उत्पाद सूची",
+      "categories": "कैटेगरी",
+      "featuredProducts": "फ़ीचर्ड उत्पाद",
+      "bulkUpload": "Bulk Upload",
+      "users": "यूज़र्स",
+      "userList": "यूज़र सूची",
+      "orders": "ऑर्डर",
+      "allOrders": "सभी ऑर्डर",
+      "pendingOrders": "लंबित ऑर्डर",
+      "orderTracking": "ऑर्डर ट्रैकिंग",
+      "refunds": "रिफंड और रिटर्न",
+      "returnRequests": "रिटर्न अनुरोध",
+      "refundStatus": "रिफंड स्टेटस",
+      "content": "कंटेंट मैनेजमेंट",
+      "homeContent": "होम कंटेंट",
+      "aboutContent": "अबाउट कंटेंट",
+      "contactContent": "कॉन्टैक्ट कंटेंट",
+      "bannerManagement": "बैनर मैनेजमेंट",
+      "blogManagement": "ब्लॉग मैनेजमेंट",
+      "analytics": "एनालिटिक्स",
+      "overview": "ओवरव्यू",
+      "financeReports": "फाइनेंस रिपोर्ट्स",
+      "settings": "सेटिंग्स"
+    },
+    "topbar": {
+      "signedInAs": "साइन इन किया है"
+    },
+    "dashboard": {
+      "eyebrow": "एडमिन ओवरव्यू",
+      "title": "BR Jewellers बैक ऑफिस",
+      "description": "कैटलॉग हेल्थ, customer activity, order movement और refund pressure का एक operational snapshot।",
+      "loading": "डैशबोर्ड snapshot लोड हो रहा है...",
+      "stats": {
+        "revenue": "रेवेन्यू",
+        "products": "उत्पाद",
+        "users": "यूज़र्स",
+        "pendingOrders": "लंबित ऑर्डर",
+        "pendingRefunds": "लंबित रिफंड"
+      },
+      "helpers": {
+        "revenue": "कुल mock storefront revenue",
+        "products": "सक्रिय catalogue records",
+        "users": "डेमो डेटा में customer accounts",
+        "pendingOrders": "अभी भी चल रहे orders",
+        "pendingRefunds": "एडमिन action की प्रतीक्षा में returns"
+      },
+      "recentOrdersEyebrow": "हाल के ऑर्डर",
+      "recentOrdersTitle": "नवीनतम ऑर्डर गतिविधि",
+      "viewAll": "सभी देखें",
+      "itemCount": "{{count}} आइटम",
+      "refundAttentionEyebrow": "रिफंड ध्यान",
+      "refundAttentionTitle": "समीक्षा की प्रतीक्षा में अनुरोध",
+      "openQueue": "Queue खोलें",
+      "refundAmount": "रिफंड राशि: {{amount}}",
+      "noPendingRefunds": "अभी कोई लंबित रिफंड अनुरोध नहीं है।",
+      "lowStockEyebrow": "कम स्टॉक",
+      "lowStockTitle": "नज़र रखने वाले catalogue items",
+      "stockLeft": "{{count}} बाकी"
+    }
+  }
+}

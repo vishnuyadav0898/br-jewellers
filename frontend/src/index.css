@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    @apply border-stone-200;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen font-sans text-stone-900 antialiased;
+    background:
+      radial-gradient(circle at top left, rgba(211, 163, 71, 0.16), transparent 28%),
+      linear-gradient(180deg, #fffaf1 0%, #f7eedf 100%);
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    @apply outline-none;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: "Cormorant Garamond", Georgia, serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
