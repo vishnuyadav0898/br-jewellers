@@ -15,12 +15,10 @@ export const register = async (req, res, next) => {
       ]);
     }
 
-    const hashedPassword = await hashPassword(password);
-
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
       phone,
     });
 
