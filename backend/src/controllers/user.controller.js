@@ -1,10 +1,10 @@
-import User from "../models/user.model.js";
+import models from "../models/index.js";
 import { hashPassword } from "../utils/hash.js";
 import ResponseHandler from "../utils/responseHandler.js";
 
 export const userMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await models.User.findById(req.user.id).select("-password");
 
     if (!user) {
       return ResponseHandler.notFound(res, "User not found");
@@ -25,7 +25,7 @@ export const getUsers = async (req, res, next) => {
       filter.role = role;
     }
 
-    const users = await User.find(filter).select("-password");
+    const users = await models.User.find(filter).select("-password");
 
     return ResponseHandler.success(res, "Users fetched", users);
   } catch (err) {
@@ -35,7 +35,7 @@ export const getUsers = async (req, res, next) => {
 
 export const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
+    const user = await models.User.findById(req.params.id).select("-password");
 
     if (!user) {
       return ResponseHandler.notFound(res, "User not found");
@@ -58,7 +58,7 @@ export const createUser = async (req, res, next) => {
       data.password = await hashPassword(data.password);
     }
 
-    const user = await User.create(data);
+    const user = await models.User.create(data);
 
     const { password: _, ...safeUser } = user.toObject();
 
@@ -76,7 +76,7 @@ export const updateUser = async (req, res, next) => {
       data.password = await hashPassword(data.password);
     }
 
-    const user = await User.findByIdAndUpdate(req.params.id, data, {
+    const user = await models.User.findByIdAndUpdate(req.params.id, data, {
       new: true,
     }).select("-password");
 
@@ -92,7 +92,7 @@ export const updateUser = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await models.User.findByIdAndDelete(req.params.id);
 
     if (!user) {
       return ResponseHandler.notFound(res, "User not found");
@@ -108,7 +108,7 @@ export const updatePassword = async (req, res, next) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id);
+    const user = await models.User.findById(req.user.id);
     if (!user) {
       return ResponseHandler.notFound(res, "User not found");
     }
@@ -150,7 +150,7 @@ export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await models.User.findOne({ email });
     if (!user) {
       return ResponseHandler.notFound(res, "User not found");
     }

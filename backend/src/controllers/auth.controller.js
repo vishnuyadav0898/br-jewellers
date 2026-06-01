@@ -1,3 +1,4 @@
+import models from "../models/index.js";
 import User from "../models/user.model.js";
 import { hashPassword, comparePassword } from "../utils/hash.js";
 import { generateToken } from "../utils/jwt.js";
@@ -7,7 +8,7 @@ export const register = async (req, res, next) => {
   try {
     const { name, email, password, phone } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await models.User.findOne({ email });
     if (existingUser) {
       return ResponseHandler.error(res, "User already exists", 409, [
         { field: "email", message: "Email already exists" },
@@ -36,7 +37,7 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await models.User.findOne({ email });
     if (!user) {
       return ResponseHandler.error(res, "Invalid credentials", 401);
     }
