@@ -2,7 +2,13 @@ import swaggerUi from "swagger-ui-express";
 import { authPaths } from "./auth.swagger.js";
 import { userPaths } from "./user.swagger.js";
 import { categoryPaths } from "./category.swagger.js";
+import { productPaths } from "./product.swagger.js";
 import { responses } from "./responses.js";
+
+const SERVER_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://br-jewellers.onrender.com/api/v1"
+    : "http://localhost:3000/api/v1";
 
 const swaggerSpec = {
   openapi: "3.0.0",
@@ -12,7 +18,7 @@ const swaggerSpec = {
   },
     servers: [
     {
-      url: "http://localhost:3000/api/v1",
+      url: SERVER_URL,
     },
   ],
 
@@ -33,7 +39,8 @@ const swaggerSpec = {
   paths: {
     ...authPaths,
     ...userPaths,
-    ...categoryPaths
+    ...categoryPaths,
+    ...productPaths
   },
 };
 
