@@ -62,7 +62,7 @@ export const createUser = async (req, res, next) => {
 
     const { password: _, ...safeUser } = user.toObject();
 
-    return ResponseHandler.created(res, "Admin user created", safeUser);
+    return ResponseHandler.created(res, "Admin user created");
   } catch (err) {
     return ResponseHandler.handleErrors(err, req, res, next);
   }
@@ -84,7 +84,7 @@ export const updateUser = async (req, res, next) => {
       return ResponseHandler.notFound(res, "User not found");
     }
 
-    return ResponseHandler.success(res, "User updated", user);
+    return ResponseHandler.success(res, "User updated");
   } catch (err) {
     return ResponseHandler.handleErrors(err, req, res, next);
   }
