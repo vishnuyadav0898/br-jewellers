@@ -59,4 +59,24 @@ export const authValidation = {
         "any.required": "Password is required",
       }),
   }),
+
+  refreshToken: Joi.object({
+    refreshToken: Joi.string()
+      .required()
+      .messages({
+        "string.base": "Refresh token must be a string",
+        "string.empty": "Refresh token is required",
+        "any.required": "Refresh token is required",
+      }),
+  }),
+
+  googleLogin: Joi.object({
+    idToken: Joi.string()
+      .required()
+      .messages({
+        "string.base": "ID token must be a string",
+        "string.empty": "ID token is required",
+        "any.required": "ID token is required",
+      }),
+  }),
 };
