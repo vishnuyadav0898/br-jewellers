@@ -18,9 +18,7 @@ export const listProducts = async (req, res, next) => {
 
     const filter = {};
 
-    if (isActive !== undefined) {
-      filter.isActive = isActive === "true" || isActive === true;
-    } else {
+    if (!isActive) {
       filter.isActive = true;
     } else if (isActive !== "all") {
       filter.isActive = isActive === "true";
