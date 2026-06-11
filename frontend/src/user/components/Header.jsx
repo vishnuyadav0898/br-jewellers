@@ -1,4 +1,4 @@
-import { Heart, LayoutDashboard, LogOut, Package, RotateCcw, ShoppingBag, User, ChevronDown } from "lucide-react";
+import { Heart, LayoutDashboard, Lock, LogOut, Package, RotateCcw, ShoppingBag, User, ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { routes, userNavigation } from "../../config/routes";
@@ -15,6 +15,7 @@ export function Header() {
   const { user, isAuthenticated, logout, openAuthModal } = useSession();
   const location = useLocation();
   const [accountOpen, setAccountOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const accountRef = useRef(null);
   const isAdmin = user?.role === "admin";
   const isCustomer = !isAdmin;
@@ -22,6 +23,7 @@ export function Header() {
 
   useEffect(() => {
     setAccountOpen(false);
+    setMobileMenuOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -40,9 +42,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#e4d4b2] bg-[#fff9ef]/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <BrandLogo />
 
+        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-5 lg:flex">
           {visibleNavigation.map((item) => (
             <NavLink
@@ -62,7 +65,8 @@ export function Header() {
           ) : null}
         </nav>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        {/* Desktop Controls */}
+        <div className="hidden lg:flex items-center gap-2">
           <PreferenceControls />
 
           {isCustomer ? (
@@ -115,7 +119,7 @@ export function Header() {
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1a120e] text-xs text-[#f8ebca]">
                   {user?.name?.slice(0, 1)?.toUpperCase()}
                 </span>
-                <span className="hidden sm:inline">{user?.name?.split(" ")[0]}</span>
+                <span>{user?.name?.split(" ")[0]}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", accountOpen && "rotate-180")} />
               </button>
 
@@ -133,7 +137,7 @@ export function Header() {
                           <LayoutDashboard className="h-4 w-4" />
                           {t("header.adminPanel")}
                         </Link>
-                        <Link to={routes.adminSettings} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
+                        <Link to={routes.adminProfile} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
                           <User className="h-4 w-4" />
                           {t("header.accountSettings")}
                         </Link>
@@ -143,6 +147,10 @@ export function Header() {
                         <Link to={routes.appProfile} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
                           <User className="h-4 w-4" />
                           {t("common.profile")}
+                        </Link>
+                        <Link to={routes.appChangePassword} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
+                          <Lock className="h-4 w-4" />
+                          {t("common.changePassword")}
                         </Link>
                         <Link to={routes.appOrders} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
                           <Package className="h-4 w-4" />
@@ -177,7 +185,104 @@ export function Header() {
             </>
           )}
         </div>
+
+        {/* Mobile Controls & Hamburger Toggle */}
+        <div className="flex lg:hidden items-center gap-2">
+          {isCustomer && (
+            <Link to={routes.appCart} className={iconLinkClassName} aria-label={t("nav.cart")}>
+              <ShoppingBag className="h-4 w-4" />
+            </Link>
+          )}
+
+          {isAuthenticated ? <NotificationCenter theme="user" /> : null}
+
+          <button
+            type="button"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#ddc8a3] bg-white text-[#1a120e] hover:bg-[#fff3dd]"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Dropdown Navigation Menu */}
+      {mobileMenuOpen && (
+        <nav className="border-t border-[#e4d4b2] bg-[#fffbf4] px-4 py-6 shadow-lg lg:hidden space-y-6">
+          {/* Main Navigation Links */}
+          <div className="space-y-1">
+            {visibleNavigation.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    "block rounded-xl px-4 py-3 text-base font-semibold text-stone-600 transition hover:bg-[#fcf5eb] hover:text-[#1a120e]",
+                    isActive && "bg-[#fcf5eb] text-[#1a120e]"
+                  )
+                }
+              >
+                {t(item.labelKey)}
+              </NavLink>
+            ))}
+            {user?.role === "admin" ? (
+              <Link
+                to={routes.adminDashboard}
+                className="block rounded-xl px-4 py-3 text-base font-semibold text-[#8a5d18] hover:bg-[#fcf5eb]"
+              >
+                {t("common.admin")}
+              </Link>
+            ) : null}
+          </div>
+
+          <hr className="border-[#e4d4b2]/65" />
+
+          {/* Account Management & Preference Actions inside mobile menu */}
+          <div className="space-y-4 px-4">
+            {isAuthenticated ? (
+              <div className="space-y-3">
+                <div className="rounded-2xl bg-[#fff7ea] p-4">
+                  <div className="text-sm font-semibold text-[#1a120e]">{user?.name}</div>
+                  <div className="mt-1 text-xs text-stone-500">{user?.email}</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-center text-sm font-semibold">
+                  <Link to={routes.appProfile} className="rounded-xl border border-[#ddc8a3] bg-white py-2.5 text-stone-700 transition hover:bg-[#fff9ef]">
+                    {t("common.profile")}
+                  </Link>
+                  <Link to={routes.appOrders} className="rounded-xl border border-[#ddc8a3] bg-white py-2.5 text-stone-700 transition hover:bg-[#fff9ef]">
+                    {t("nav.orders")}
+                  </Link>
+                </div>
+
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 border border-rose-200 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                  onClick={logout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t("common.logout")}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Button className="w-full" onClick={() => openAuthModal("register")}>
+                  {t("common.register")}
+                </Button>
+                <Button tone="secondary" className="w-full" onClick={() => openAuthModal("login")}>
+                  {t("common.login")}
+                </Button>
+              </div>
+            )}
+
+            {/* Language and currency selectors centered */}
+            <div className="pt-2 flex justify-center">
+              <PreferenceControls />
+            </div>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

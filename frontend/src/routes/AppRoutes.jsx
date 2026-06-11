@@ -35,12 +35,21 @@ const ReturnsPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import("../user/pages/ProfilePage").then((module) => ({ default: module.ProfilePage }))
 );
+const UserChangePasswordPage = lazy(() =>
+  import("../user/pages/ChangePasswordPage").then((module) => ({ default: module.UserChangePasswordPage }))
+);
 
 const AdminDashboardPage = lazy(() =>
   import("../admin/pages/dashboard/DashboardPage").then((module) => ({ default: module.DashboardPage }))
 );
 const ProductListPage = lazy(() =>
   import("../admin/pages/products/ProductListPage").then((module) => ({ default: module.ProductListPage }))
+);
+const ProductFormPage = lazy(() =>
+  import("../admin/pages/products/ProductFormPage").then((module) => ({ default: module.ProductFormPage }))
+);
+const AdminProductDetailsPage = lazy(() =>
+  import("../admin/pages/products/ProductDetailsPage").then((module) => ({ default: module.ProductDetailsPage }))
 );
 const CategoriesPage = lazy(() =>
   import("../admin/pages/products/CategoriesPage").then((module) => ({ default: module.CategoriesPage }))
@@ -93,8 +102,8 @@ const AnalyticsOverviewPage = lazy(() =>
 const FinanceReportsPage = lazy(() =>
   import("../admin/pages/analytics/FinanceReportsPage").then((module) => ({ default: module.FinanceReportsPage }))
 );
-const SettingsPage = lazy(() =>
-  import("../admin/pages/settings/SettingsPage").then((module) => ({ default: module.SettingsPage }))
+const ChangePasswordPage = lazy(() =>
+  import("../admin/pages/settings/ChangePasswordPage").then((module) => ({ default: module.ChangePasswordPage }))
 );
 
 function RouteLoader() {
@@ -109,13 +118,11 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoader />}>
       <Routes>
-        <Route path={routes.root} element={<Navigate to={routes.appHome} replace />} />
-
         {userRouteRedirects.map((entry) => (
           <Route key={entry.from} path={entry.from} element={<Navigate to={entry.to} replace />} />
         ))}
 
-        <Route path="/app" element={<UserLayout />}>
+        <Route path="/" element={<UserLayout />}>
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
@@ -124,10 +131,11 @@ export function AppRoutes() {
           <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
             <Route path="cart" element={<CartPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
-            <Route path="orders" element={<OrdersPage />} />
+            <Route key="orders-list" path="orders" element={<OrdersPage />} />
             <Route path="orders/:orderId/tracking" element={<UserOrderTrackingPage />} />
             <Route path="returns" element={<ReturnsPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="change-password" element={<UserChangePasswordPage />} />
           </Route>
           <Route path="*" element={<Navigate to={routes.appHome} replace />} />
         </Route>
@@ -142,6 +150,9 @@ export function AppRoutes() {
 
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="products/list" element={<ProductListPage />} />
+            <Route path="products/create" element={<ProductFormPage />} />
+            <Route path="products/:productId/edit" element={<ProductFormPage />} />
+            <Route path="products/:productId" element={<AdminProductDetailsPage />} />
             <Route path="products/categories" element={<CategoriesPage />} />
             <Route path="products/featured" element={<FeaturedProductsPage />} />
             <Route path="products/bulk-upload" element={<BulkUploadPage />} />
@@ -159,7 +170,9 @@ export function AppRoutes() {
             <Route path="content/blogs" element={<BlogManagementPage />} />
             <Route path="analytics" element={<AnalyticsOverviewPage />} />
             <Route path="analytics/finance" element={<FinanceReportsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings" element={<Navigate to="/admin/profile" replace />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="change-password" element={<ChangePasswordPage />} />
             <Route path="*" element={<Navigate to={routes.adminDashboard} replace />} />
           </Route>
         </Route>

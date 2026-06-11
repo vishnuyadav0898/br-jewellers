@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { RotateCcw } from "lucide-react";
 import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
 import { queryKeys } from "../../../shared/constants/queryKeys";
@@ -16,7 +15,6 @@ export function SettingsPage() {
   const { user, updateProfile, changePassword } = useSession();
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-  const [resetting, setResetting] = useState(false);
   const [profileErrors, setProfileErrors] = useState({});
   const [passwordErrors, setPasswordErrors] = useState({});
   const settingsQuery = useQuery({
@@ -24,6 +22,18 @@ export function SettingsPage() {
     queryFn: () => settingsService.getAdminProfile(user.id),
     enabled: Boolean(user?.id),
   });
+
+  useEffect(() => {
+    if (window.location.hash) {
+      const id = window.location.hash.substring(1);
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [window.location.hash]);
 
   return (
     <div className="space-y-6">
@@ -41,7 +51,7 @@ export function SettingsPage() {
 
           return (
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <AdminPanel>
+              <AdminPanel id="profile-section">
                 <h2 className="font-display text-3xl text-[#1d130f]">Profile</h2>
                 <form
                   className="mt-5 space-y-4"
@@ -131,7 +141,7 @@ export function SettingsPage() {
               </AdminPanel>
 
               <div className="space-y-6">
-                <AdminPanel>
+                <AdminPanel id="password-section">
                   <h2 className="font-display text-3xl text-[#1d130f]">Password</h2>
                   <form
                     className="mt-5 space-y-4"
@@ -166,7 +176,7 @@ export function SettingsPage() {
                         setSavingPassword(false);
                       }
                     }}
-                >
+                  >
                     <Input
                       name="oldPassword"
                       type="password"
@@ -209,31 +219,6 @@ export function SettingsPage() {
                       </Button>
                     </div>
                   </form>
-                </AdminPanel>
-
-                <AdminPanel>
-                  <h2 className="font-display text-3xl text-[#1d130f]">Demo controls</h2>
-                  <p className="mt-3 text-sm leading-6 text-stone-600">
-                    Reset the mock database to the seeded BR Jewellers demo state.
-                  </p>
-                  <div className="mt-5">
-                    <Button
-                      tone="danger"
-                      loading={resetting}
-                      onClick={async () => {
-                        setResetting(true);
-                        try {
-                          await settingsService.resetDemoData();
-                          window.location.reload();
-                        } finally {
-                          setResetting(false);
-                        }
-                      }}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Reset demo data
-                    </Button>
-                  </div>
                 </AdminPanel>
               </div>
             </div>

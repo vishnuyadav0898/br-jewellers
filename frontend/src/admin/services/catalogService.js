@@ -1,5 +1,6 @@
-import { mockApiClient } from "../../shared/services/mockApiClient";
 import { initialData } from "../../mock/data";
+import { ApiUnavailableError, apiClient } from "../../shared/services/apiClient";
+import { mockApiClient } from "../../shared/services/mockApiClient";
 
 const slugify = (value = "") =>
   value
@@ -28,6 +29,16 @@ const normalizeColors = (colors = []) =>
         }
   );
 
+const isApiFallbackError = (error) => false;
+const firstImage = (product = {}) => product.coverImage || product.images?.[0] || "";
+
+const toTitleSlug = (value = "") =>
+  String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+
 const resolveCategory = (db, payload) => {
   const rawCategory = payload.category || payload.categoryName;
   const byId = db.categories.find((category) => category.id === payload.categoryId);
@@ -38,55 +49,336 @@ const resolveCategory = (db, payload) => {
   return byId || byName || db.categories[0];
 };
 
+export const normalizeApiProduct = (product = {}) => {
+  const rawVariants = Array.isArray(product.variants) ? product.variants : [];
+  const variants = rawVariants.map((v) => {
+    // Map attributes Map/object to top level variant keys for frontend compatibility
+    const attrs = {};
+    if (v.attributes) {
+      if (typeof v.attributes.get === "function") {
+        v.attributes.forEach((val, key) => {
+          attrs[key] = val;
+        });
+      } else {
+        Object.entries(v.attributes).forEach(([key, val]) => {
+          attrs[key] = val;
+        });
+      }
+    }
+
+    // Map prices array back to price: { INR, USD }
+    const price = { INR: 0, USD: 0 };
+    if (Array.isArray(v.prices)) {
+      v.prices.forEach((p) => {
+        if (p.currency === "INR") price.INR = p.amount;
+        if (p.currency === "USD") price.USD = p.amount;
+      });
+    }
+
+    // Extract image URLs from variant images
+    const images = Array.isArray(v.images)
+      ? v.images.map((img) => (typeof img === "string" ? img : img?.url)).filter(Boolean)
+      : [];
+
+    return {
+      sku: v.sku || "",
+      name: attrs.name || product.name || "",
+      material: attrs.material || "Gold",
+      color: attrs.color || "Gold",
+      purity: attrs.purity || "22K",
+      size: attrs.size || "One Size",
+      stock: Number(attrs.stock || 0),
+      isAvailable: v.isAvailable !== false,
+      isDefault: Boolean(v.isDefault),
+      price,
+      images,
+      image_url: images[0] || "",
+    };
+  });
+
+  const variantPrices = variants
+    .map((v) => Number(v.price?.INR))
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  const price = Number(product.priceRange?.min ?? product.price ?? variantPrices[0] ?? 0);
+  const originalPrice = Number(
+    product.priceRange?.max ?? product.originalPrice ?? Math.max(price, ...variantPrices, 0)
+  );
+
+  const colors = variants.length
+    ? variants
+        .map((v) => v.color)
+        .filter(Boolean)
+        .filter((color, index, entries) => entries.indexOf(color) === index)
+        .map((color) => ({ name: color, code: "#D9A44F" }))
+    : normalizeColors(product.colors || ["Gold"]);
+
+  const sizes = variants.length
+    ? variants
+        .map((v) => v.size)
+        .filter(Boolean)
+        .filter((size, index, entries) => entries.indexOf(size) === index)
+    : parseList(product.sizes, ["One Size"]);
+
+  const stock = variants.length
+    ? variants.reduce((total, v) => total + Number(v.stock || 0), 0)
+    : Number(product.stock || 0);
+
+  const imageList = [product.coverImage, ...(Array.isArray(product.images) ? product.images : [])].filter(Boolean);
+
+  // Extract gemstone, badge, occasions from tags
+  let gemstone = "Gold";
+  let badge = "BR Edit";
+  let occasions = [];
+  if (Array.isArray(product.tags)) {
+    const gemTags = ["diamond", "gold", "ruby", "emerald", "sapphire", "platinum", "silver", "pearl"];
+    const foundGem = product.tags.find((t) => gemTags.includes(t.toLowerCase()));
+    if (foundGem) {
+      gemstone = foundGem.charAt(0).toUpperCase() + foundGem.slice(1);
+      badge = gemstone;
+    }
+  }
+
+  return {
+    id: product._id || product.id,
+    backendId: product._id,
+    slug: product.slug || "",
+    name: product.name || "Untitled product",
+    categoryId: product.category || "",
+    category: product.category || "Unassigned",
+    gemstone,
+    coverImage: product.coverImage || imageList[0] || "",
+    price,
+    originalPrice: originalPrice || price,
+    description: product.description || "Premium jewellery item.",
+    details: product.description || "Crafted with BR Jewellers quality standards.",
+    colors,
+    sizes,
+    featured: Boolean(product.featured),
+    badge,
+    stock,
+    tags: Array.isArray(product.tags) ? product.tags : [],
+    occasions,
+    images: imageList.length ? imageList : [],
+    variants,
+    isActive: product.isActive !== false,
+    status: product.isActive === false ? "Inactive" : "Active",
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  };
+};
+
+const mapFormToBackendPayload = (payload = {}) => {
+  const name = payload.name?.trim();
+  const slug = payload.slug || slugify(name);
+  const description = payload.description?.trim() || "";
+  const shortDescription = payload.shortDescription?.trim() || "";
+  const coverImage = payload.coverImage || "";
+  const isActive = payload.isActive !== false;
+  const category = payload.category || payload.categoryId || "";
+
+  const galleryImages = parseList(payload.images).filter((img) => img && img !== coverImage);
+
+  // Combine tags, gemstone, and occasions into tags
+  const tagsSet = new Set();
+  parseList(payload.tags).forEach((t) => tagsSet.add(t.toLowerCase()));
+  if (payload.gemstone) tagsSet.add(payload.gemstone.toLowerCase());
+  if (payload.badge) tagsSet.add(payload.badge.toLowerCase());
+  parseList(payload.occasions).forEach((o) => tagsSet.add(o.toLowerCase()));
+  const tags = Array.from(tagsSet);
+
+  const rawVariants = Array.isArray(payload.variants) ? payload.variants : [];
+  const variants = rawVariants.map((variant) => {
+    const attributes = {};
+    if (variant.material) attributes.material = String(variant.material);
+    if (variant.color) attributes.color = String(variant.color);
+    if (variant.purity) attributes.purity = String(variant.purity);
+    if (variant.size) attributes.size = String(variant.size);
+    if (variant.stock !== undefined) attributes.stock = String(variant.stock);
+    if (variant.name) attributes.name = String(variant.name);
+
+    const prices = [];
+    const inrVal = Number(variant.price?.INR ?? variant.price ?? 0);
+    const usdVal = Number(variant.price?.USD ?? variant.usdPrice ?? Math.round(inrVal * 0.012));
+    if (inrVal > 0) prices.push({ currency: "INR", amount: inrVal });
+    if (usdVal > 0) prices.push({ currency: "USD", amount: usdVal });
+
+    const variantImages = [];
+    const vImages = parseList(variant.images || variant.image_url);
+    vImages.forEach((imgUrl) => {
+      variantImages.push({ url: imgUrl, key: "" });
+    });
+
+    return {
+      sku: variant.sku ? String(variant.sku) : undefined,
+      isAvailable: variant.isAvailable !== false,
+      isDefault: Boolean(variant.isDefault),
+      attributes,
+      prices,
+      images: variantImages,
+    };
+  });
+
+  if (variants.length === 0) {
+    const priceVal = Number(payload.price ?? payload.priceRange?.min ?? 0);
+    const usdPriceVal = Number(payload.usdPrice ?? Math.round(priceVal * 0.012));
+    const stockVal = Number(payload.stock ?? 0);
+    const colors = parseList(payload.colors, ["Gold"]);
+    const sizes = parseList(payload.sizes, ["One Size"]);
+
+    const attributes = {
+      material: payload.material || "Gold",
+      color: colors[0] || "Gold",
+      purity: payload.purity || "22K",
+      size: sizes[0] || "One Size",
+      stock: String(stockVal),
+      name: name,
+    };
+
+    const prices = [
+      { currency: "INR", amount: priceVal },
+      { currency: "USD", amount: usdPriceVal },
+    ];
+
+    variants.push({
+      sku: payload.sku || undefined,
+      isAvailable: true,
+      isDefault: true,
+      attributes,
+      prices,
+      images: galleryImages.map((url) => ({ url, key: "" })),
+    });
+  }
+
+  return {
+    name,
+    slug,
+    description,
+    shortDescription,
+    coverImage,
+    images: galleryImages,
+    tags,
+    category,
+    isActive,
+    variants,
+  };
+};
+
 const makeProductRecord = (db, payload, existingProduct = {}) => {
   const category = resolveCategory(db, payload);
   const name = payload.name?.trim() || existingProduct.name;
+  const variants = Array.isArray(payload.variants) ? payload.variants : existingProduct.variants || [];
+  const variantPrices = variants.map((variant) => Number(variant?.price?.INR)).filter((price) => Number.isFinite(price));
+  const price = Number(payload.priceRange?.min ?? payload.price ?? variantPrices[0] ?? existingProduct.price ?? 0);
+  const originalPrice = Number(payload.priceRange?.max ?? payload.originalPrice ?? Math.max(price, ...variantPrices, 0));
 
   return {
     ...existingProduct,
     id: existingProduct.id || crypto.randomUUID(),
     slug: slugify(payload.slug || name),
     name,
-    categoryId: category?.id || existingProduct.categoryId,
-    category: category?.name || existingProduct.category || "Unassigned",
-    price: Number(payload.price ?? existingProduct.price ?? 0),
-    originalPrice: Number(payload.originalPrice ?? existingProduct.originalPrice ?? payload.price ?? 0),
+    categoryId: category?.id || payload.category || existingProduct.categoryId,
+    category: category?.name || payload.category || existingProduct.category || "Unassigned",
+    price,
+    originalPrice,
     description: payload.description ?? existingProduct.description ?? "Premium jewellery item.",
     details: payload.details ?? existingProduct.details ?? "Prepared for future backend enrichment.",
-    colors: normalizeColors(payload.colors ?? existingProduct.colors ?? []),
-    sizes: parseList(payload.sizes, existingProduct.sizes ?? ["One Size"]),
+    gemstone: payload.gemstone ?? existingProduct.gemstone ?? payload.badge ?? "Gold",
+    coverImage: payload.coverImage ?? existingProduct.coverImage ?? parseList(payload.images, existingProduct.images ?? [])[0],
+    occasions: parseList(payload.occasions, existingProduct.occasions ?? []),
+    colors: normalizeColors(
+      payload.colors ??
+        (variants.length ? variants.map((variant) => variant.color).filter(Boolean) : existingProduct.colors ?? [])
+    ),
+    sizes: parseList(
+      payload.sizes ?? (variants.length ? variants.map((variant) => variant.size).filter(Boolean) : undefined),
+      existingProduct.sizes ?? ["One Size"]
+    ),
     featured: Boolean(payload.featured ?? existingProduct.featured),
     badge: payload.badge ?? existingProduct.badge ?? "BR Edit",
-    stock: Number(payload.stock ?? existingProduct.stock ?? 0),
+    stock: Number(
+      payload.stock ??
+        variants.reduce((total, variant) => total + Number(variant.stock || 0), 0) ??
+        existingProduct.stock ??
+        0
+    ),
     tags: parseList(payload.tags, existingProduct.tags ?? []),
     images: parseList(payload.images, existingProduct.images ?? []).length
       ? parseList(payload.images, existingProduct.images ?? [])
       : existingProduct.images ?? [],
-    status: payload.status ?? existingProduct.status ?? "Active",
+    variants,
+    isActive: payload.isActive ?? existingProduct.isActive ?? true,
+    status: payload.isActive === false ? "Inactive" : payload.status ?? existingProduct.status ?? "Active",
   };
 };
 
 export const catalogService = {
-  async getProducts(search = "") {
+  async getProducts(search = "", options = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (options.includeInactive) params.set("isActive", "all");
+
+      const products = await apiClient.request(`/api/v1/product/list${params.toString() ? `?${params}` : ""}`);
+      const query = search.trim().toLowerCase();
+
+      return (Array.isArray(products) ? products : [])
+        .map(normalizeApiProduct)
+        .filter((product) => {
+          if (!query) return true;
+
+          return [product.name, product.category, product.badge, product.gemstone, ...product.tags]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query));
+        })
+        .sort((left, right) => left.name.localeCompare(right.name));
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
     return mockApiClient.query((db) => {
       const query = search.trim().toLowerCase();
 
       return db.products
+        .filter((product) => options.includeInactive || product.isActive !== false)
         .filter((product) => {
           if (!query) return true;
 
-          return [product.name, product.category, product.badge]
+          return [product.name, product.category, product.badge, product.gemstone, ...(product.tags || [])]
             .filter(Boolean)
-            .some((value) => value.toLowerCase().includes(query));
+            .some((value) => String(value).toLowerCase().includes(query));
         })
         .sort((left, right) => left.name.localeCompare(right.name));
     });
   },
 
-  async getFeaturedProducts() {
+  async getProductById(identifier) {
+    try {
+      const product = await apiClient.request(`/api/v1/product/${identifier}`);
+      return normalizeApiProduct(product);
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
     return mockApiClient.query((db) => {
-      const products =
-        Array.isArray(db.products) && db.products.length ? db.products : initialData.products || [];
+      const product = db.products.find((entry) => entry.id === identifier || entry.slug === identifier);
+      if (!product) throw new Error("Product not found.");
+      return product;
+    });
+  },
+
+  async getFeaturedProducts() {
+    try {
+      const products = await apiClient.request("/api/v1/product/list");
+      return (Array.isArray(products) ? products : [])
+        .map(normalizeApiProduct)
+        .slice(0, 6);
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
+    return mockApiClient.query((db) => {
+      const products = Array.isArray(db.products) && db.products.length ? db.products : initialData.products || [];
       const featured = products.filter((product) => product.featured);
 
       return (featured.length ? featured : (initialData.products || []).filter((product) => product.featured))
@@ -96,6 +388,17 @@ export const catalogService = {
   },
 
   async createProduct(payload) {
+    try {
+      await apiClient.request("/api/v1/product/create", {
+        method: "POST",
+        auth: true,
+        body: mapFormToBackendPayload(payload),
+      });
+      return true;
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
     return mockApiClient.mutate((db) => {
       db.products.unshift(makeProductRecord(db, payload));
       return db;
@@ -103,6 +406,17 @@ export const catalogService = {
   },
 
   async updateProduct(productId, payload) {
+    try {
+      await apiClient.request(`/api/v1/product/${productId}`, {
+        method: "PATCH",
+        auth: true,
+        body: mapFormToBackendPayload(payload),
+      });
+      return true;
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
     return mockApiClient.mutate((db) => {
       const index = db.products.findIndex((product) => product.id === productId);
       if (index === -1) throw new Error("Product not found.");
@@ -112,7 +426,41 @@ export const catalogService = {
     });
   },
 
+  async updateProductStatus(productId, isActive) {
+    try {
+      const activeState = isActive === true || isActive === "true" || isActive === 1 || isActive === "1";
+      await apiClient.request(`/api/v1/product/status/${productId}`, {
+        method: "PATCH",
+        auth: true,
+        body: { isActive: activeState },
+      });
+      return true;
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
+    return mockApiClient.mutate((db) => {
+      const product = db.products.find((entry) => entry.id === productId);
+      if (!product) throw new Error("Product not found.");
+
+      const activeState = isActive === true || isActive === "true" || isActive === 1 || isActive === "1";
+      product.isActive = activeState;
+      product.status = activeState ? "Active" : "Inactive";
+      return db;
+    });
+  },
+
   async deleteProduct(productId) {
+    try {
+      await apiClient.request(`/api/v1/product/${productId}`, {
+        method: "DELETE",
+        auth: true,
+      });
+      return true;
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
     return mockApiClient.mutate((db) => {
       db.products = db.products.filter((product) => product.id !== productId);
       return db;
@@ -129,81 +477,53 @@ export const catalogService = {
     });
   },
 
-  async bulkUploadProducts(rows = []) {
-    return mockApiClient.mutate((db) => {
-      const created = rows
-        .filter((row) => row.name && row.price)
-        .map((row) => makeProductRecord(db, row));
+  async bulkUploadProducts(file) {
+    const formData = new FormData();
+    formData.append("file", file);
 
-      db.products = [...created, ...db.products];
-      return db;
+    const res = await apiClient.request("/api/v1/product/bulk-import", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      auth: true,
     });
+    return res;
   },
 
   async getCategories() {
-    return mockApiClient.query((db) =>
-      db.categories.map((category) => ({
-        ...category,
-        productCount: db.products.filter((product) => product.categoryId === category.id).length,
-      }))
-    );
+    const categories = await apiClient.request("/api/v1/category/list");
+
+    return (Array.isArray(categories) ? categories : []).map((category) => {
+      const name = typeof category === "string" ? category : category?.name;
+      const id = typeof category === "string" ? category : category?._id || category?.id || name;
+      return {
+        id,
+        name,
+        slug: toTitleSlug(name),
+        description: "",
+        productCount: 0,
+      };
+    });
   },
 
   async createCategory(payload) {
-    return mockApiClient.mutate((db) => {
-      const category = {
-        id: crypto.randomUUID(),
-        name: payload.name.trim(),
-        slug: slugify(payload.name),
-        description: payload.description || "",
-        featured: Boolean(payload.featured),
-      };
-
-      db.categories.unshift(category);
-      return db;
+    await apiClient.post("/api/v1/category/create", {
+      name: payload.name.trim(),
     });
+    return true;
   },
 
   async updateCategory(categoryId, payload) {
-    return mockApiClient.mutate((db) => {
-      const category = db.categories.find((entry) => entry.id === categoryId);
-      if (!category) throw new Error("Category not found.");
-
-      const nextName = payload.name?.trim() || category.name;
-      category.name = nextName;
-      category.slug = slugify(nextName);
-      category.description = payload.description ?? category.description;
-      category.featured = Boolean(payload.featured);
-
-      db.products.forEach((product) => {
-        if (product.categoryId === categoryId) {
-          product.category = nextName;
-        }
-      });
-
-      return db;
+    await apiClient.patch(`/api/v1/category/${categoryId}`, {
+      name: payload.name.trim(),
     });
+    return true;
   },
 
   async deleteCategory(categoryId) {
-    return mockApiClient.mutate((db) => {
-      const fallbackCategory = db.categories.find((category) => category.id !== categoryId);
-      if (!fallbackCategory) {
-        throw new Error("At least one category must remain in the catalogue.");
-      }
-
-      db.categories = db.categories.filter((category) => category.id !== categoryId);
-      db.products = db.products.map((product) =>
-        product.categoryId === categoryId
-          ? {
-              ...product,
-              categoryId: fallbackCategory.id,
-              category: fallbackCategory.name,
-            }
-          : product
-      );
-
-      return db;
-    });
+    await apiClient.delete(`/api/v1/category/${categoryId}`);
+    return true;
   },
 };

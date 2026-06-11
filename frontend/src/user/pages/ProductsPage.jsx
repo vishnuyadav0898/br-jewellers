@@ -13,8 +13,8 @@ export function ProductsPage() {
   const { user } = useSession();
   const [search, setSearch] = useState("");
   const productsQuery = useQuery({
-    queryKey: ["products", search, user?.id],
-    queryFn: () => storefrontService.getProducts(search, user?.id),
+    queryKey: ["products", search],
+    queryFn: () => storefrontService.getProducts(search),
   });
 
   return (
@@ -34,12 +34,12 @@ export function ProductsPage() {
         <Loader label={t("common.loading")} />
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {productsQuery.data.map((product) => (
+          {(productsQuery.data || []).map((product) => (
             <ProductCard
               key={product.id}
               product={product}
               onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["products", search, user?.id] })}
+              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["products", search] })}
             />
           ))}
         </div>

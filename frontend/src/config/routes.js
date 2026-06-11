@@ -1,18 +1,22 @@
 export const routes = {
   root: "/",
-  appHome: "/app",
-  appProducts: "/app/products",
-  appProductDetails: (productId = ":productId") => `/app/products/${productId}`,
-  appAbout: "/app/about",
-  appContact: "/app/contact",
-  appCart: "/app/cart",
-  appFavorites: "/app/favorites",
-  appOrders: "/app/orders",
-  appOrderTracking: (orderId = ":orderId") => `/app/orders/${orderId}/tracking`,
-  appReturns: "/app/returns",
-  appProfile: "/app/profile",
+  appHome: "/",
+  appProducts: "/products",
+  appProductDetails: (productId = ":productId") => `/products/${productId}`,
+  appAbout: "/about",
+  appContact: "/contact",
+  appCart: "/cart",
+  appFavorites: "/favorites",
+  appOrders: "/orders",
+  appOrderTracking: (orderId = ":orderId") => `/orders/${orderId}/tracking`,
+  appReturns: "/returns",
+  appProfile: "/profile",
+  appChangePassword: "/change-password",
   adminDashboard: "/admin/dashboard",
   adminProductsList: "/admin/products/list",
+  adminProductCreate: "/admin/products/create",
+  adminProductEdit: (productId = ":productId") => `/admin/products/${productId}/edit`,
+  adminProductDetails: (productId = ":productId") => `/admin/products/${productId}`,
   adminCategories: "/admin/products/categories",
   adminFeaturedProducts: "/admin/products/featured",
   adminBulkUpload: "/admin/products/bulk-upload",
@@ -31,6 +35,8 @@ export const routes = {
   adminAnalytics: "/admin/analytics",
   adminFinance: "/admin/analytics/finance",
   adminSettings: "/admin/settings",
+  adminProfile: "/admin/profile",
+  adminChangePassword: "/admin/change-password",
 };
 
 export const userNavigation = [
@@ -41,14 +47,17 @@ export const userNavigation = [
 ];
 
 export const userRouteRedirects = [
-  { from: "/products", to: routes.appProducts },
-  { from: "/about", to: routes.appAbout },
-  { from: "/contact", to: routes.appContact },
-  { from: "/cart", to: routes.appCart },
-  { from: "/favorites", to: routes.appFavorites },
-  { from: "/orders", to: routes.appOrders },
-  { from: "/returns", to: routes.appReturns },
-  { from: "/profile", to: routes.appProfile },
+  { from: "/app", to: "/" },
+  { from: "/app/products", to: "/products" },
+  { from: "/app/products/:productId", to: "/products/:productId" },
+  { from: "/app/about", to: "/about" },
+  { from: "/app/contact", to: "/contact" },
+  { from: "/app/cart", to: "/cart" },
+  { from: "/app/favorites", to: "/favorites" },
+  { from: "/app/orders", to: "/orders" },
+  { from: "/app/orders/:orderId/tracking", to: "/orders/:orderId/tracking" },
+  { from: "/app/returns", to: "/returns" },
+  { from: "/app/profile", to: "/profile" },
 ];
 
 export const adminRouteRedirects = [

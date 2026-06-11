@@ -16,21 +16,26 @@ const sizes = {
 };
 
 export const Button = forwardRef(
-  ({ className, tone = "primary", size = "md", loading = false, children, ...props }, ref) => (
-    <button
-      ref={ref}
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60",
-        tones[tone],
-        sizes[size],
-        className
-      )}
-      disabled={loading || props.disabled}
-      {...props}
-    >
-      {loading ? "Please wait..." : children}
-    </button>
-  )
+  ({ as: Component = "button", className, tone = "primary", size = "md", loading = false, children, ...props }, ref) => {
+    const isButton = Component === "button";
+    const disabled = loading || props.disabled;
+
+    return (
+      <Component
+        ref={ref}
+        className={cn(
+          "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60",
+          tones[tone],
+          sizes[size],
+          className
+        )}
+        {...props}
+        {...(isButton ? { disabled } : { "aria-disabled": disabled || undefined })}
+      >
+        {loading ? "Please wait..." : children}
+      </Component>
+    );
+  }
 );
 
 Button.displayName = "Button";

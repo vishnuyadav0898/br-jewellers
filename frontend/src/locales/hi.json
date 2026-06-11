@@ -38,15 +38,15 @@
   },
   "auth": {
     "title": "अपने BR workspace में जाएँ",
-    "loginSubtitle": "ईमेल + पासवर्ड या mock Google flow का उपयोग करें।",
-    "registerSubtitle": "पेज छोड़े बिना नया ग्राहक खाता बनाएं।",
+    "loginSubtitle": "अपने backend account email और password से login करें।",
+    "registerSubtitle": "Backend authentication API से नया account बनाएं।",
     "email": "ईमेल",
     "password": "पासवर्ड",
     "name": "पूरा नाम",
     "phone": "फ़ोन",
     "address": "पता",
     "google": "Google से जारी रखें",
-    "demo": "डेमो ग्राहक: aarohi@brdemo.com / demo123 | डेमो एडमिन: admin@brdemo.com / demo123"
+    "demo": ""
   },
   "home": {
     "eyebrow": "आर्किटेक्चर रिफ्रेश",
@@ -156,8 +156,6 @@
     "loginTitle": "सफलतापूर्वक साइन इन हुआ",
     "registerSuccess": "खाता सफलतापूर्वक बन गया।",
     "registerTitle": "BR Jewellers में आपका स्वागत है",
-    "googleSuccess": "Google demo mode से साइन इन हुआ।",
-    "googleTitle": "Google sign-in पूरा हुआ",
     "profileUpdated": "प्रोफ़ाइल अपडेट हो गई।",
     "profileUpdatedTitle": "खाते के बदलाव सहेजे गए",
     "passwordUpdated": "पासवर्ड अपडेट हो गया।",
@@ -170,6 +168,7 @@
       "dashboard": "डैशबोर्ड",
       "products": "उत्पाद",
       "productList": "उत्पाद सूची",
+      "createProduct": "उत्पाद बनाएं",
       "categories": "कैटेगरी",
       "featuredProducts": "फ़ीचर्ड उत्पाद",
       "bulkUpload": "Bulk Upload",

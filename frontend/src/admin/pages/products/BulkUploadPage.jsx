@@ -11,23 +11,24 @@ import { AdminTable } from "../../components/AdminTable";
 import { catalogService } from "../../services/catalogService";
 
 const normalizeRow = (row) => ({
-  name: row.Name || row.name || "",
-  price: Number(row.Price || row.price || 0),
-  originalPrice: Number(row.OriginalPrice || row.originalPrice || row.Price || row.price || 0),
-  category: row.Category || row.category || "",
-  colors: row.Colors || row.colors || "",
-  sizes: row.Sizes || row.sizes || "",
-  tags: row.Tags || row.tags || "",
-  badge: row.Badge || row.badge || "Bulk Upload",
-  stock: Number(row.Stock || row.stock || 0),
-  description: row.Description || row.description || "Imported from spreadsheet preview.",
-  details: row.Details || row.details || "Bulk uploaded demo product.",
-  featured: String(row.Featured || row.featured || "").toLowerCase() === "true",
+  name: row.name || row.Name || "",
+  price: Number(row.price_INR || row.Price || 0),
+  originalPrice: Number(row.price_INR || row.Price || 0),
+  category: row.category || row.Category || "",
+  colors: row.color || row.colors || "",
+  sizes: row.size || row.sizes || "",
+  tags: row.tags || "",
+  badge: row.badge || "Bulk Upload",
+  stock: Number(row.stock || 0),
+  description: row.description || "Imported from spreadsheet preview.",
+  details: row.description || "Bulk uploaded product.",
+  featured: String(row.featured || "").toLowerCase() === "true",
 });
 
 export function BulkUploadPage() {
   const queryClient = useQueryClient();
   const [previewRows, setPreviewRows] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const validRows = useMemo(
@@ -41,7 +42,7 @@ export function BulkUploadPage() {
         <AdminPageHeader
           eyebrow="Products"
           title="Bulk upload"
-          description="Spreadsheet rows are parsed client-side, previewed in a table, and only committed to mock storage after confirmation."
+          description="Spreadsheet rows are parsed client-side, previewed in a table, and committed directly to the production backend."
         />
       </AdminPanel>
 
@@ -50,19 +51,20 @@ export function BulkUploadPage() {
           <div className="rounded-full bg-[#f4e3bf] p-4 text-[#8a5d18]">
             <Upload className="h-6 w-6" />
           </div>
-          <div className="mt-4 font-display text-3xl text-[#1d130f]">Upload Excel or CSV</div>
+          <div className="mt-4 font-display text-3xl text-[#1d130f]">Upload Excel file</div>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-            Expected columns: Name, Price, OriginalPrice, Category, Colors, Sizes, Tags, Badge, Stock, Description, Details, Featured.
+            Expected columns: name, category, description, shortDescription, coverImage, sku, price_INR, price_USD, isAvailable, isDefault, image_url, and dynamic properties (e.g. material, color, purity, size, stock).
           </p>
           <input
             type="file"
-            accept=".xlsx,.csv"
+            accept=".xlsx"
             className="sr-only"
             onChange={async (event) => {
               const file = event.target.files?.[0];
               if (!file) return;
 
               try {
+                setSelectedFile(file);
                 const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonRows = XLSX.utils.sheet_to_json(worksheet);
@@ -92,9 +94,10 @@ export function BulkUploadPage() {
             <Button
               loading={uploading}
               onClick={async () => {
+                if (!selectedFile) return;
                 setUploading(true);
                 try {
-                  await catalogService.bulkUploadProducts(validRows);
+                  await catalogService.bulkUploadProducts(selectedFile);
                   notify.success("Bulk upload completed.", {
                     title: "Catalogue import finished",
                     iconKey: "order",
@@ -102,6 +105,7 @@ export function BulkUploadPage() {
                   queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
                   queryClient.invalidateQueries({ queryKey: queryKeys.adminCategories });
                   setPreviewRows([]);
+                  setSelectedFile(null);
                 } catch (error) {
                   notify.error(error.message);
                 } finally {

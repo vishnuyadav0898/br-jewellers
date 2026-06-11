@@ -30,8 +30,8 @@ export function ProductDetailsPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const productQuery = useQuery({
-    queryKey: ["product", productId, user?.id],
-    queryFn: () => storefrontService.getProductById(productId, user?.id),
+    queryKey: ["product", productId],
+    queryFn: () => storefrontService.getProductById(productId),
   });
 
   useEffect(() => {
@@ -70,21 +70,21 @@ export function ProductDetailsPage() {
       </div>
 
       <section className="grid gap-6 rounded-[36px] border border-[#dfccab] bg-white/90 p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)] lg:grid-cols-[1fr_0.95fr]">
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-[28px] bg-[#f9f0de]">
-            <img src={product.images[selectedImage]} alt={product.name} className="aspect-[4/4.5] w-full object-cover" />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-[72px_1fr] gap-4 sm:grid-cols-[88px_1fr]">
+          <div className="flex max-h-[520px] flex-col gap-3 overflow-y-auto pr-1">
             {product.images.map((image, index) => (
               <button
                 key={image}
                 type="button"
-                className={`overflow-hidden rounded-[20px] border ${selectedImage === index ? "border-[#1a120e]" : "border-[#e3d2b0]"}`}
+                className={`shrink-0 overflow-hidden rounded-[18px] border ${selectedImage === index ? "border-[#1a120e]" : "border-[#e3d2b0]"}`}
                 onClick={() => setSelectedImage(index)}
               >
                 <img src={image} alt={`${product.name} view ${index + 1}`} className="aspect-square w-full object-cover" />
               </button>
             ))}
+          </div>
+          <div className="overflow-hidden rounded-[28px] bg-[#f9f0de]">
+            <img src={product.images[selectedImage]} alt={product.name} className="aspect-[4/4.5] w-full object-cover" />
           </div>
         </div>
 
@@ -179,7 +179,7 @@ export function ProductDetailsPage() {
                 }
 
                 await storefrontService.toggleFavorite(user.id, product.id);
-                queryClient.invalidateQueries({ queryKey: ["product", productId, user?.id] });
+                queryClient.invalidateQueries({ queryKey: ["product", productId] });
                 queryClient.invalidateQueries({ queryKey: ["products"] });
                 queryClient.invalidateQueries({ queryKey: ["favorites", user.id] });
                 notify.success(
@@ -260,7 +260,7 @@ export function ProductDetailsPage() {
                 product={relatedProduct}
                 onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
                 onFavoriteChanged={() => {
-                  queryClient.invalidateQueries({ queryKey: ["product", productId, user?.id] });
+                  queryClient.invalidateQueries({ queryKey: ["product", productId] });
                   queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
                 }}
               />

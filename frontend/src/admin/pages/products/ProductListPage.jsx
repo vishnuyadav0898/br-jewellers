@@ -1,14 +1,15 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, EyeOff, Plus, Search, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { routes } from "../../../config/routes";
+import { palette } from "../../../config/palette";
 import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
 import { Modal } from "../../../shared/components/Modal";
 import { queryKeys } from "../../../shared/constants/queryKeys";
 import { useMoney } from "../../../shared/hooks/useMoney";
 import { notify } from "../../../shared/utils/notify";
-import { getValidationErrors, productSchema } from "../../../shared/utils/validation";
-import { compressImages } from "../../../shared/utils/imageCompression";
 import { AdminDataState } from "../../components/AdminDataState";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { AdminPagination } from "../../components/AdminPagination";
@@ -17,165 +18,117 @@ import { AdminStatusBadge } from "../../components/AdminStatusBadge";
 import { AdminTable } from "../../components/AdminTable";
 import { catalogService } from "../../services/catalogService";
 
-const pageSize = 6;
-const defaultForm = {
-  name: "",
-  price: "",
-  originalPrice: "",
-  categoryId: "",
-  colors: "",
-  sizes: "",
-  tags: "",
-  badge: "",
-  stock: "",
-  description: "",
-  details: "",
-  featured: false,
-  images: [],
-};
-
-const mapProductToForm = (product) => ({
-  name: product.name || "",
-  price: product.price || "",
-  originalPrice: product.originalPrice || "",
-  categoryId: product.categoryId || "",
-  colors: (product.colors || []).map((item) => item.name).join(", "),
-  sizes: (product.sizes || []).join(", "),
-  tags: (product.tags || []).join(", "),
-  badge: product.badge || "",
-  stock: product.stock || "",
-  description: product.description || "",
-  details: product.details || "",
-  featured: Boolean(product.featured),
-  images: product.images || [],
-});
+const pageSize = 8;
 
 export function ProductListPage() {
-  const queryClient = useQueryClient();
   const { formatFromInr } = useMoney();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [activeProduct, setActiveProduct] = useState(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [form, setForm] = useState(defaultForm);
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(true); // "active" | "inactive" | "all"
+  const [deletingProduct, setDeletingProduct] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [statusProduct, setStatusProduct] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   const deferredSearch = useDeferredValue(search);
 
   const productsQuery = useQuery({
-    queryKey: queryKeys.adminProducts(deferredSearch, page),
-    queryFn: () => catalogService.getProducts(deferredSearch),
-  });
-  const categoriesQuery = useQuery({
-    queryKey: queryKeys.adminCategories,
-    queryFn: catalogService.getCategories,
+    queryKey: [...queryKeys.adminProducts(deferredSearch, page), statusFilter],
+    queryFn: () =>
+      catalogService.getProducts(deferredSearch, {
+        isActive: statusFilter,
+      }),
   });
 
+  const handleDelete = async () => {
+    if (!deletingProduct) return;
+    setDeleting(true);
+    try {
+      await catalogService.deleteProduct(deletingProduct.backendId || deletingProduct.id);
+      notify.success("Product deleted.", {
+        title: "Product removed",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminDashboard });
+      setDeletingProduct(null);
+    } catch (error) {
+      notify.error(error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!statusProduct) return;
+    setStatusLoading(true);
+    try {
+      const nextActive = statusProduct.isActive === false ? true : false;
+      await catalogService.updateProductStatus(statusProduct.backendId || statusProduct.id, nextActive);
+      notify.success(
+        nextActive ? "Product activated successfully." : "Product deactivated successfully.",
+        {
+          title: "Status updated",
+        }
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminDashboard });
+      setStatusProduct(null);
+    } catch (error) {
+      notify.error(error.message);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const filteredProducts = productsQuery.data || [];
+
   const paginated = useMemo(() => {
-    const rows = productsQuery.data || [];
+    const rows = filteredProducts;
     const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
     const safePage = Math.min(page, totalPages);
 
     return {
-      totalPages,
       rows: rows.slice((safePage - 1) * pageSize, safePage * pageSize),
+      totalPages,
+      totalRows: rows.length,
     };
-  }, [page, productsQuery.data]);
-
-  const openCreate = () => {
-    setActiveProduct(null);
-    setIsFormOpen(true);
-    setForm({
-      ...defaultForm,
-      categoryId: categoriesQuery.data?.[0]?.id || "",
-    });
-    setErrors({});
-  };
-
-  const openEdit = (product) => {
-    setActiveProduct(product);
-    setIsFormOpen(true);
-    setForm(mapProductToForm(product));
-    setErrors({});
-  };
-
-  const closeModal = () => {
-    setActiveProduct(null);
-    setIsFormOpen(false);
-    setForm(defaultForm);
-    setErrors({});
-  };
-
-  const refreshProducts = () => {
-    queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-    queryClient.invalidateQueries({ queryKey: queryKeys.adminDashboard });
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-
-    try {
-      const parsed = productSchema.safeParse(form);
-
-      if (!parsed.success) {
-        setErrors(getValidationErrors(parsed.error));
-        return;
-      }
-
-      setErrors({});
-      const payload = {
-        ...parsed.data,
-        originalPrice: parsed.data.originalPrice ?? parsed.data.price,
-      };
-
-      if (activeProduct) {
-        await catalogService.updateProduct(activeProduct.id, payload);
-        notify.success("Product updated.", {
-          title: "Catalogue updated",
-          iconKey: "order",
-        });
-      } else {
-        await catalogService.createProduct(payload);
-        notify.success("Product created.", {
-          title: "New product added",
-          iconKey: "order",
-        });
-      }
-
-      refreshProducts();
-      closeModal();
-    } catch (error) {
-      notify.error(error.message, { iconKey: "order" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const clearError = (field) =>
-    setErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
+  }, [page, filteredProducts]);
 
   const columns = [
     {
       key: "product",
       header: "Product",
       render: (row) => (
-        <div className="flex items-center gap-3">
-          <img src={row.images?.[0]} alt={row.name} className="h-12 w-12 rounded-[14px] object-cover" />
+        <div className="flex min-w-[260px] items-center gap-3">
+          <img
+            src={row.coverImage || row.images?.[0]}
+            alt={row.name}
+            className="h-14 w-14 rounded-lg border border-gold-100 bg-gold-50 object-cover"
+          />
           <div>
-            <div className="font-semibold text-[#1a120e]">{row.name}</div>
-            <div className="text-xs text-stone-500">{row.category}</div>
+            <Link
+              to={routes.adminProductDetails(row.backendId || row.id)}
+              className={`font-semibold ${palette.text.strong} hover:text-gold-700`}
+            >
+              {row.name}
+            </Link>
+            <div className="mt-1 text-xs text-stone-500">{row.category || "Unassigned"}</div>
           </div>
         </div>
       ),
     },
     {
+      key: "gemstone",
+      header: "Gemstone",
+      render: (row) => <span className="text-sm text-stone-700">{row.gemstone || row.badge || "Gold"}</span>,
+    },
+    {
       key: "price",
-      header: "Price",
+      header: "Price range",
       render: (row) => (
         <div>
-          <div className="font-semibold text-[#1a120e]">{formatFromInr(row.price)}</div>
-          <div className="text-xs text-stone-500">MRP {formatFromInr(row.originalPrice)}</div>
+          <div className={`font-semibold ${palette.text.strong}`}>{formatFromInr(row.price)}</div>
+          <div className="text-xs text-stone-500">Max {formatFromInr(row.originalPrice || row.price)}</div>
         </div>
       ),
     },
@@ -184,43 +137,54 @@ export function ProductListPage() {
       header: "Stock",
       render: (row) => (
         <div className="space-y-1">
-          <div className="font-semibold text-[#1a120e]">{row.stock}</div>
-          <AdminStatusBadge value={row.stock > 10 ? "Active" : "Low"} />
+          <div className={`font-semibold ${palette.text.strong}`}>{row.stock}</div>
+          <AdminStatusBadge value={row.stock > 10 ? "Active" : row.stock > 0 ? "Low" : "Draft"} />
         </div>
       ),
     },
     {
-      key: "featured",
-      header: "Featured",
-      render: (row) => <AdminStatusBadge value={row.featured ? "Featured" : "Standard"} />,
+      key: "media",
+      header: "Media",
+      render: (row) => <span className="text-sm text-stone-600">{row.images?.length || 0} image(s)</span>,
     },
     {
       key: "actions",
       header: "Actions",
       render: (row) => (
-        <div className="flex gap-2">
-          <Button tone="secondary" size="sm" onClick={() => openEdit(row)}>
-            <Pencil className="h-4 w-4" />
-            Edit
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            tone="secondary"
+            size="sm"
+            onClick={() => setStatusProduct(row)}
+            title={row.isActive ? "Deactivate Product" : "Activate Product"}
+            aria-label={row.isActive ? "Deactivate Product" : "Activate Product"}
+          >
+            {row.isActive ? (
+              <Eye className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <EyeOff className="h-4 w-4 text-stone-400" />
+            )}
           </Button>
           <Button
+            as={Link}
+            to={routes.adminProductEdit(row.id)}
+            tone="secondary"
+            size="sm"
+            title="Edit Product"
+            aria-label="Edit Product"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
             tone="danger"
             size="sm"
-            onClick={async () => {
-              try {
-                await catalogService.deleteProduct(row.id);
-                notify.success("Product deleted.", {
-                  title: "Product removed",
-                  iconKey: "order",
-                });
-                refreshProducts();
-              } catch (error) {
-                notify.error(error.message, { iconKey: "order" });
-              }
-            }}
+            onClick={() => setDeletingProduct(row)}
+            title="Delete Product"
+            aria-label="Delete Product"
           >
             <Trash2 className="h-4 w-4" />
-            Delete
           </Button>
         </div>
       ),
@@ -233,29 +197,57 @@ export function ProductListPage() {
         <AdminPageHeader
           eyebrow="Products"
           title="Product list"
-          description="CRUD-ready catalogue management using the existing mock API. Images are compressed in-browser before being stored in demo state."
+          description="Manage catalogue records from the backend when it is reachable, with automatic mock fallback for uninterrupted admin work."
           actions={
-            <Button onClick={openCreate}>
+            <Button as={Link} to={routes.adminProductCreate}>
               <Plus className="h-4 w-4" />
               Add product
             </Button>
           }
         />
-        <div className="mt-5 max-w-md">
-          <Input
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by product name, category, or badge"
-          />
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="grid gap-3 md:grid-cols-[minmax(0,420px)_auto] items-center">
+            <Input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by product name, category, gemstone, or tag"
+            />
+            <div className="flex gap-1 rounded-3xl bg-[#f5e9d4]/40 p-1 md:max-w-xs">
+              {[
+                [true, "Active"],
+                [false, "Inactive"],
+                ["", "All"],
+              ].map(([val, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(val);
+                    setPage(1);
+                  }}
+                  className={`flex-1 rounded-3xl py-2 text-center text-xs font-semibold transition ${statusFilter === val
+                    ? "bg-gold-500 text-white shadow-md shadow-gold-100"
+                    : "text-stone-600 hover:bg-gold-50 hover:text-gold-700"
+                    }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 text-sm text-stone-500">
+            <Search className="h-4 w-4 text-gold-700" />
+            {paginated.totalRows} product{paginated.totalRows === 1 ? "" : "s"}
+          </div>
         </div>
       </AdminPanel>
 
       <AdminDataState query={productsQuery} loadingLabel="Loading product catalogue...">
         <div className="space-y-4">
-          <AdminPanel>
+          <AdminPanel className="p-0">
             <AdminTable
               columns={columns}
               rows={paginated.rows}
@@ -267,167 +259,58 @@ export function ProductListPage() {
       </AdminDataState>
 
       <Modal
-        open={isFormOpen}
-        onClose={closeModal}
-        title={activeProduct ? "Edit product" : "Create product"}
-        className="max-w-3xl"
+        open={Boolean(deletingProduct)}
+        onClose={() => setDeletingProduct(null)}
+        title="Confirm deletion"
+        className="max-w-md w-full"
       >
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Name"
-              required
-              error={errors.name}
-              value={form.name}
-              onChange={(event) => {
-                clearError("name");
-                setForm((current) => ({ ...current, name: event.target.value }));
-              }}
-            />
-            <Input label="Badge" value={form.badge} onChange={(event) => setForm((current) => ({ ...current, badge: event.target.value }))} />
-            <Input
-              label="Price"
-              type="number"
-              required
-              error={errors.price}
-              value={form.price}
-              onChange={(event) => {
-                clearError("price");
-                setForm((current) => ({ ...current, price: event.target.value }));
-              }}
-            />
-            <Input
-              label="Original Price"
-              type="number"
-              error={errors.originalPrice}
-              value={form.originalPrice}
-              onChange={(event) => {
-                clearError("originalPrice");
-                setForm((current) => ({ ...current, originalPrice: event.target.value }));
-              }}
-            />
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-stone-700">
-                Category
-                <span className="ml-1 text-rose-500">*</span>
-              </span>
-              <select
-                value={form.categoryId}
-                aria-invalid={Boolean(errors.categoryId)}
-                onChange={(event) => {
-                  clearError("categoryId");
-                  setForm((current) => ({ ...current, categoryId: event.target.value }));
-                }}
-                className={`w-full rounded-3xl border bg-white px-4 py-3 text-sm text-stone-900 ${
-                  errors.categoryId ? "border-rose-300" : "border-[#dcc8a1]"
-                }`}
-              >
-                {(categoriesQuery.data || []).map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {errors.categoryId ? <span className="text-xs text-rose-600">{errors.categoryId}</span> : null}
-            </label>
-            <Input
-              label="Stock"
-              type="number"
-              required
-              error={errors.stock}
-              value={form.stock}
-              onChange={(event) => {
-                clearError("stock");
-                setForm((current) => ({ ...current, stock: event.target.value }));
-              }}
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Colors" helperText="Comma separated values" value={form.colors} onChange={(event) => setForm((current) => ({ ...current, colors: event.target.value }))} />
-            <Input label="Sizes" helperText="Comma separated values" value={form.sizes} onChange={(event) => setForm((current) => ({ ...current, sizes: event.target.value }))} />
-            <Input label="Tags" helperText="Comma separated values" value={form.tags} onChange={(event) => setForm((current) => ({ ...current, tags: event.target.value }))} />
-            <label className="flex items-center gap-3 rounded-3xl border border-[#dcc8a1] bg-[#fffaf1] px-4 py-3 text-sm font-medium text-stone-700">
-              <input
-                type="checkbox"
-                checked={form.featured}
-                onChange={(event) => setForm((current) => ({ ...current, featured: event.target.checked }))}
-              />
-              Featured product
-            </label>
-          </div>
-
-          <Input
-            label="Description"
-            as="textarea"
-            required
-            error={errors.description}
-            value={form.description}
-            onChange={(event) => {
-              clearError("description");
-              setForm((current) => ({ ...current, description: event.target.value }));
-            }}
-          />
-          <Input
-            label="Details"
-            as="textarea"
-            required
-            error={errors.details}
-            value={form.details}
-            onChange={(event) => {
-              clearError("details");
-              setForm((current) => ({ ...current, details: event.target.value }));
-            }}
-          />
-
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-stone-700">
-              Images
-              <span className="ml-1 text-rose-500">*</span>
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="block w-full text-sm"
-              onChange={async (event) => {
-                const files = Array.from(event.target.files || []);
-                if (!files.length) return;
-
-                try {
-                  const compressed = await compressImages(files);
-                  clearError("images");
-                  setForm((current) => ({
-                    ...current,
-                    images: [...compressed.map((item) => item.preview), ...current.images].slice(0, 6),
-                  }));
-                  notify.success("Images compressed and added.", {
-                    title: "Product media ready",
-                  });
-                } catch (error) {
-                  notify.error(error.message);
-                }
-              }}
-            />
-            {errors.images ? <span className="text-xs text-rose-600">{errors.images}</span> : null}
-            {form.images.length ? (
-              <div className="grid grid-cols-3 gap-3">
-                {form.images.map((image, index) => (
-                  <img key={`${image}-${index}`} src={image} alt={`Preview ${index + 1}`} className="h-24 w-full rounded-[18px] object-cover" />
-                ))}
-              </div>
-            ) : null}
-          </label>
-
-          <div className="flex justify-end gap-3">
-            <Button type="button" tone="secondary" onClick={closeModal}>
+        <div className="flex flex-col gap-4 w-full">
+          <p className="text-sm text-stone-600 w-full">
+            Are you sure you want to delete <span className="font-semibold text-espresso">{deletingProduct?.name}</span>? This action cannot be undone.
+          </p>
+          <div className="flex w-full gap-3 mt-2">
+            <Button type="button" tone="secondary" className="flex-1 w-full" disabled={deleting} onClick={() => setDeletingProduct(null)}>
               Cancel
             </Button>
-            <Button type="submit" loading={saving}>
-              {activeProduct ? "Save changes" : "Create product"}
+            <Button type="button" tone="danger" className="flex-1 w-full" loading={deleting} onClick={handleDelete}>
+              Delete
             </Button>
           </div>
-        </form>
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(statusProduct)}
+        onClose={() => setStatusProduct(null)}
+        title={statusProduct?.isActive ? "Deactivate product" : "Activate product"}
+        className="max-w-md w-full"
+      >
+        <div className="flex flex-col gap-4 w-full">
+          <p className="text-sm text-stone-600 w-full">
+            Are you sure you want to {statusProduct?.isActive ? "deactivate" : "activate"}{" "}
+            <span className="font-semibold text-espresso">{statusProduct?.name}</span>?
+          </p>
+          <div className="flex w-full gap-3 mt-2">
+            <Button
+              type="button"
+              tone="secondary"
+              className="flex-1 w-full"
+              disabled={statusLoading}
+              onClick={() => setStatusProduct(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              tone={statusProduct?.isActive ? "danger" : "primary"}
+              className="flex-1 w-full"
+              loading={statusLoading}
+              onClick={handleToggleStatus}
+            >
+              {statusProduct?.isActive ? "Deactivate" : "Activate"}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

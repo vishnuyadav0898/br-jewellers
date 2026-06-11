@@ -18,7 +18,9 @@ export function FavoritesPage() {
     return <Loader label="Loading your favorites..." />;
   }
 
-  if (!favoritesQuery.data?.length) {
+  const favorites = favoritesQuery.data || [];
+
+  if (!favorites.length) {
     return (
       <EmptyState
         title="No favorites saved yet"
@@ -38,7 +40,7 @@ export function FavoritesPage() {
       </section>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {favoritesQuery.data.map((product) => (
+        {favorites.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
