@@ -1,5 +1,6 @@
-import { mockApiClient } from "./mockApiClient";
+import { apiClient } from "./apiClient";
 import { normalizeUserRole } from "../utils/auth";
+import { useAppStore } from "../store/useAppStore";
 
 const sanitizeUser = (user) => {
   if (!user) return null;
@@ -7,116 +8,125 @@ const sanitizeUser = (user) => {
   return normalizeUserRole(rest);
 };
 
+const normalizeApiUser = (user, token) =>
+  sanitizeUser({
+    ...user,
+    id: user?._id || user?.id,
+    ...(token ? { token } : {}),
+    avatar:
+      user?.avatar ||
+      `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || "BR User")}&backgroundType=gradientLinear`,
+  });
+
+const getMeWithToken = (token) =>
+  apiClient
+    .request("/api/v1/user/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      unavailableStatuses: [404, 500, 502, 503, 504],
+    })
+    .then((user) => normalizeApiUser(user, token));
+
+const withExistingToken = (user) => normalizeApiUser(user, useAppStore.getState().user?.token);
+
 export const authService = {
   async login({ email, password }) {
-    return mockApiClient.query((db) => {
-      const user = db.users.find(
-        (entry) => entry.email.toLowerCase() === email.toLowerCase() && entry.password === password
-      );
+    const res = await apiClient.request("/api/v1/auth/login", {
+      method: "POST",
+      body: { email, password },
+      unavailableStatuses: [404, 500, 502, 503, 504],
+    });
 
-      if (!user) {
-        throw new Error("Invalid credentials. Try aarohi@brdemo.com / demo123.");
-      }
+    const token = typeof res === "string" ? res : res?.accessToken || res?.token;
+    return getMeWithToken(token);
+  },
 
-      return sanitizeUser(user);
+  async register({ name, email, password }) {
+    const res = await apiClient.request("/api/v1/auth/register", {
+      method: "POST",
+      body: { name, email, password },
+      unavailableStatuses: [404, 500, 502, 503, 504],
+    });
+
+    const token = typeof res === "string" ? res : res?.accessToken || res?.token;
+    return getMeWithToken(token);
+  },
+
+  async forgotPassword({ email }) {
+    return apiClient.request("/api/v1/user/forgot-password", {
+      method: "POST",
+      body: { email },
+      unavailableStatuses: [404, 500, 502, 503, 504],
     });
   },
 
-  async register({ name, email, password, phone, address }) {
-    return mockApiClient.mutate((db) => {
-      const existingUser = db.users.find((entry) => entry.email.toLowerCase() === email.toLowerCase());
+  async googleLogin({ idToken }) {
+    const res = await apiClient.request("/api/v1/auth/google", {
+      method: "POST",
+      body: { idToken },
+      unavailableStatuses: [404, 500, 502, 503, 504],
+    });
 
-      if (existingUser) {
-        throw new Error("An account with this email already exists.");
-      }
-
-      const user = {
-        id: crypto.randomUUID(),
-        name,
-        email,
-        password,
-        phone,
-        address,
-        role: "customer",
-        provider: "email",
-        avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundType=gradientLinear`,
-      };
-
-      db.users.unshift(user);
-      db.carts[user.id] = [];
-      db.favorites[user.id] = [];
-      db.recentlyViewed[user.id] = [];
-
-      return db;
-    }).then((db) => sanitizeUser(db.users[0]));
+    const token = typeof res === "string" ? res : res?.accessToken || res?.token;
+    return getMeWithToken(token);
   },
 
-  async loginWithGoogle() {
-    return mockApiClient.mutate((db) => {
-      const email = "google.user@brdemo.com";
-      let user = db.users.find((entry) => entry.email === email);
+  async refreshToken() {
+    const res = await apiClient.request("/api/v1/auth/refresh-token", {
+      method: "POST",
+      unavailableStatuses: [401, 404, 500, 502, 503, 504],
+    });
 
-      if (!user) {
-        user = {
-          id: crypto.randomUUID(),
-          name: "Google Demo User",
-          email,
-          password: "",
-          role: "customer",
-          phone: "+91 99999 88888",
-          address: "Bandra West, Mumbai, Maharashtra",
-          provider: "google",
-          avatar:
-            "https://api.dicebear.com/9.x/initials/svg?seed=Google%20Demo%20User&backgroundType=gradientLinear",
-        };
-
-        db.users.unshift(user);
-        db.carts[user.id] = [];
-        db.favorites[user.id] = [];
-        db.recentlyViewed[user.id] = [];
+    const token = typeof res === "string" ? res : res?.accessToken || res?.token;
+    if (token) {
+      localStorage.setItem("br_jewellers_jwt_token", token);
+      const store = useAppStore.getState();
+      if (store.user) {
+        store.setUser({
+          ...store.user,
+          accessToken: token,
+          token: token,
+        });
       }
-
-      return db;
-    }).then((db) => sanitizeUser(db.users.find((entry) => entry.email === "google.user@brdemo.com")));
+    }
+    return token;
   },
 
   async getProfile(userId) {
-    return mockApiClient.query((db) => {
-      const user = db.users.find((entry) => entry.id === userId);
-      if (!user) throw new Error("Profile not found.");
-      return sanitizeUser(user);
-    });
+    return apiClient.request("/api/v1/user/me", { auth: true }).then(withExistingToken);
   },
 
   async updateProfile(userId, payload) {
-    return mockApiClient.mutate((db) => {
-      const user = db.users.find((entry) => entry.id === userId);
-      if (!user) throw new Error("Profile not found.");
-
-      Object.assign(user, payload);
-      return db;
-    }).then((db) => sanitizeUser(db.users.find((entry) => entry.id === userId)));
+    return apiClient
+      .request(`/api/v1/user/${userId}`, {
+        method: "PATCH",
+        auth: true,
+        body: {
+          name: payload.name,
+          email: payload.email,
+          phone: payload.phone,
+        },
+      })
+      .then(withExistingToken);
   },
 
   async changePassword(userId, { oldPassword, newPassword, confirmPassword }) {
-    if (newPassword.length < 6) {
-      throw new Error("New password must be at least 6 characters.");
+    if (newPassword.length < 8) {
+      throw new Error("New password must be at least 8 characters.");
     }
 
     if (newPassword !== confirmPassword) {
       throw new Error("New password and confirmation do not match.");
     }
 
-    return mockApiClient.mutate((db) => {
-      const user = db.users.find((entry) => entry.id === userId);
-      if (!user) throw new Error("Profile not found.");
+    await apiClient.request("/api/v1/user/change-password", {
+      method: "PATCH",
+      auth: true,
+      body: { oldPassword, newPassword },
+      unavailableStatuses: [400, 401, 403, 404, 422, 500, 502, 503, 504],
+    });
 
-      if (user.password !== oldPassword) {
-        throw new Error("Old password is incorrect.");
-      }
-
-      user.password = newPassword;
-      return db;
-    }).then(() => true);
+    return true;
   },
 };

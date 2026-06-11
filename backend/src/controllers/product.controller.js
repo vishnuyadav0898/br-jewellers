@@ -8,10 +8,12 @@ export const listProducts = async (req, res, next) => {
 
     const filter = {};
 
-    if (isActive !== undefined) {
-      filter.isActive = isActive;
-    } else {
+    if (!isActive) {
       filter.isActive = true;
+    } else if (isActive !== "all") {
+      filter.isActive = isActive === "true";
+    } else {
+      delete filter.isActive;
     }
 
     if (category) filter.category = category;
@@ -19,7 +21,6 @@ export const listProducts = async (req, res, next) => {
     if (purity) filter["variants.attributes.purity"] = purity;
 
     const products = await models.Product.find(filter)
-      .select("-isActive")
       .sort({ createdAt: -1 });
 
     return ResponseHandler.success(
@@ -55,7 +56,7 @@ export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const product = await models.Product.findById(id).select("-isActive");
+    const product = await models.Product.findById(id);
 
     if (!product) {
       return ResponseHandler.notFound(res, "Product not found");
@@ -123,13 +124,14 @@ export const updateProductStatus = async (req, res, next) => {
       return ResponseHandler.notFound(res, "Product not found");
     }
 
-    product.isActive = isActive;
+    const nextActiveState = isActive === true || isActive === "true" || isActive === 1 || isActive === "1";
+    product.isActive = nextActiveState;
 
     await product.save();
 
     return ResponseHandler.success(
       res,
-      `Product ${isActive ? "activated" : "deactivated"} successfully`
+      `Product ${nextActiveState ? "activated" : "deactivated"} successfully`
     );
   } catch (err) {
     return ResponseHandler.handleErrors(err, req, res, next);

@@ -38,15 +38,15 @@
   },
   "auth": {
     "title": "Access your BR workspace",
-    "loginSubtitle": "Use email + password or the mock Google flow.",
-    "registerSubtitle": "Create a customer account without leaving the page.",
+    "loginSubtitle": "Use your backend account email and password.",
+    "registerSubtitle": "Create an account through the backend authentication API.",
     "email": "Email",
     "password": "Password",
     "name": "Full name",
     "phone": "Phone",
     "address": "Address",
     "google": "Continue with Google",
-    "demo": "Demo customer: aarohi@brdemo.com / demo123 | Demo admin: admin@brdemo.com / demo123"
+    "demo": ""
   },
   "home": {
     "eyebrow": "Architecture refresh",
@@ -156,8 +156,6 @@
     "loginTitle": "Signed in successfully",
     "registerSuccess": "Account created successfully.",
     "registerTitle": "Welcome to BR Jewellers",
-    "googleSuccess": "Signed in with Google demo mode.",
-    "googleTitle": "Google sign-in complete",
     "profileUpdated": "Profile updated.",
     "profileUpdatedTitle": "Account changes saved",
     "passwordUpdated": "Password updated.",
@@ -170,6 +168,7 @@
       "dashboard": "Dashboard",
       "products": "Products",
       "productList": "Product List",
+      "createProduct": "Create Product",
       "categories": "Categories",
       "featuredProducts": "Featured Products",
       "bulkUpload": "Bulk Upload",

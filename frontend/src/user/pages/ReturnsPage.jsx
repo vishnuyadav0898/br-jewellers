@@ -21,7 +21,9 @@ export function ReturnsPage() {
     return <Loader label={t("common.loading")} />;
   }
 
-  if (!refundQuery.data.length) {
+  const refundData = refundQuery.data || [];
+
+  if (!refundData.length) {
     return <EmptyState title={t("returns.emptyTitle")} description={t("returns.emptyDescription")} />;
   }
 
@@ -36,7 +38,7 @@ export function ReturnsPage() {
       </section>
 
       <div className="grid gap-4">
-        {refundQuery.data.map((request) => (
+        {refundData.map((request) => (
           <article key={request.id} className="rounded-[30px] border border-[#dfccab] bg-white p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>

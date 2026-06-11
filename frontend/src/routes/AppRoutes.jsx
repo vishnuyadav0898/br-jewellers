@@ -42,6 +42,12 @@ const AdminDashboardPage = lazy(() =>
 const ProductListPage = lazy(() =>
   import("../admin/pages/products/ProductListPage").then((module) => ({ default: module.ProductListPage }))
 );
+const ProductFormPage = lazy(() =>
+  import("../admin/pages/products/ProductFormPage").then((module) => ({ default: module.ProductFormPage }))
+);
+const AdminProductDetailsPage = lazy(() =>
+  import("../admin/pages/products/ProductDetailsPage").then((module) => ({ default: module.ProductDetailsPage }))
+);
 const CategoriesPage = lazy(() =>
   import("../admin/pages/products/CategoriesPage").then((module) => ({ default: module.CategoriesPage }))
 );
@@ -109,13 +115,11 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoader />}>
       <Routes>
-        <Route path={routes.root} element={<Navigate to={routes.appHome} replace />} />
-
         {userRouteRedirects.map((entry) => (
           <Route key={entry.from} path={entry.from} element={<Navigate to={entry.to} replace />} />
         ))}
 
-        <Route path="/app" element={<UserLayout />}>
+        <Route path="/" element={<UserLayout />}>
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
@@ -124,7 +128,7 @@ export function AppRoutes() {
           <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
             <Route path="cart" element={<CartPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
-            <Route path="orders" element={<OrdersPage />} />
+            <Route key="orders-list" path="orders" element={<OrdersPage />} />
             <Route path="orders/:orderId/tracking" element={<UserOrderTrackingPage />} />
             <Route path="returns" element={<ReturnsPage />} />
             <Route path="profile" element={<ProfilePage />} />
@@ -142,6 +146,9 @@ export function AppRoutes() {
 
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="products/list" element={<ProductListPage />} />
+            <Route path="products/create" element={<ProductFormPage />} />
+            <Route path="products/:productId/edit" element={<ProductFormPage />} />
+            <Route path="products/:productId" element={<AdminProductDetailsPage />} />
             <Route path="products/categories" element={<CategoriesPage />} />
             <Route path="products/featured" element={<FeaturedProductsPage />} />
             <Route path="products/bulk-upload" element={<BulkUploadPage />} />

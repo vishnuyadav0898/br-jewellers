@@ -40,19 +40,30 @@ export const useAppStore = create(
       detectedCountry: detectMockCountry(),
       cartCouponCode: "",
       translationOverrides: {},
-      setUser: (user) =>
+      setUser: (user) => {
+        if (user) {
+          const token = user.token || user.accessToken || user.jwt;
+          if (token) {
+            localStorage.setItem("br_jewellers_jwt_token", token);
+          }
+        } else {
+          localStorage.removeItem("br_jewellers_jwt_token");
+        }
         set({
           user: normalizeUserRole(user),
           isAuthenticated: Boolean(user),
-        }),
-      logout: () =>
+        });
+      },
+      logout: () => {
+        localStorage.removeItem("br_jewellers_jwt_token");
         set({
           user: null,
           isAuthenticated: false,
           authModalOpen: false,
           authRedirectPath: null,
           cartCouponCode: "",
-        }),
+        });
+      },
       openAuthModal: (mode = "login", redirectPath) =>
         set((state) => ({
           authModalMode: mode,
