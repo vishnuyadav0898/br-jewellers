@@ -141,6 +141,9 @@
  *               phone:
  *                 type: string
  *                 example: "9876543210"
+ *               image:
+ *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
  *     responses:
  *       200:
  *         description: User updated successfully
@@ -157,6 +160,7 @@
  *                   email: "updated@gmail.com"
  *                   phone: "9876543210"
  *                   role: "user"
+ *                   image: "https://example.com/avatar.jpg"
  *                   createdAt: "2025-06-01T10:00:00.000Z"
  *                   updatedAt: "2025-06-09T10:00:00.000Z"
  *       400:
@@ -217,6 +221,9 @@
  *               phone:
  *                 type: string
  *                 example: "9876543210"
+ *               image:
+ *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
  *     responses:
  *       201:
  *         description: Admin user created
@@ -233,6 +240,7 @@
  *                   email: "newadmin@gmail.com"
  *                   phone: "9876543210"
  *                   role: "admin"
+ *                   image: "https://example.com/avatar.jpg"
  *                   createdAt: "2025-06-09T10:00:00.000Z"
  *                   updatedAt: "2025-06-09T10:00:00.000Z"
  *       400:

@@ -19,7 +19,7 @@ const setRefreshTokenCookie = (res, token) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, image } = req.body;
 
     const existingUser = await models.User.findOne({ email });
     if (existingUser) {
@@ -33,6 +33,7 @@ export const register = async (req, res, next) => {
       email,
       password,
       phone,
+      image,
     });
 
     const accessToken = generateAccessToken({ id: user._id, role: user.role });
@@ -147,6 +148,7 @@ export const googleLogin = async (req, res, next) => {
         name,
         email,
         googleId,
+        image: picture,
         role: "user",
       });
     }

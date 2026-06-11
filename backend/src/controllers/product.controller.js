@@ -4,19 +4,71 @@ import xlsx from "xlsx";
 
 export const listProducts = async (req, res, next) => {
   try {
-    const { isActive, category, material, purity } = req.query;
+    const {
+      isActive,
+      category,
+      material,
+      purity,
+      size,
+      minPrice,
+      maxPrice,
+      tags,
+      search,
+    } = req.query;
 
     const filter = {};
 
     if (isActive !== undefined) {
-      filter.isActive = isActive;
+      filter.isActive = isActive === "true" || isActive === true;
     } else {
       filter.isActive = true;
     }
 
-    if (category) filter.category = category;
-    if (material) filter["variants.attributes.material"] = material;
-    if (purity) filter["variants.attributes.purity"] = purity;
+    if (category) {
+      const categories = category.split(",").map((c) => new RegExp(`^${c.trim()}$`, "i"));
+      filter.category = { $in: categories };
+    }
+
+    if (material) {
+      const materials = material.split(",").map((m) => new RegExp(`^${m.trim()}$`, "i"));
+      filter["variants.attributes.material"] = { $in: materials };
+    }
+    if (purity) {
+      const purities = purity.split(",").map((p) => new RegExp(`^${p.trim()}$`, "i"));
+      filter["variants.attributes.purity"] = { $in: purities };
+    }
+    if (size) {
+      const sizes = size.split(",").map((s) => new RegExp(`^${s.trim()}$`, "i"));
+      filter["variants.attributes.size"] = { $in: sizes };
+    }
+
+    if (minPrice || maxPrice) {
+      filter["variants.prices.amount"] = {};
+      if (minPrice) filter["variants.prices.amount"].$gte = Number(minPrice);
+      if (maxPrice) filter["variants.prices.amount"].$lte = Number(maxPrice);
+    }
+
+    // 5. Tags (New, Featured, etc.)
+    const queryTags = [];
+    if (tags) {
+      tags.split(",").forEach((t) => queryTags.push(new RegExp(`^${t.trim()}$`, "i")));
+    }
+
+    if (queryTags.length > 0) {
+      filter.tags = { $in: queryTags };
+    }
+
+    if (search) {
+      const searchRegex = new RegExp(search, "i");
+      filter.$or = [
+        { name: searchRegex },
+        { category: searchRegex },
+        { tags: searchRegex },
+        { description: searchRegex },
+        { shortDescription: searchRegex },
+        { "variants.sku": searchRegex },
+      ];
+    }
 
     const products = await models.Product.find(filter)
       .select("-isActive")
@@ -155,7 +207,7 @@ export const bulkImportProducts = async (req, res, next) => {
 
     // Standard columns for Product / Variant
     const standardProductFields = ["name", "slug", "description", "shortDescription", "coverImage", "category"];
-    const standardVariantFields = ["sku", "price_INR", "price_USD", "isAvailable", "isDefault", "image_url"];
+    const standardVariantFields = ["sku", "price_INR", "price_USD", "isDefault", "image_url"];
 
     const productsMap = {};
 
@@ -189,7 +241,6 @@ export const bulkImportProducts = async (req, res, next) => {
       // Build Variant
       const variant = {
         sku: row.sku ? String(row.sku) : undefined,
-        isAvailable: row.isAvailable !== undefined ? Boolean(row.isAvailable) : true,
         isDefault: row.isDefault !== undefined ? Boolean(row.isDefault) : false,
         prices: [],
         images: [],

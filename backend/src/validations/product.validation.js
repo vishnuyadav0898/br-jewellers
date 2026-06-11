@@ -24,9 +24,6 @@ const variantSchema = Joi.object({
   prices: Joi.array().items(priceSchema).messages({
     "array.base": "Prices must be an array of objects",
   }),
-  isAvailable: Joi.boolean().messages({
-    "boolean.base": "isAvailable must be a boolean",
-  }),
   images: Joi.array()
     .items(
       Joi.object({

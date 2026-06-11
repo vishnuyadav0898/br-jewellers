@@ -13,6 +13,54 @@
  *           type: boolean
  *           default: true
  *         description: Filter products by active status. Defaults to true.
+ *       - name: category
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter by category (comma-separated allowed).
+ *       - name: material
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter by variant material (comma-separated allowed).
+ *       - name: purity
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter by variant purity (comma-separated allowed).
+ *       - name: size
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter by variant size (comma-separated allowed).
+ *       - name: minPrice
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: number
+ *         description: Minimum price.
+ *       - name: maxPrice
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: number
+ *         description: Maximum price.
+ *       - name: tags
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter by tags (comma-separated).
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Search by name, category, tags, description, shortDescription, or variant SKU.
  *     responses:
  *       200:
  *         description: Products fetched successfully
@@ -39,15 +87,17 @@
  *                       min: 200
  *                       max: 6000
  *                     variants:
- *                       - name: "gold-rosegold-24k-s"
- *                         material: "Gold"
- *                         color: "Rose Gold"
- *                         purity: "24K"
- *                         size: "S"
- *                         stock: 10
- *                         price:
- *                           INR: 2000
- *                           USD: 20
+ *                       - sku: "gold-rosegold-24k-s"
+ *                         attributes:
+ *                           material: "Gold"
+ *                           color: "Rose Gold"
+ *                           purity: "24K"
+ *                           size: "S"
+ *                         prices:
+ *                           - currency: "INR"
+ *                             amount: 2000
+ *                           - currency: "USD"
+ *                             amount: 20
  *                     createdAt: "2025-06-01T10:00:00.000Z"
  *                     updatedAt: "2025-06-01T10:00:00.000Z"
  *       500:
@@ -92,15 +142,17 @@
  *                     min: 200
  *                     max: 6000
  *                   variants:
- *                     - name: "gold-rosegold-24k-s"
- *                       material: "Gold"
- *                       color: "Rose Gold"
- *                       purity: "24K"
- *                       size: "S"
- *                       stock: 10
- *                       price:
- *                         INR: 2000
- *                         USD: 20
+ *                     - sku: "gold-rosegold-24k-s"
+ *                       attributes:
+ *                         material: "Gold"
+ *                         color: "Rose Gold"
+ *                         purity: "24K"
+ *                         size: "S"
+ *                       prices:
+ *                         - currency: "INR"
+ *                           amount: 2000
+ *                         - currency: "USD"
+ *                           amount: 20
  *                   createdAt: "2025-06-01T10:00:00.000Z"
  *                   updatedAt: "2025-06-01T10:00:00.000Z"
  *       404:
@@ -167,35 +219,33 @@
  *                 items:
  *                   type: object
  *                   properties:
- *                     name:
+ *                     sku:
  *                       type: string
- *                     material:
- *                       type: string
- *                     color:
- *                       type: string
- *                     purity:
- *                       type: string
- *                     size:
- *                       type: string
- *                     stock:
- *                       type: number
- *                     price:
+ *                     attributes:
  *                       type: object
- *                       properties:
- *                         INR:
- *                           type: number
- *                         USD:
- *                           type: number
+ *                       additionalProperties:
+ *                         type: string
+ *                     prices:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           currency:
+ *                             type: string
+ *                           amount:
+ *                             type: number
  *                 example:
- *                   - name: "gold-rosegold-24k-s"
- *                     material: "Gold"
- *                     color: "Rose Gold"
- *                     purity: "24K"
- *                     size: "S"
- *                     stock: 10
- *                     price:
- *                       INR: 2000
- *                       USD: 20
+ *                   - sku: "gold-rosegold-24k-s"
+ *                     attributes:
+ *                       material: "Gold"
+ *                       color: "Rose Gold"
+ *                       purity: "24K"
+ *                       size: "S"
+ *                     prices:
+ *                       - currency: "INR"
+ *                         amount: 2000
+ *                       - currency: "USD"
+ *                         amount: 20
  *     responses:
  *       200:
  *         description: Product updated successfully
@@ -295,15 +345,17 @@
  *                 items:
  *                   type: object
  *                 example:
- *                   - name: "gold-rosegold-24k-s"
- *                     material: "Gold"
- *                     color: "Rose Gold"
- *                     purity: "24K"
- *                     size: "S"
- *                     stock: 10
- *                     price:
- *                       INR: 2000
- *                       USD: 20
+ *                   - sku: "gold-rosegold-24k-s"
+ *                     attributes:
+ *                       material: "Gold"
+ *                       color: "Rose Gold"
+ *                       purity: "24K"
+ *                       size: "S"
+ *                     prices:
+ *                       - currency: "INR"
+ *                         amount: 2000
+ *                       - currency: "USD"
+ *                         amount: 20
  *               isActive:
  *                 type: boolean
  *                 example: true
