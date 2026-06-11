@@ -356,9 +356,6 @@
  *                         amount: 2000
  *                       - currency: "USD"
  *                         amount: 20
- *               isActive:
- *                 type: boolean
- *                 example: true
  *     responses:
  *       200:
  *         description: Product created successfully
