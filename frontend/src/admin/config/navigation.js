@@ -76,12 +76,6 @@ export const adminNavigation = [
       { labelKey: "admin.nav.financeReports", to: routes.adminFinance },
     ],
   },
-  {
-    key: "settings",
-    labelKey: "admin.nav.settings",
-    icon: Settings,
-    to: routes.adminSettings,
-  },
 ];
 
 const matchesPath = (pathname, target) =>
@@ -90,6 +84,10 @@ const matchesPath = (pathname, target) =>
   (target.includes(":") && pathname.startsWith(target.split(":")[0]));
 
 export function getSectionForPath(pathname = "") {
+  if (matchesPath(pathname, routes.adminSettings)) {
+    return "dashboard";
+  }
+
   const match = adminNavigation.find((entry) => {
     if (entry.to) {
       return matchesPath(pathname, entry.to);
@@ -102,6 +100,13 @@ export function getSectionForPath(pathname = "") {
 }
 
 export function getAdminPageMeta(pathname = "") {
+  if (matchesPath(pathname, routes.adminSettings)) {
+    return {
+      sectionKey: "admin.nav.settings",
+      pageKey: "admin.nav.settings",
+    };
+  }
+
   for (const entry of adminNavigation) {
     if (entry.to && matchesPath(pathname, entry.to)) {
       return {

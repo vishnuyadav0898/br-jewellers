@@ -1,4 +1,4 @@
-import { Heart, LayoutDashboard, LogOut, Package, RotateCcw, ShoppingBag, User, ChevronDown, Menu, X } from "lucide-react";
+import { Heart, LayoutDashboard, Lock, LogOut, Package, RotateCcw, ShoppingBag, User, ChevronDown, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { routes, userNavigation } from "../../config/routes";
@@ -137,7 +137,7 @@ export function Header() {
                           <LayoutDashboard className="h-4 w-4" />
                           {t("header.adminPanel")}
                         </Link>
-                        <Link to={routes.adminSettings} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
+                        <Link to={routes.adminProfile} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
                           <User className="h-4 w-4" />
                           {t("header.accountSettings")}
                         </Link>
@@ -147,6 +147,10 @@ export function Header() {
                         <Link to={routes.appProfile} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
                           <User className="h-4 w-4" />
                           {t("common.profile")}
+                        </Link>
+                        <Link to={routes.appChangePassword} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
+                          <Lock className="h-4 w-4" />
+                          {t("common.changePassword")}
                         </Link>
                         <Link to={routes.appOrders} className="flex items-center gap-3 rounded-[18px] px-4 py-3 text-sm text-stone-700 transition hover:bg-[#f8ecd4]">
                           <Package className="h-4 w-4" />

@@ -25,7 +25,7 @@ export function ProductListPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("active"); // "active" | "inactive" | "all"
+  const [statusFilter, setStatusFilter] = useState(true); // "active" | "inactive" | "all"
   const [deletingProduct, setDeletingProduct] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [statusProduct, setStatusProduct] = useState(null);
@@ -36,7 +36,7 @@ export function ProductListPage() {
     queryKey: [...queryKeys.adminProducts(deferredSearch, page), statusFilter],
     queryFn: () =>
       catalogService.getProducts(deferredSearch, {
-        includeInactive: statusFilter !== "active",
+        isActive: statusFilter,
       }),
   });
 
@@ -80,16 +80,7 @@ export function ProductListPage() {
     }
   };
 
-  const filteredProducts = useMemo(() => {
-    const products = productsQuery.data || [];
-    if (statusFilter === "active") {
-      return products.filter((p) => p.isActive);
-    }
-    if (statusFilter === "inactive") {
-      return products.filter((p) => !p.isActive);
-    }
-    return products;
-  }, [productsQuery.data, statusFilter]);
+  const filteredProducts = productsQuery.data || [];
 
   const paginated = useMemo(() => {
     const rows = filteredProducts;
@@ -226,22 +217,21 @@ export function ProductListPage() {
             />
             <div className="flex gap-1 rounded-3xl bg-[#f5e9d4]/40 p-1 md:max-w-xs">
               {[
-                ["active", "Active"],
-                ["inactive", "Inactive"],
-                ["all", "All"],
+                [true, "Active"],
+                [false, "Inactive"],
+                ["", "All"],
               ].map(([val, label]) => (
                 <button
-                  key={val}
+                  key={label}
                   type="button"
                   onClick={() => {
                     setStatusFilter(val);
                     setPage(1);
                   }}
-                  className={`flex-1 rounded-3xl py-2 text-center text-xs font-semibold transition ${
-                    statusFilter === val
-                      ? "bg-gold-500 text-white shadow-md shadow-gold-100"
-                      : "text-stone-600 hover:bg-gold-50 hover:text-gold-700"
-                  }`}
+                  className={`flex-1 rounded-3xl py-2 text-center text-xs font-semibold transition ${statusFilter === val
+                    ? "bg-gold-500 text-white shadow-md shadow-gold-100"
+                    : "text-stone-600 hover:bg-gold-50 hover:text-gold-700"
+                    }`}
                 >
                   {label}
                 </button>

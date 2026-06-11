@@ -35,6 +35,9 @@ const ReturnsPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import("../user/pages/ProfilePage").then((module) => ({ default: module.ProfilePage }))
 );
+const UserChangePasswordPage = lazy(() =>
+  import("../user/pages/ChangePasswordPage").then((module) => ({ default: module.UserChangePasswordPage }))
+);
 
 const AdminDashboardPage = lazy(() =>
   import("../admin/pages/dashboard/DashboardPage").then((module) => ({ default: module.DashboardPage }))
@@ -99,8 +102,8 @@ const AnalyticsOverviewPage = lazy(() =>
 const FinanceReportsPage = lazy(() =>
   import("../admin/pages/analytics/FinanceReportsPage").then((module) => ({ default: module.FinanceReportsPage }))
 );
-const SettingsPage = lazy(() =>
-  import("../admin/pages/settings/SettingsPage").then((module) => ({ default: module.SettingsPage }))
+const ChangePasswordPage = lazy(() =>
+  import("../admin/pages/settings/ChangePasswordPage").then((module) => ({ default: module.ChangePasswordPage }))
 );
 
 function RouteLoader() {
@@ -132,6 +135,7 @@ export function AppRoutes() {
             <Route path="orders/:orderId/tracking" element={<UserOrderTrackingPage />} />
             <Route path="returns" element={<ReturnsPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="change-password" element={<UserChangePasswordPage />} />
           </Route>
           <Route path="*" element={<Navigate to={routes.appHome} replace />} />
         </Route>
@@ -166,7 +170,9 @@ export function AppRoutes() {
             <Route path="content/blogs" element={<BlogManagementPage />} />
             <Route path="analytics" element={<AnalyticsOverviewPage />} />
             <Route path="analytics/finance" element={<FinanceReportsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path="settings" element={<Navigate to="/admin/profile" replace />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="change-password" element={<ChangePasswordPage />} />
             <Route path="*" element={<Navigate to={routes.adminDashboard} replace />} />
           </Route>
         </Route>
