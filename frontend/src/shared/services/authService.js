@@ -106,6 +106,7 @@ export const authService = {
           name: payload.name,
           email: payload.email,
           phone: payload.phone,
+          address: payload.address,
         },
       })
       .then(withExistingToken);

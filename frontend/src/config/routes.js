@@ -11,6 +11,7 @@ export const routes = {
   appOrderTracking: (orderId = ":orderId") => `/orders/${orderId}/tracking`,
   appReturns: "/returns",
   appProfile: "/profile",
+  appChangePassword: "/change-password",
   adminDashboard: "/admin/dashboard",
   adminProductsList: "/admin/products/list",
   adminProductCreate: "/admin/products/create",
@@ -34,6 +35,8 @@ export const routes = {
   adminAnalytics: "/admin/analytics",
   adminFinance: "/admin/analytics/finance",
   adminSettings: "/admin/settings",
+  adminProfile: "/admin/profile",
+  adminChangePassword: "/admin/change-password",
 };
 
 export const userNavigation = [
