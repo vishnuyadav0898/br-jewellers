@@ -9,7 +9,7 @@ const priceSchema = new Schema(
 );
 
 const variantSchema = new Schema({
-  sku: { type: String, unique: true, sparse: true },
+  sku: { type: String, sparse: true },
   attributes: {
     type: Map,
     of: String,

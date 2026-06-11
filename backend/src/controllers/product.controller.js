@@ -87,12 +87,19 @@ export const listProducts = async (req, res, next) => {
 
 export const createProduct = async (req, res, next) => {
   try {
-    const { category } = req.body;
+    const { category, variants } = req.body;
 
     if (category) {
       const existingCategory = await models.Category.findOne({ name: category });
       if (!existingCategory) {
         return ResponseHandler.badRequest(res, `Category '${category}' does not exist.`);
+      }
+    }
+
+    if (variants && Array.isArray(variants)) {
+      const skus = variants.map(v => v.sku).filter(Boolean);
+      if (new Set(skus).size !== skus.length) {
+        return ResponseHandler.badRequest(res, "Duplicate SKUs found within the variants array.");
       }
     }
 
@@ -123,7 +130,7 @@ export const getProductById = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { category } = req.body;
+    const { category, variants } = req.body;
 
     const existingProduct = await models.Product.findById(id);
 
@@ -135,6 +142,13 @@ export const updateProduct = async (req, res, next) => {
       const existingCategory = await models.Category.findOne({ name: category });
       if (!existingCategory) {
         return ResponseHandler.badRequest(res, `Category '${category}' does not exist.`);
+      }
+    }
+
+    if (variants && Array.isArray(variants)) {
+      const skus = variants.map(v => v.sku).filter(Boolean);
+      if (new Set(skus).size !== skus.length) {
+        return ResponseHandler.badRequest(res, "Duplicate SKUs found within the variants array.");
       }
     }
 
