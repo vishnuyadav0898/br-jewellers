@@ -15,7 +15,7 @@ const variantSchema = new Schema({
     of: String,
   },
   prices: [priceSchema],
-  isAvailable: { type: Boolean, default: true },
+
   images: [
     {
       url: String,

@@ -56,6 +56,11 @@ const baseUserSchema = Joi.object({
       "string.pattern.base": "Phone must be a valid 10-digit number",
     }),
 
+  image: Joi.string().uri().messages({
+    "string.base": "Image must be a string",
+    "string.uri": "Image must be a valid URL",
+  }),
+
   role: Joi.forbidden().messages({
     "any.unknown": "Role cannot be set manually",
   }),

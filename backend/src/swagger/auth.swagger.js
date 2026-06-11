@@ -22,6 +22,12 @@
  *               password:
  *                 type: string
  *                 example: "Pass@123"
+ *               phone:
+ *                 type: string
+ *                 example: "9876543210"
+ *               image:
+ *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
  *     responses:
  *       201:
  *         description: User registered successfully

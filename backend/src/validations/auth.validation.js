@@ -15,6 +15,16 @@ export const authValidation = {
         "any.required": "Name is required",
       }),
 
+    phone: Joi.string()
+      .trim()
+      .min(10)
+      .max(15)
+      .messages({
+        "string.base": "Phone number must be a string",
+        "string.min": "Phone number must be at least 10 digits",
+        "string.max": "Phone number must not exceed 15 digits",
+      }),
+
     email: Joi.string()
       .trim()
       .email()

@@ -62,10 +62,10 @@ export const createOrder = async (req, res, next) => {
         const sku = item.sku;
         const variant = product.variants.find((v) => v.sku === sku);
 
-        if (!variant || !variant.isAvailable) {
+        if (!variant) {
           return ResponseHandler.badRequest(
             res,
-            `Variant SKU ${sku} for product ${product.name} is not available`
+            `Variant SKU ${sku} for product ${product.name} is not found`
           );
         }
 
@@ -102,10 +102,10 @@ export const createOrder = async (req, res, next) => {
         const sku = cartItem.sku;
         const variant = product.variants.find((v) => v.sku === sku);
 
-        if (!variant || !variant.isAvailable) {
+        if (!variant) {
           return ResponseHandler.badRequest(
             res,
-            `Variant SKU ${sku} for product ${product.name} is not available`
+            `Variant SKU ${sku} for product ${product.name} is not found`
           );
         }
 

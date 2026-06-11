@@ -120,7 +120,6 @@
  *                             price:
  *                               INR: 15000
  *                               USD: 180
- *                             stock: 12
  *                           - name: "18K Rose Gold - Size 7"
  *                             material: "Rose Gold"
  *                             color: "Rose"
@@ -129,7 +128,6 @@
  *                             price:
  *                               INR: 25000
  *                               USD: 300
- *                             stock: 8
  *                       variantIndex: 0
  *                       quantity: 2
  *                     - _id: "665f1a2b3c4d5e6f7a8b9c11"
@@ -152,7 +150,6 @@
  *                             price:
  *                               INR: 50000
  *                               USD: 600
- *                             stock: 5
  *                       variantIndex: 0
  *                       quantity: 1
  *                   createdAt: "2025-06-09T10:00:00.000Z"

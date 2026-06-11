@@ -37,6 +37,8 @@
  *             properties:
  *               name:
  *                 type: string
+ *               description:
+ *                 type: string
  *     responses:
  *       201:
  *         $ref: '#/components/responses/Created'
@@ -69,6 +71,39 @@
  *             properties:
  *               name:
  *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *
+ * /api/v1/category/{id}/status:
+ *   patch:
+ *     tags: [Category]
+ *     summary: Update category status
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'

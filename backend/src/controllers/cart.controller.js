@@ -18,9 +18,6 @@ export const addToCart = async (req, res, next) => {
       return ResponseHandler.badRequest(res, "Variant SKU not found");
     }
 
-    if (!variant.isAvailable) {
-      return ResponseHandler.badRequest(res, "Variant is currently unavailable");
-    }
 
     // Find or create cart for this user
     let cart = await Cart.findOne({ user: req.user.id });

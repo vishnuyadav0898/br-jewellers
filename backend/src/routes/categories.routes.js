@@ -6,6 +6,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  toggleCategoryStatus,
 } from "../controllers/category.controller.js";
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 router.get("/list", getCategories); // Public
 router.post("/create", verifyJWT(JWT_SECRET), requireAdmin, createCategory);
 router.patch("/:id", verifyJWT(JWT_SECRET), requireAdmin, updateCategory);
+router.patch("/:id/status", verifyJWT(JWT_SECRET), requireAdmin, toggleCategoryStatus);
 router.delete("/:id", verifyJWT(JWT_SECRET), requireAdmin, deleteCategory);
 
 export default router;
