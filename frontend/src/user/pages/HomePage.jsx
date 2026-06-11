@@ -15,15 +15,15 @@ export function HomePage() {
   const { user } = useSession();
   const { formatFromInr } = useMoney();
   const homeQuery = useQuery({
-    queryKey: ["home-snapshot", user?.id],
-    queryFn: () => storefrontService.getHomeSnapshot(user?.id),
+    queryKey: ["home-snapshot"],
+    queryFn: () => storefrontService.getHomeSnapshot(),
   });
 
   if (homeQuery.isLoading) {
     return <Loader label={t("common.loading")} />;
   }
 
-  const { banners, featuredProducts, activeCoupons, homeContent = {} } = homeQuery.data;
+  const { banners = [], featuredProducts = [], activeCoupons = [], homeContent = {} } = homeQuery.data || {};
 
   return (
     <div className="space-y-8">
@@ -100,7 +100,7 @@ export function HomePage() {
               key={product.id}
               product={product}
               onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot", user?.id] })}
+              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot"] })}
             />
           ))}
         </div>

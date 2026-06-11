@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
 import { Modal } from "../../../shared/components/Modal";
@@ -25,7 +25,10 @@ export function CategoriesPage() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
+  const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const categoriesQuery = useQuery({
     queryKey: queryKeys.adminCategories,
     queryFn: catalogService.getCategories,
@@ -45,11 +48,29 @@ export function CategoriesPage() {
   const openEdit = (category) => {
     setActiveCategory(category);
     setForm({
-      name: category.name,
-      description: category.description,
-      featured: Boolean(category.featured),
+      name: category.name || "",
+      description: category.description || "",
+      featured: category.featured || false,
     });
     setErrors({});
+  };
+
+  const handleDelete = async () => {
+    if (!deletingCategory) return;
+    setDeleting(true);
+
+    try {
+      await catalogService.deleteCategory(deletingCategory.id);
+      notify.success("Category deleted.", {
+        title: "Category removed",
+      });
+      refreshCategories();
+      setDeletingCategory(null);
+    } catch (error) {
+      notify.error(error.message);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const closeModal = () => {
@@ -61,7 +82,6 @@ export function CategoriesPage() {
   const columns = [
     { key: "name", header: "Category" },
     { key: "description", header: "Description" },
-    { key: "productCount", header: "Products" },
     {
       key: "featured",
       header: "Status",
@@ -71,41 +91,47 @@ export function CategoriesPage() {
       key: "actions",
       header: "Actions",
       render: (row) => (
-        <div className="flex gap-2">
-          <Button tone="secondary" size="sm" onClick={() => openEdit(row)}>
-            <Pencil className="h-4 w-4" />
-            Edit
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            tone="secondary"
+            size="sm"
+            onClick={() => openEdit(row)}
+            title="Edit Category"
+            aria-label="Edit Category"
+          >
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
+            type="button"
             tone="danger"
             size="sm"
-            onClick={async () => {
-              try {
-                await catalogService.deleteCategory(row.id);
-                notify.success("Category deleted.", {
-                  title: "Category removed",
-                });
-                refreshCategories();
-              } catch (error) {
-                notify.error(error.message);
-              }
-            }}
+            onClick={() => setDeletingCategory(row)}
+            title="Delete Category"
+            aria-label="Delete Category"
           >
             <Trash2 className="h-4 w-4" />
-            Delete
           </Button>
         </div>
       ),
     },
   ];
+  const filteredCategories = (categoriesQuery.data || []).filter((category) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+
+    return [category.name, category.description]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query));
+  });
 
   return (
     <div className="space-y-6">
       <AdminPanel>
         <AdminPageHeader
           eyebrow="Products"
-          title="Categories"
-          description="Category CRUD stays separate from products so catalogue taxonomy can scale independently later."
+          title="Product categories"
+          description="Manage product taxonomy through the backend category API when available, with mock fallback for local create, edit, and delete workflows."
           actions={
             <Button onClick={openCreate}>
               <Plus className="h-4 w-4" />
@@ -113,11 +139,22 @@ export function CategoriesPage() {
             </Button>
           }
         />
+        <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,420px)_auto] md:items-center">
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search categories"
+          />
+          <div className="inline-flex items-center gap-2 text-sm text-stone-500">
+            <Search className="h-4 w-4 text-gold-700" />
+            {filteredCategories.length} categor{filteredCategories.length === 1 ? "y" : "ies"}
+          </div>
+        </div>
       </AdminPanel>
 
       <AdminDataState query={categoriesQuery} loadingLabel="Loading categories...">
-        <AdminPanel>
-          <AdminTable columns={columns} rows={categoriesQuery.data} emptyMessage="No categories available." />
+        <AdminPanel className="p-0">
+          <AdminTable columns={columns} rows={filteredCategories} emptyMessage="No categories available." />
         </AdminPanel>
       </AdminDataState>
 
@@ -193,6 +230,27 @@ export function CategoriesPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(deletingCategory)}
+        onClose={() => setDeletingCategory(null)}
+        title="Confirm deletion"
+        className="max-w-md w-full"
+      >
+        <div className="flex flex-col gap-4 w-full">
+          <p className="text-sm text-stone-600 w-full">
+            Are you sure you want to delete <span className="font-semibold text-espresso">{deletingCategory?.name}</span>? This action cannot be undone.
+          </p>
+          <div className="flex w-full gap-3 mt-2">
+            <Button type="button" tone="secondary" className="flex-1 w-full" disabled={deleting} onClick={() => setDeletingCategory(null)}>
+              Cancel
+            </Button>
+            <Button type="button" tone="danger" className="flex-1 w-full" loading={deleting} onClick={handleDelete}>
+              Delete
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

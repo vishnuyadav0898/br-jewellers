@@ -1,30 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./Button";
 import { Input } from "./Input";
 import { Modal } from "./Modal";
 import { useSession } from "../hooks/useSession";
 import { useLocale } from "../localization";
+import { authService } from "../services/authService";
 import { getValidationErrors, loginSchema, registerSchema } from "../utils/validation";
+import { notify } from "../utils/notify";
 
 const defaultLoginState = {
-  email: "aarohi@brdemo.com",
-  password: "demo123",
+  email: "",
+  password: "",
 };
 
 const defaultRegisterState = {
   name: "",
   email: "",
   password: "",
-  phone: "",
-  address: "",
 };
 
 export function AuthModal() {
   const { t } = useLocale();
   const [loginForm, setLoginForm] = useState(defaultLoginState);
   const [registerForm, setRegisterForm] = useState(defaultRegisterState);
+  const [forgotEmail, setForgotEmail] = useState("");
   const [loginErrors, setLoginErrors] = useState({});
   const [registerErrors, setRegisterErrors] = useState({});
+  const [forgotError, setForgotError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState("");
+
   const {
     authModalMode,
     authModalOpen,
@@ -32,40 +37,89 @@ export function AuthModal() {
     openAuthModal,
     login,
     register,
-    loginWithGoogle,
     isBusy,
   } = useSession();
 
+  useEffect(() => {
+    if (!authModalOpen) {
+      setLoginForm(defaultLoginState);
+      setRegisterForm(defaultRegisterState);
+      setForgotEmail("");
+      setLoginErrors({});
+      setRegisterErrors({});
+      setForgotError("");
+      setTemporaryPassword("");
+    }
+  }, [authModalOpen]);
+
   const isLogin = authModalMode === "login";
+  const isRegister = authModalMode === "register";
+  const isForgot = authModalMode === "forgot";
+
   const clearLoginError = (field) =>
     setLoginErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
   const clearRegisterError = (field) =>
     setRegisterErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
 
+  const handleForgotSubmit = async (event) => {
+    event.preventDefault();
+    if (!forgotEmail.trim()) {
+      setForgotError("Email is required");
+      return;
+    }
+    setForgotError("");
+    setForgotLoading(true);
+    setTemporaryPassword("");
+
+    try {
+      const res = await authService.forgotPassword({ email: forgotEmail });
+      notify.success("Password reset request successful!", {
+        title: "Reset Success",
+      });
+      if (res?.temporaryPassword) {
+        setTemporaryPassword(res.temporaryPassword);
+      } else {
+        notify.info("If the email exists, a reset link/password has been issued.");
+        openAuthModal("login");
+      }
+    } catch (err) {
+      setForgotError(err.message || "Something went wrong.");
+      notify.error(err.message || "Failed to reset password.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
     <Modal open={authModalOpen} onClose={closeAuthModal} title={t("auth.title")}>
-      <div className="mb-5 flex rounded-full bg-[#f5ebd6] p-1">
-        <button
-          type="button"
-          onClick={() => openAuthModal("login")}
-          className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${isLogin ? "bg-[linear-gradient(135deg,#e2bf6c_0%,#f6e4b8_100%)] text-[#1a120e] shadow-[0_10px_24px_rgba(142,103,34,0.18)]" : "text-[#221711]"}`}
-        >
-          {t("common.login")}
-        </button>
-        <button
-          type="button"
-          onClick={() => openAuthModal("register")}
-          className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${!isLogin ? "bg-[linear-gradient(135deg,#e2bf6c_0%,#f6e4b8_100%)] text-[#1a120e] shadow-[0_10px_24px_rgba(142,103,34,0.18)]" : "text-[#221711]"}`}
-        >
-          {t("common.register")}
-        </button>
-      </div>
+      {!isForgot ? (
+        <div className="mb-5 flex rounded-full bg-[#f5ebd6] p-1">
+          <button
+            type="button"
+            onClick={() => openAuthModal("login")}
+            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${isLogin ? "bg-[linear-gradient(135deg,#e2bf6c_0%,#f6e4b8_100%)] text-[#1a120e] shadow-[0_10px_24px_rgba(142,103,34,0.18)]" : "text-[#221711]"}`}
+          >
+            {t("common.login")}
+          </button>
+          <button
+            type="button"
+            onClick={() => openAuthModal("register")}
+            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${isRegister ? "bg-[linear-gradient(135deg,#e2bf6c_0%,#f6e4b8_100%)] text-[#1a120e] shadow-[0_10px_24px_rgba(142,103,34,0.18)]" : "text-[#221711]"}`}
+          >
+            {t("common.register")}
+          </button>
+        </div>
+      ) : null}
 
       <p className="mb-5 text-sm leading-6 text-stone-600">
-        {isLogin ? t("auth.loginSubtitle") : t("auth.registerSubtitle")}
+        {isLogin
+          ? t("auth.loginSubtitle")
+          : isRegister
+            ? t("auth.registerSubtitle")
+            : "Enter your email address to receive a temporary password reset code."}
       </p>
 
-      {isLogin ? (
+      {isLogin && (
         <form
           className="space-y-4"
           onSubmit={async (event) => {
@@ -103,14 +157,22 @@ export function AuthModal() {
               setLoginForm((current) => ({ ...current, password: event.target.value }));
             }}
           />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => openAuthModal("forgot")}
+              className="text-xs font-semibold text-[#8a5d18] hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </div>
           <Button type="submit" className="w-full" loading={isBusy}>
             {t("common.login")}
           </Button>
-          <Button type="button" tone="secondary" className="w-full" onClick={() => loginWithGoogle()}>
-            {t("auth.google")}
-          </Button>
         </form>
-      ) : (
+      )}
+
+      {isRegister && (
         <form
           className="space-y-4"
           onSubmit={async (event) => {
@@ -148,27 +210,6 @@ export function AuthModal() {
             }}
           />
           <Input
-            label={t("auth.phone")}
-            type="tel"
-            value={registerForm.phone}
-            required
-            error={registerErrors.phone}
-            onChange={(event) => {
-              clearRegisterError("phone");
-              setRegisterForm((current) => ({ ...current, phone: event.target.value }));
-            }}
-          />
-          <Input
-            label={t("auth.address")}
-            value={registerForm.address}
-            required
-            error={registerErrors.address}
-            onChange={(event) => {
-              clearRegisterError("address");
-              setRegisterForm((current) => ({ ...current, address: event.target.value }));
-            }}
-          />
-          <Input
             label={t("auth.password")}
             type="password"
             value={registerForm.password}
@@ -185,7 +226,49 @@ export function AuthModal() {
         </form>
       )}
 
-      <p className="mt-5 text-xs leading-6 text-stone-500">{t("auth.demo")}</p>
+      {isForgot && (
+        <form className="space-y-4" onSubmit={handleForgotSubmit}>
+          <Input
+            label={t("auth.email")}
+            type="email"
+            value={forgotEmail}
+            required
+            error={forgotError}
+            onChange={(event) => {
+              setForgotError("");
+              setForgotEmail(event.target.value);
+            }}
+          />
+
+          {temporaryPassword && (
+            <div className="rounded-2xl bg-[#fff7ea] border border-[#f3e1bf] p-4 space-y-2">
+              <p className="text-xs font-semibold text-[#8a5d18] uppercase tracking-wider">
+                Temporary Password Generated (Dev Only):
+              </p>
+              <code className="block rounded-lg bg-stone-900 px-3 py-2 text-center text-lg font-mono font-bold text-amber-400 select-all">
+                {temporaryPassword}
+              </code>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Use this temporary password to log in, then change it in your Profile workspace.
+              </p>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" loading={forgotLoading}>
+            Reset Password
+          </Button>
+
+          <div className="flex justify-center pt-2">
+            <button
+              type="button"
+              onClick={() => openAuthModal("login")}
+              className="text-sm font-semibold text-stone-600 hover:text-[#1a120e] transition"
+            >
+              Back to Login
+            </button>
+          </div>
+        </form>
+      )}
     </Modal>
   );
 }

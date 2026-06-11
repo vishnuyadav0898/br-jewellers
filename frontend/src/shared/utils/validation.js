@@ -8,13 +8,17 @@ const requiredString = (label, minimumLength = 1) =>
 
 const numericField = (label, { integer = false, min } = {}) => {
   let schema = z
-    .string()
-    .trim()
-    .min(1, `${label} is required.`)
-    .refine((value) => !Number.isNaN(Number(value)), {
-      message: `${label} must be a valid number.`,
-    })
-    .transform((value) => Number(value));
+    .preprocess(
+      (value) => (value === null || value === undefined ? "" : String(value)),
+      z
+        .string()
+        .trim()
+        .min(1, `${label} is required.`)
+        .refine((value) => !Number.isNaN(Number(value)), {
+          message: `${label} must be a valid number.`,
+        })
+        .transform((value) => Number(value))
+    );
 
   if (integer) {
     schema = schema.refine((value) => Number.isInteger(value), {
@@ -33,13 +37,17 @@ const numericField = (label, { integer = false, min } = {}) => {
 
 const optionalNumericField = (label, options = {}) =>
   z
-    .string()
-    .trim()
-    .transform((value) => (value === "" ? undefined : value))
-    .refine((value) => value === undefined || !Number.isNaN(Number(value)), {
-      message: `${label} must be a valid number.`,
-    })
-    .transform((value) => (value === undefined ? undefined : Number(value)))
+    .preprocess(
+      (value) => (value === null || value === undefined ? "" : String(value)),
+      z
+        .string()
+        .trim()
+        .transform((value) => (value === "" ? undefined : value))
+        .refine((value) => value === undefined || !Number.isNaN(Number(value)), {
+          message: `${label} must be a valid number.`,
+        })
+        .transform((value) => (value === undefined ? undefined : Number(value)))
+    )
     .refine((value) => value === undefined || !options.integer || Number.isInteger(value), {
       message: `${label} must be a whole number.`,
     })
@@ -71,9 +79,7 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   name: requiredString("Name", 2),
   email: requiredString("Email").email("Enter a valid email address."),
-  phone: requiredString("Phone", 10),
-  address: requiredString("Address", 5),
-  password: requiredString("Password", 6),
+  password: requiredString("Password", 8),
 });
 
 export const profileSchema = z.object({
@@ -87,7 +93,7 @@ export const profileSchema = z.object({
 export const passwordSchema = z
   .object({
     oldPassword: requiredString("Current password"),
-    newPassword: requiredString("New password", 6),
+  newPassword: requiredString("New password", 8),
     confirmPassword: requiredString("Confirm password"),
   })
   .refine((value) => value.newPassword === value.confirmPassword, {
@@ -109,6 +115,27 @@ export const categorySchema = z.object({
   name: requiredString("Category name", 2),
   description: z.string().trim(),
   featured: z.boolean(),
+});
+
+export const adminUserSchema = z.object({
+  name: requiredString("Name", 2),
+  email: requiredString("Email").email("Enter a valid email address."),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{10}$/, "Phone must be a valid 10-digit number.")
+    .or(z.literal("")),
+  password: z
+    .string()
+    .trim()
+    .transform((value) => (value === "" ? undefined : value))
+    .refine((value) => value === undefined || value.length >= 8, {
+      message: "Password must be at least 8 characters.",
+    }),
+});
+
+export const createAdminUserSchema = adminUserSchema.extend({
+  password: requiredString("Password", 8),
 });
 
 export const bannerSchema = z.object({
@@ -146,22 +173,38 @@ export const homeContentSchema = z.object({
 export const productSchema = z
   .object({
     name: requiredString("Name", 2),
-    badge: z.string().trim(),
-    price: numericField("Price", { min: 1 }),
-    originalPrice: optionalNumericField("Original price", { min: 1 }),
-    categoryId: requiredString("Category"),
-    colors: z.string().trim(),
-    sizes: z.string().trim(),
-    tags: z.string().trim(),
-    stock: numericField("Stock", { integer: true, min: 0 }),
     description: requiredString("Description", 10),
-    details: requiredString("Details", 10),
-    featured: z.boolean(),
-    images: z.array(z.string().trim()).min(1, "Add at least one product image."),
+    gemstone: requiredString("Gemstone", 2),
+    coverImage: requiredString("Cover image URL", 5).url("Enter a valid cover image URL."),
+    category: requiredString("Category"),
+    priceRange: z.object({
+      min: numericField("Minimum price", { min: 0 }),
+      max: numericField("Maximum price", { min: 0 }),
+    }),
+    images: z.array(z.string().trim().url("Enter valid image URLs only.")).min(1, "Add at least one product image."),
+    tags: z.array(z.string().trim().min(1, "Tag is required.")),
+    occasions: z.array(z.string().trim().min(1, "Occasion is required.")),
+    variants: z
+      .array(
+        z.object({
+          name: requiredString("Variant name", 2),
+          material: requiredString("Material", 2),
+          color: requiredString("Color", 2),
+          purity: requiredString("Purity", 2),
+          size: requiredString("Size"),
+          stock: numericField("Stock", { integer: true, min: 0 }),
+          price: z.object({
+            INR: numericField("INR price", { min: 0 }),
+            USD: numericField("USD price", { min: 0 }),
+          }),
+        })
+      )
+      .min(1, "Add at least one variant."),
+    isActive: z.boolean(),
   })
-  .refine((value) => value.originalPrice === undefined || value.originalPrice >= value.price, {
-    message: "Original price must be greater than or equal to price.",
-    path: ["originalPrice"],
+  .refine((value) => Number(value.priceRange.max) >= Number(value.priceRange.min), {
+    message: "Maximum price must be greater than or equal to minimum price.",
+    path: ["priceRange"],
   });
 
 export { z };

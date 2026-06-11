@@ -38,11 +38,14 @@ export function OrdersPage() {
     return <Loader label={t("common.loading")} />;
   }
 
-  if (!ordersQuery.data.length) {
+  const orders = ordersQuery.data || [];
+  const refunds = refundQuery.data || [];
+
+  if (!orders.length) {
     return <EmptyState title={t("orders.emptyTitle")} description={t("orders.emptyDescription")} />;
   }
 
-  const refundMap = new Map(refundQuery.data.map((entry) => [entry.orderId, entry]));
+  const refundMap = new Map(refunds.map((entry) => [entry.orderId, entry]));
 
   return (
     <div className="space-y-6">
@@ -55,7 +58,7 @@ export function OrdersPage() {
       </section>
 
       <div className="grid gap-5">
-        {ordersQuery.data.map((order) => {
+        {orders.map((order) => {
           const refundRequest = refundMap.get(order.id);
 
           return (
