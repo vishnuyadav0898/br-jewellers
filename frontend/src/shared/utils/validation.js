@@ -86,7 +86,6 @@ export const profileSchema = z.object({
   name: requiredString("Name", 2),
   email: requiredString("Email").email("Enter a valid email address."),
   phone: requiredString("Phone", 10),
-  address: requiredString("Address", 5),
   avatar: z.string().optional(),
 });
 
@@ -201,6 +200,7 @@ export const productSchema = z
       )
       .min(1, "Add at least one variant."),
     isActive: z.boolean(),
+    featured: z.boolean().optional(),
   })
   .refine((value) => Number(value.priceRange.max) >= Number(value.priceRange.min), {
     message: "Maximum price must be greater than or equal to minimum price.",

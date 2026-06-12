@@ -94,6 +94,22 @@ const baseProductSchema = Joi.object({
     "string.max": "Category must not exceed 100 characters",
   }),
 
+  gemstone: Joi.string().trim().allow("").messages({
+    "string.base": "Gemstone must be a string",
+  }),
+
+  occasions: Joi.array().items(Joi.string().trim()).messages({
+    "array.base": "Occasions must be an array",
+  }),
+
+  priceRange: priceRangeSchema.messages({
+    "object.base": "Price range must be an object",
+  }),
+
+  featured: Joi.boolean().messages({
+    "boolean.base": "featured must be a boolean",
+  }),
+
   isActive: Joi.boolean().messages({
     "boolean.base": "isActive must be a boolean",
   }),

@@ -57,8 +57,7 @@
     "percentOff": "{{value}}% छूट",
     "bannerFallbackTag": "फ़ीचर्ड",
     "featuredEyebrow": "फ़ीचर्ड",
-    "featuredTitle": "Currency-aware pricing के साथ shared catalogue",
-    "samplePrice": "नमूना कीमत: {{value}}"
+    "featuredTitle": "Currency-aware pricing के साथ shared catalogue"
   },
   "products": {
     "eyebrow": "कैटलॉग",

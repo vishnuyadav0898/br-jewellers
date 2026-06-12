@@ -57,8 +57,7 @@
     "percentOff": "{{value}}% off",
     "bannerFallbackTag": "Featured",
     "featuredEyebrow": "Featured",
-    "featuredTitle": "Shared catalogue with currency-aware pricing",
-    "samplePrice": "Sample price: {{value}}"
+    "featuredTitle": "Shared catalogue with currency-aware pricing"
   },
   "products": {
     "eyebrow": "Catalogue",

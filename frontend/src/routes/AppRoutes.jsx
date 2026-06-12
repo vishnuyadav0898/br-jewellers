@@ -127,7 +127,7 @@ export function AppRoutes() {
           <Route path="about" element={<AboutPage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="products" element={<ProductsPage />} />
-          <Route path="products/:productId" element={<ProductDetailsPage />} />
+          <Route path="products/:slug" element={<ProductDetailsPage />} />
           <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
             <Route path="cart" element={<CartPage />} />
             <Route path="favorites" element={<FavoritesPage />} />

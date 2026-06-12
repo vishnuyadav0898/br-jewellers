@@ -34,22 +34,30 @@ const mapFrontendStatusToBackend = (status) => {
   return lower;
 };
 
+const formatSkuName = (sku = "") => {
+  if (!sku) return "Premium Jewellery Item";
+  return sku
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 const normalizeApiOrder = (order = {}) => {
   const items = (Array.isArray(order.items) ? order.items : []).map((item) => ({
     productId: item.product?._id || item.product,
     sku: item.sku || "",
     quantity: item.quantity || 1,
-    name: item.product?.name || "Premium Jewellery Item",
+    name: item.product?.name || formatSkuName(item.sku),
     image: item.product?.coverImage || item.product?.images?.[0] || "",
     price: item.price?.INR || 0,
   }));
 
   const shippingAddress = {
-    name: order.shippingAddress?.fullName || "",
+    name: order.shippingAddress?.fullName || order.shippingAddress?.name || "",
     line1: order.shippingAddress?.line1 || "",
     city: order.shippingAddress?.city || "",
     state: order.shippingAddress?.state || "",
-    pincode: order.shippingAddress?.zip || "",
+    pincode: order.shippingAddress?.zip || order.shippingAddress?.pincode || "",
   };
 
   const status = mapBackendStatusToFrontend(order.status);
@@ -58,8 +66,8 @@ const normalizeApiOrder = (order = {}) => {
     id: order._id || order.id,
     orderNumber: order.orderNumber || `ORD-${String(order._id || "").slice(-6).toUpperCase()}`,
     createdAt: order.createdAt,
-    customerName: order.user?.name || "Customer",
-    customerEmail: order.user?.email || "",
+    customerName: order.user?.name || order.shippingAddress?.fullName || "Customer",
+    customerEmail: order.user?.email || order.shippingAddress?.phone || "",
     total: order.totalAmount?.INR || 0,
     status,
     paymentStatus: order.paymentStatus || "Paid",

@@ -112,44 +112,12 @@ export function AllOrdersPage() {
                 {
                   key: "status",
                   header: "Order status",
-                  render: (row) => (
-                    <select
-                      value={row.status}
-                      onChange={(event) =>
-                        updateOrder(row.id, { status: event.target.value }, "Order status updated.")
-                      }
-                      className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2 text-sm"
-                    >
-                      {["Pending", "Ordered", "Processing", "Shipped", "Delivered"].map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  ),
+                  render: (row) => <AdminStatusBadge value={row.status} />,
                 },
                 {
                   key: "paymentStatus",
                   header: "Payment",
-                  render: (row) => (
-                    <select
-                      value={row.paymentStatus}
-                      onChange={(event) =>
-                        updateOrder(
-                          row.id,
-                          { paymentStatus: event.target.value },
-                          "Payment status updated."
-                        )
-                      }
-                      className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2 text-sm"
-                    >
-                      {["Paid", "Unpaid", "Failed"].map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  ),
+                  render: (row) => <AdminStatusBadge value={row.paymentStatus} />,
                 },
                 {
                   key: "actions",
@@ -168,7 +136,7 @@ export function AllOrdersPage() {
           <AdminPagination page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       </AdminDataState>
-
+ 
       <Modal
         open={Boolean(selectedOrder)}
         onClose={() => setSelectedOrder(null)}
@@ -203,6 +171,47 @@ export function AllOrdersPage() {
               </div>
             </div>
 
+            {/* Status Modification Controls */}
+            <div className="grid gap-4 md:grid-cols-2 rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
+              <label className="flex flex-col gap-2 text-sm font-semibold text-[#1d130f]">
+                Order Status
+                <select
+                  value={selectedOrder.status}
+                  onChange={async (event) => {
+                    const nextStatus = event.target.value;
+                    await updateOrder(selectedOrder.id, { status: nextStatus }, "Order status updated.");
+                    setSelectedOrder((prev) => ({ ...prev, status: nextStatus }));
+                  }}
+                  className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2 text-sm font-normal"
+                >
+                  {["Pending", "Ordered", "Processing", "Shipped", "Delivered"].map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-semibold text-[#1d130f]">
+                Payment Status
+                <select
+                  value={selectedOrder.paymentStatus}
+                  onChange={async (event) => {
+                    const nextPayment = event.target.value;
+                    await updateOrder(selectedOrder.id, { paymentStatus: nextPayment }, "Payment status updated.");
+                    setSelectedOrder((prev) => ({ ...prev, paymentStatus: nextPayment }));
+                  }}
+                  className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2 text-sm font-normal"
+                >
+                  {["Paid", "Unpaid", "Failed"].map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+ 
             <div className="space-y-3">
               {selectedOrder.items.map((item) => (
                 <article key={`${selectedOrder.id}-${item.productId}`} className="flex gap-4 rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">

@@ -1,4 +1,5 @@
-import { Heart } from "lucide-react";
+import { Heart, Loader2, Gem } from "lucide-react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { routes } from "../../config/routes";
@@ -9,17 +10,39 @@ import { useSession } from "../../shared/hooks/useSession";
 import { notify } from "../../shared/utils/notify";
 import { storefrontService } from "../services/storefrontService";
 
+const slugify = (text) =>
+  String(text || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+
 export function ProductCard({ product, onAdded, onFavoriteChanged }) {
   const { formatFromInr } = useMoney();
   const { t } = useLocale();
   const { isAuthenticated, openAuthModal, user } = useSession();
   const queryClient = useQueryClient();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   return (
-    <article className="group overflow-hidden rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1">
+    <article className="group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full max-w-[380px] mx-auto flex flex-col h-full">
       <div className="relative">
-        <Link to={routes.appProductDetails(product.slug || product.id)} className="block aspect-[4/4.3] overflow-hidden bg-[#f9f0de]">
-          <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="block aspect-[4/4.3] overflow-hidden bg-[#f9f0de]">
+          {imageError || !product.images?.[0] ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-1 sm:gap-2 p-3 text-[#d5a957]/45">
+              <Gem className="h-8 w-8 sm:h-10 sm:w-10 animate-pulse" />
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">BR Jewellers</span>
+            </div>
+          ) : (
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              onError={() => setImageError(true)}
+            />
+          )}
         </Link>
         <button
           type="button"
@@ -28,7 +51,7 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
               ? t("productCard.removeFromFavorites")
               : t("productCard.addToFavorites")
           }
-          className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#e2cfab] bg-white/95 text-[#1b120f] shadow-[0_12px_30px_rgba(26,18,14,0.12)] transition hover:bg-[#fff6e5]"
+          className="absolute right-2.5 top-2.5 sm:right-4 sm:top-4 inline-flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-[#e2cfab] bg-white/95 text-[#1b120f] shadow-[0_12px_30px_rgba(26,18,14,0.12)] transition hover:bg-[#fff6e5]"
           onClick={async (event) => {
             event.preventDefault();
 
@@ -51,46 +74,80 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
             onFavoriteChanged?.();
           }}
         >
-          <Heart className={`h-4 w-4 ${product.isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />
+          <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${product.isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />
         </button>
       </div>
-      <div className="space-y-4 p-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9e6c24]">{product.category}</p>
-          <Link to={routes.appProductDetails(product.slug || product.id)} className="mt-2 block font-display text-3xl text-[#1b120f] transition hover:text-[#8a5d18]">
+      <div className="p-3 sm:p-5 flex flex-col flex-1 justify-between">
+        <div className="space-y-1 sm:space-y-2">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.24em] text-[#9e6c24]">{product.category}</p>
+          <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="mt-1 block font-display text-base sm:text-2xl lg:text-3xl text-[#1b120f] transition hover:text-[#8a5d18] line-clamp-1">
             {product.name}
           </Link>
-          <p className="mt-2 text-sm leading-6 text-stone-600">{product.description}</p>
+          <p className="mt-1 text-xs sm:text-sm leading-6 text-stone-600 line-clamp-2 hidden sm:block">{product.description}</p>
         </div>
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <div className="text-xl font-semibold text-[#1b120f]">{formatFromInr(product.price)}</div>
-            <div className="text-sm text-stone-500">{product.badge}</div>
+        <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t border-stone-100 mt-3 sm:mt-5">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-lg sm:text-2xl font-bold text-[#1b120f]">{formatFromInr(product.price)}</span>
+            {product.badge && (
+              <span className="rounded-full bg-[#fcf5e8] px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-[#8a5d18] ring-1 ring-[#e2d0ae]">
+                {product.badge}
+              </span>
+            )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
             <Link
-              to={routes.appProductDetails(product.slug || product.id)}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-[#20140f] ring-1 ring-[#dbc8a2] transition duration-200 hover:bg-[#fff7e6]"
+              to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)}
+              state={{ id: product.id }}
+              className="inline-flex h-9 sm:h-11 items-center justify-center rounded-full bg-white px-2 text-[10px] sm:text-xs font-semibold text-[#20140f] ring-1 ring-[#dbc8a2] transition duration-200 hover:bg-[#fff7e6] text-center"
             >
               {t("productCard.viewDetails")}
             </Link>
             <Button
               tone="accent"
+              disabled={isAddingToCart}
+              className="h-9 sm:h-11 px-2 text-[10px] sm:text-xs font-semibold w-full"
               onClick={async () => {
                 if (!isAuthenticated) {
                   openAuthModal("login", routes.appCart);
                   return;
                 }
 
-                await storefrontService.addToCart(user.id, product.id);
-                notify.success(t("productCard.addedToCart"), {
-                  title: t("productCard.cartUpdated"),
-                  iconKey: "order",
-                });
-                onAdded?.();
+                // Resolve SKU from already-loaded product variants — no extra API call
+                const variant =
+                  product.variants?.find((v) => v.isDefault && v.sku) ||
+                  product.variants?.find((v) => v.isAvailable !== false && v.sku) ||
+                  product.variants?.[0];
+
+                const sku = variant?.sku;
+                if (!sku) {
+                  notify.error("This product is currently unavailable.");
+                  return;
+                }
+
+                setIsAddingToCart(true);
+                try {
+                  await storefrontService.addToCart(user.id, product.id, sku);
+                  notify.success(t("productCard.addedToCart"), {
+                    title: t("productCard.cartUpdated"),
+                    iconKey: "order",
+                  });
+                  queryClient.invalidateQueries({ queryKey: ["cart"] });
+                  onAdded?.();
+                } catch (err) {
+                  notify.error(err.message || "Failed to add to cart");
+                } finally {
+                  setIsAddingToCart(false);
+                }
               }}
             >
-              {t("productCard.addToCart")}
+              {isAddingToCart ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                t("productCard.addToCart")
+              )}
             </Button>
           </div>
         </div>

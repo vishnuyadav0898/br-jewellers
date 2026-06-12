@@ -2,7 +2,7 @@ export const routes = {
   root: "/",
   appHome: "/",
   appProducts: "/products",
-  appProductDetails: (productId = ":productId") => `/products/${productId}`,
+  appProductDetails: (slug = ":slug") => `/products/${slug}`,
   appAbout: "/about",
   appContact: "/contact",
   appCart: "/cart",

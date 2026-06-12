@@ -65,66 +65,76 @@ export function Header() {
           ) : null}
         </nav>
 
-        {/* Desktop Controls */}
-        <div className="hidden lg:flex items-center gap-2">
-          <PreferenceControls />
+        {/* Header Controls (Desktop and Mobile) */}
+        <div className="flex items-center gap-2">
+          {/* Desktop Preference Controls */}
+          <div className="hidden lg:block">
+            <PreferenceControls />
+          </div>
 
-          {isCustomer ? (
-            <>
-              {isAuthenticated ? (
-                <>
-                  <Link to={routes.appFavorites} className={iconLinkClassName} aria-label={t("common.favorites")}>
-                    <Heart className="h-4 w-4" />
-                  </Link>
-                  <Link to={routes.appCart} className={iconLinkClassName} aria-label={t("nav.cart")}>
-                    <ShoppingBag className="h-4 w-4" />
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className={iconLinkClassName}
-                    aria-label={t("common.favorites")}
-                    onClick={() => openAuthModal("login", routes.appFavorites)}
-                  >
-                    <Heart className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    className={iconLinkClassName}
-                    aria-label={t("nav.cart")}
-                    onClick={() => openAuthModal("login", routes.appCart)}
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            <Link to={routes.adminDashboard} className={iconLinkClassName} aria-label={t("header.adminPanel")}>
+          {/* Favorites (Desktop only) */}
+          <div className="hidden lg:block">
+            {isAuthenticated ? (
+              <Link to={routes.appFavorites} className={iconLinkClassName} aria-label={t("common.favorites")}>
+                <Heart className="h-4 w-4" />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className={iconLinkClassName}
+                aria-label={t("common.favorites")}
+                onClick={() => openAuthModal("login", routes.appFavorites)}
+              >
+                <Heart className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Cart (Desktop and Mobile for Customer) */}
+          {isCustomer && (
+            isAuthenticated ? (
+              <Link to={routes.appCart} className={iconLinkClassName} aria-label={t("nav.cart")}>
+                <ShoppingBag className="h-4 w-4" />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                className={iconLinkClassName}
+                aria-label={t("nav.cart")}
+                onClick={() => openAuthModal("login", routes.appCart)}
+              >
+                <ShoppingBag className="h-4 w-4" />
+              </button>
+            )
+          )}
+
+          {/* Admin Dashboard Quick Link (Desktop only) */}
+          {!isCustomer && (
+            <Link to={routes.adminDashboard} className={cn(iconLinkClassName, "hidden lg:inline-flex")} aria-label={t("header.adminPanel")}>
               <LayoutDashboard className="h-4 w-4" />
             </Link>
           )}
 
+          {/* Notification Center (Desktop and Mobile) */}
           {isAuthenticated ? <NotificationCenter theme="user" /> : null}
 
+          {/* Account Popover / Login Buttons */}
           {isAuthenticated ? (
             <div className="relative" ref={accountRef}>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-[#ddc8a3] bg-white px-4 py-2 text-sm font-semibold text-[#1a120e] transition hover:bg-[#fff6e7]"
+                className="inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#ddc8a3] bg-white p-1 pr-3 sm:px-4 sm:py-2 text-sm font-semibold text-[#1a120e] transition hover:bg-[#fff6e7]"
                 onClick={() => setAccountOpen((current) => !current)}
               >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1a120e] text-xs text-[#f8ebca]">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#1a120e] text-[10px] sm:text-xs text-[#f8ebca] font-bold">
                   {user?.name?.slice(0, 1)?.toUpperCase()}
                 </span>
-                <span>{user?.name?.split(" ")[0]}</span>
+                <span className="hidden sm:inline">{user?.name?.split(" ")[0]}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", accountOpen && "rotate-180")} />
               </button>
 
               {accountOpen ? (
-                <div className="absolute right-0 top-[calc(100%+12px)] w-72 rounded-[28px] border border-[#e0cfad] bg-white p-3 shadow-[0_24px_60px_rgba(31,20,12,0.14)]">
+                <div className="absolute right-0 top-[calc(100%+12px)] w-72 rounded-[28px] border border-[#e0cfad] bg-white p-3 shadow-[0_24px_60px_rgba(31,20,12,0.14)] z-50">
                   <div className="rounded-[22px] bg-[#fff7ea] px-4 py-3">
                     <div className="text-sm font-semibold text-[#1a120e]">{user?.name}</div>
                     <div className="mt-1 text-xs text-stone-500">{user?.email}</div>
@@ -176,29 +186,31 @@ export function Header() {
             </div>
           ) : (
             <>
-              <Button tone="secondary" size="sm" onClick={() => openAuthModal("login")}>
-                {t("common.login")}
-              </Button>
-              <Button size="sm" onClick={() => openAuthModal("register")}>
-                {t("common.register")}
-              </Button>
+              {/* Desktop Auth Buttons */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Button tone="secondary" size="sm" onClick={() => openAuthModal("login")}>
+                  {t("common.login")}
+                </Button>
+                <Button size="sm" onClick={() => openAuthModal("register")}>
+                  {t("common.register")}
+                </Button>
+              </div>
+              {/* Mobile Auth Icon Button */}
+              <button
+                type="button"
+                className={cn(iconLinkClassName, "sm:hidden")}
+                aria-label={t("common.login")}
+                onClick={() => openAuthModal("login")}
+              >
+                <User className="h-4 w-4" />
+              </button>
             </>
           )}
-        </div>
 
-        {/* Mobile Controls & Hamburger Toggle */}
-        <div className="flex lg:hidden items-center gap-2">
-          {isCustomer && (
-            <Link to={routes.appCart} className={iconLinkClassName} aria-label={t("nav.cart")}>
-              <ShoppingBag className="h-4 w-4" />
-            </Link>
-          )}
-
-          {isAuthenticated ? <NotificationCenter theme="user" /> : null}
-
+          {/* Hamburger Menu Toggle (Mobile only) */}
           <button
             type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#ddc8a3] bg-white text-[#1a120e] hover:bg-[#fff3dd]"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#ddc8a3] bg-white text-[#1a120e] hover:bg-[#fff3dd] lg:hidden"
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-label="Toggle Navigation Menu"
           >
@@ -238,48 +250,9 @@ export function Header() {
 
           <hr className="border-[#e4d4b2]/65" />
 
-          {/* Account Management & Preference Actions inside mobile menu */}
-          <div className="space-y-4 px-4">
-            {isAuthenticated ? (
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-[#fff7ea] p-4">
-                  <div className="text-sm font-semibold text-[#1a120e]">{user?.name}</div>
-                  <div className="mt-1 text-xs text-stone-500">{user?.email}</div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-center text-sm font-semibold">
-                  <Link to={routes.appProfile} className="rounded-xl border border-[#ddc8a3] bg-white py-2.5 text-stone-700 transition hover:bg-[#fff9ef]">
-                    {t("common.profile")}
-                  </Link>
-                  <Link to={routes.appOrders} className="rounded-xl border border-[#ddc8a3] bg-white py-2.5 text-stone-700 transition hover:bg-[#fff9ef]">
-                    {t("nav.orders")}
-                  </Link>
-                </div>
-
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 border border-rose-200 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                  onClick={logout}
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t("common.logout")}
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Button className="w-full" onClick={() => openAuthModal("register")}>
-                  {t("common.register")}
-                </Button>
-                <Button tone="secondary" className="w-full" onClick={() => openAuthModal("login")}>
-                  {t("common.login")}
-                </Button>
-              </div>
-            )}
-
-            {/* Language and currency selectors centered */}
-            <div className="pt-2 flex justify-center">
-              <PreferenceControls />
-            </div>
+          {/* Preferences (Language and Currency) inside mobile menu */}
+          <div className="pt-2 flex justify-center">
+            <PreferenceControls />
           </div>
         </nav>
       )}
