@@ -76,16 +76,18 @@ export function ProductDetailsPage() {
             </div>
             <div className="space-y-5">
               <div className="flex flex-wrap gap-2">
-                <AdminStatusBadge value={product.stock > 0 ? "Active" : "Draft"} />
+                <AdminStatusBadge value={product.isActive ? "Active" : "Inactive"} />
                 {product.featured ? <AdminStatusBadge value="Featured" /> : null}
               </div>
               <dl className="grid gap-5 sm:grid-cols-2">
                 <Field label="Category" value={product.category} />
                 <Field label="Gemstone" value={product.gemstone || product.badge} />
-                <Field label="Price" value={formatFromInr(product.price)} />
-                <Field label="Max price" value={formatFromInr(product.originalPrice || product.price)} />
-                <Field label="Stock" value={product.stock} />
-                <Field label="Media" value={`${product.images?.length || 0} image(s)`} />
+                <Field label="Min Price" value={formatFromInr(product.priceRange?.min ?? product.price)} />
+                <Field label="Max Price" value={formatFromInr(product.priceRange?.max ?? product.originalPrice)} />
+                <Field label="Total Stock" value={product.stock} />
+                <Field label="Variants" value={`${product.variants?.length || 0} variant(s)`} />
+                <Field label="Occasions" value={(product.occasions || []).join(", ") || "Not set"} />
+                <Field label="Tags" value={(product.tags || []).join(", ") || "Not set"} />
               </dl>
               <div>
                 <h2 className="font-display text-3xl text-espresso">Details</h2>
@@ -101,8 +103,6 @@ export function ProductDetailsPage() {
             <div className="mt-5 space-y-4">
               <Field label="Colors" value={(product.colors || []).map((item) => item.name || item).join(", ")} />
               <Field label="Sizes" value={(product.sizes || []).join(", ")} />
-              <Field label="Tags" value={(product.tags || []).join(", ")} />
-              <Field label="Occasions" value={(product.occasions || []).join(", ")} />
             </div>
           </AdminPanel>
 
@@ -123,6 +123,80 @@ export function ProductDetailsPage() {
           ) : null}
         </div>
       </section>
+
+      {/* Variants Table */}
+      {product.variants?.length ? (
+        <AdminPanel>
+          <h2 className="font-display text-3xl text-espresso">
+            Variants
+            <span className="ml-3 text-base font-normal text-stone-500">
+              {product.variants.length} variant{product.variants.length === 1 ? "" : "s"}
+            </span>
+          </h2>
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gold-100 text-left text-xs font-semibold uppercase tracking-[0.15em] text-gold-700">
+                  <th className="pb-3 pr-4">SKU</th>
+                  <th className="pb-3 pr-4">Material</th>
+                  <th className="pb-3 pr-4">Color</th>
+                  <th className="pb-3 pr-4">Purity</th>
+                  <th className="pb-3 pr-4">Size</th>
+                  <th className="pb-3 pr-4">Stock</th>
+                  <th className="pb-3 pr-4">INR Price</th>
+                  <th className="pb-3 pr-4">USD Price</th>
+                  <th className="pb-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gold-50">
+                {product.variants.map((variant, index) => (
+                  <tr key={variant.sku || index} className="hover:bg-gold-50/50 transition">
+                    <td className="py-3 pr-4 font-mono text-xs text-stone-500">
+                      {variant.sku || "—"}
+                    </td>
+                    <td className="py-3 pr-4 text-espresso">{variant.material || "—"}</td>
+                    <td className="py-3 pr-4">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span
+                          className="h-3 w-3 rounded-full border border-gold-100"
+                          style={{ backgroundColor: "#D9A44F" }}
+                        />
+                        {variant.color || "—"}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 text-espresso">{variant.purity || "—"}</td>
+                    <td className="py-3 pr-4 text-espresso">{variant.size || "—"}</td>
+                    <td className="py-3 pr-4">
+                      <span
+                        className={`font-semibold ${
+                          variant.stock > 10
+                            ? "text-emerald-700"
+                            : variant.stock > 0
+                            ? "text-amber-700"
+                            : "text-rose-700"
+                        }`}
+                      >
+                        {variant.stock ?? 0}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-4 font-semibold text-espresso">
+                      {variant.price?.INR ? formatFromInr(variant.price.INR) : "—"}
+                    </td>
+                    <td className="py-3 pr-4 text-stone-500">
+                      {variant.price?.USD ? `$${variant.price.USD}` : "—"}
+                    </td>
+                    <td className="py-3">
+                      <AdminStatusBadge
+                        value={variant.isAvailable !== false ? "Active" : "Unavailable"}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </AdminPanel>
+      ) : null}
     </div>
   );
 }

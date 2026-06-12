@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, CheckCircle2, Package } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { EmptyState } from "../../shared/components/EmptyState";
 import { Input } from "../../shared/components/Input";
@@ -32,6 +32,12 @@ export function CartPage() {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+  // Track per-item loading for quantity buttons
+  const [itemLoadingMap, setItemLoadingMap] = useState({});
+
+  // Track order placed success state
+  const [orderPlaced, setOrderPlaced] = useState(null); // { orderNumber, total }
+
   const [newAddress, setNewAddress] = useState({
     fullName: "",
     phone: "",
@@ -52,6 +58,36 @@ export function CartPage() {
     queryFn: () => storefrontService.getCart(user.id, cartCouponCode),
     enabled: Boolean(user?.id),
   });
+
+  const setItemLoading = (itemId, loading) => {
+    setItemLoadingMap((prev) => ({ ...prev, [itemId]: loading }));
+  };
+
+  const handleUpdateQuantity = async (item, delta) => {
+    const nextQty = item.quantity + delta;
+    setItemLoading(item.id, true);
+    try {
+      await storefrontService.updateCartQuantity(user.id, item.id, nextQty);
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    } catch (err) {
+      notify.error(err.message || "Failed to update quantity");
+    } finally {
+      setItemLoading(item.id, false);
+    }
+  };
+
+  const handleRemoveItem = async (itemId) => {
+    setItemLoading(itemId, true);
+    try {
+      await storefrontService.removeCartItem(user.id, itemId);
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      notify.success("Item removed from cart");
+    } catch (err) {
+      notify.error(err.message || "Failed to remove item");
+    } finally {
+      setItemLoading(itemId, false);
+    }
+  };
 
   const fetchAddresses = async () => {
     try {
@@ -126,17 +162,27 @@ export function CartPage() {
 
     try {
       setIsPlacingOrder(true);
-      await storefrontService.createOrder(user.id, {
+      const response = await storefrontService.createOrder(user.id, {
         addressId: selectedAddressId,
       });
+
+      const orderNumber =
+        response?.orderNumber ||
+        response?.data?.orderNumber ||
+        `ORD-${Date.now().toString().slice(-6)}`;
+      const orderTotal = cartQuery.data?.total || 0;
+
       notify.success("Your order was placed successfully!", {
         title: "Order Placed",
         iconKey: "order",
       });
+
       setIsCheckoutOpen(false);
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-      navigate(routes?.appOrders || "/orders");
+
+      // Show the order placed success screen
+      setOrderPlaced({ orderNumber, total: orderTotal });
     } catch (err) {
       notify.error(err.message || "Failed to place order");
     } finally {
@@ -146,6 +192,52 @@ export function CartPage() {
 
   if (cartQuery.isLoading) {
     return <Loader label={t("common.loading")} />;
+  }
+
+  // ── Order Placed Success Screen ──────────────────────────────────────────────
+  if (orderPlaced) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center px-4">
+        <div className="relative mx-auto mb-8">
+          {/* Animated ring */}
+          <span className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-60" />
+          <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-emerald-50 border-4 border-emerald-200 shadow-[0_8px_32px_rgba(16,185,129,0.2)]">
+            <CheckCircle2 className="h-14 w-14 text-emerald-500" strokeWidth={1.5} />
+          </div>
+        </div>
+
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#9e6c24] mb-3">
+          Order Confirmed
+        </p>
+        <h1 className="font-display text-5xl text-[#1a120e] mb-3">
+          Thank You!
+        </h1>
+        <p className="text-stone-500 text-base leading-7 max-w-md mb-2">
+          Your order <span className="font-semibold text-[#1a120e]">{orderPlaced.orderNumber}</span> has been placed successfully.
+        </p>
+        <p className="text-stone-500 text-sm mb-8">
+          Total paid:{" "}
+          <span className="font-semibold text-[#8a5d18]">{formatFromInr(orderPlaced.total)}</span>
+        </p>
+
+        <div className="flex flex-wrap gap-3 justify-center">
+          <Link
+            to={routes.appOrders}
+            className="inline-flex items-center gap-2 rounded-full bg-[#1a120e] px-6 py-3 text-sm font-semibold text-[#f8ebca] transition hover:bg-[#2d1f16]"
+          >
+            <Package className="h-4 w-4" />
+            View My Orders
+          </Link>
+          <Link
+            to={routes.appProducts}
+            className="inline-flex items-center gap-2 rounded-full border border-[#ddc8a3] bg-white px-6 py-3 text-sm font-semibold text-[#1a120e] transition hover:bg-[#fff7ea]"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Continue Shopping
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!cartQuery.data?.items?.length) {
@@ -163,57 +255,74 @@ export function CartPage() {
           <p className="mt-2 text-sm leading-6 text-stone-600">{t("cart.subtitle")}</p>
         </div>
 
-        {cartQuery.data.items.map((item) => (
-          <article key={item.id} className="flex gap-4 rounded-[28px] border border-[#eadcc0] bg-[#fff8ec] p-4">
-            <img src={item.image} alt={item.name} className="h-28 w-24 rounded-[22px] object-cover" />
-            <div className="flex flex-1 flex-col justify-between gap-3">
-              <div>
-                <h2 className="font-display text-3xl text-[#1a120e]">{item.name}</h2>
-                <p className="text-sm text-stone-500">
-                  {item.selectedColor} / {item.selectedSize}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#dcc8a1] bg-white px-2 py-2">
-                  <button
-                    type="button"
-                    className="rounded-full bg-[#f6eacc] p-2"
-                    onClick={async () => {
-                      await storefrontService.updateCartQuantity(user.id, item.id, item.quantity - 1);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    }}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="min-w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                  <button
-                    type="button"
-                    className="rounded-full bg-[#f6eacc] p-2"
-                    onClick={async () => {
-                      await storefrontService.updateCartQuantity(user.id, item.id, item.quantity + 1);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+        {cartQuery.data.items.map((item) => {
+          const isLoading = Boolean(itemLoadingMap[item.id]);
+          return (
+            <article
+              key={item.id}
+              className={`flex gap-4 rounded-[28px] border border-[#eadcc0] bg-[#fff8ec] p-4 transition-opacity ${isLoading ? "opacity-60 pointer-events-none" : ""}`}
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                className="h-28 w-24 rounded-[22px] object-cover bg-[#f5ead2]"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
+              <div className="flex flex-1 flex-col justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-3xl text-[#1a120e]">{item.name}</h2>
+                  <p className="text-sm text-stone-500">
+                    {[item.selectedColor, item.selectedSize].filter(
+                      (v) => v && v !== "Default" && v !== "Standard"
+                    ).join(" / ") || item.sku || "Default variant"}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-lg font-semibold text-[#1a120e]">{formatFromInr(item.price * item.quantity)}</div>
-                  <button
-                    type="button"
-                    className="rounded-full bg-[#fff0ef] p-3 text-rose-600"
-                    onClick={async () => {
-                      await storefrontService.removeCartItem(user.id, item.id);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* Quantity Controls */}
+                  <div className="inline-flex items-center gap-2 rounded-full border border-[#dcc8a1] bg-white px-2 py-2">
+                    <button
+                      type="button"
+                      aria-label="Decrease quantity"
+                      disabled={isLoading}
+                      className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50"
+                      onClick={() => handleUpdateQuantity(item, -1)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="min-w-8 text-center text-sm font-semibold">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Increase quantity"
+                      disabled={isLoading}
+                      className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50"
+                      onClick={() => handleUpdateQuantity(item, +1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-lg font-semibold text-[#1a120e]">
+                      {formatFromInr(item.price * item.quantity)}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Remove item"
+                      disabled={isLoading}
+                      className="rounded-full bg-[#fff0ef] p-3 text-rose-600 transition hover:bg-rose-100 disabled:opacity-50"
+                      onClick={() => handleRemoveItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </section>
 
       <aside className="space-y-4 rounded-[34px] border border-[#dfccab] bg-[#17100d] p-6 text-[#f8efdc] shadow-[0_18px_60px_rgba(32,21,15,0.25)]">

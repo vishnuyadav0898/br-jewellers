@@ -70,6 +70,28 @@ const productSchema = new Schema(
       type: String,
       trim: true,
     },
+    gemstone: {
+      type: String,
+      trim: true,
+    },
+    occasions: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+    priceRange: {
+      min: {
+        type: Number,
+      },
+      max: {
+        type: Number,
+      },
+    },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
     variants: [variantSchema],
   },
   {

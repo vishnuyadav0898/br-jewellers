@@ -85,8 +85,16 @@ instance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Check if it's an auth request that shouldn't auto-refresh tokens
+    const isAuthRequest = originalRequest?.url && (
+      originalRequest.url.includes("/auth/login") ||
+      originalRequest.url.includes("/auth/register") ||
+      originalRequest.url.includes("/auth/google") ||
+      originalRequest.url.includes("/auth/refresh-token")
+    );
+
     // Check if error is 401 and request hasn't been retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthRequest) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -147,15 +155,29 @@ instance.interceptors.response.use(
     }
 
     // Standardize error message formatting to match frontend expectations
-    const payload = error.response?.data;
+    let payload = error.response?.data;
+    if (payload && typeof payload === "string") {
+      try {
+        payload = JSON.parse(payload);
+      } catch (e) {
+        // Not a JSON string
+      }
+    }
+
     let message = "Backend API request failed.";
-    if (payload?.errors?.length) {
-      message = payload.errors
-        .map((entry) => entry.message || entry.field)
-        .filter(Boolean)
-        .join(", ");
-    } else if (payload?.message) {
-      message = payload.message;
+    if (payload && typeof payload === "object") {
+      if (payload.errors?.length) {
+        message = payload.errors
+          .map((entry) => entry.message || entry.field)
+          .filter(Boolean)
+          .join(", ");
+      } else if (payload.message) {
+        message = payload.message;
+      } else {
+        message = error.message || "Backend API request failed.";
+      }
+    } else if (payload) {
+      message = String(payload);
     } else if (error.message) {
       message = error.message;
     }

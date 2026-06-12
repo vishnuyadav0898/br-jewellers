@@ -3,7 +3,7 @@ import { useLocale } from "../localization";
 import { useAppStore } from "../store/useAppStore";
 import { cn } from "../utils/cn";
 
-const supportedCurrencies = ["INR", "USD", "EUR"];
+const supportedCurrencies = ["INR", "USD"];
 
 export function PreferenceControls({ className }) {
   const { language, languages, setLanguage, t } = useLocale();
@@ -32,7 +32,10 @@ export function PreferenceControls({ className }) {
       </select>
       <select
         value={currency}
-        onChange={(event) => setCurrency(event.target.value)}
+        onChange={(event) => {
+          setCurrency(event.target.value);
+          localStorage.setItem("br_currency_manually_set", "true");
+        }}
         aria-label={t("common.currency")}
         className="bg-transparent text-sm font-medium"
       >

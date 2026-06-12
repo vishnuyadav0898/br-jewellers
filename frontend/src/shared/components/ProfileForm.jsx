@@ -21,7 +21,6 @@ export function ProfileForm({ roleLabel }) {
     name: "",
     email: "",
     phone: "",
-    address: "",
     avatar: "",
   });
   const [profileErrors, setProfileErrors] = useState({});
@@ -32,7 +31,6 @@ export function ProfileForm({ roleLabel }) {
       name: profileQuery.data.name || "",
       email: profileQuery.data.email || "",
       phone: profileQuery.data.phone || "",
-      address: profileQuery.data.address || "",
       avatar: profileQuery.data.avatar || "",
     });
   }, [profileQuery.data]);
@@ -124,16 +122,6 @@ export function ProfileForm({ roleLabel }) {
           onChange={(event) => {
             clearProfileError("phone");
             setProfileForm((current) => ({ ...current, phone: event.target.value }));
-          }}
-        />
-        <Input
-          label={t("profile.fields.address")}
-          required
-          error={profileErrors.address}
-          value={profileForm.address}
-          onChange={(event) => {
-            clearProfileError("address");
-            setProfileForm((current) => ({ ...current, address: event.target.value }));
           }}
         />
 

@@ -92,22 +92,30 @@ const mapBackendStatusToFrontend = (status) => {
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
+const formatSkuName = (sku = "") => {
+  if (!sku) return "Premium Jewellery Item";
+  return sku
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 const normalizeApiOrder = (order = {}) => {
   const items = (Array.isArray(order.items) ? order.items : []).map((item) => ({
     productId: item.product?._id || item.product,
     sku: item.sku || "",
     quantity: item.quantity || 1,
-    name: item.product?.name || "Premium Jewellery Item",
+    name: item.product?.name || formatSkuName(item.sku),
     image: item.product?.coverImage || item.product?.images?.[0] || "",
     price: item.price?.INR || 0,
   }));
 
   const shippingAddress = {
-    name: order.shippingAddress?.fullName || "",
+    name: order.shippingAddress?.fullName || order.shippingAddress?.name || "",
     line1: order.shippingAddress?.line1 || "",
     city: order.shippingAddress?.city || "",
     state: order.shippingAddress?.state || "",
-    pincode: order.shippingAddress?.zip || "",
+    pincode: order.shippingAddress?.zip || order.shippingAddress?.pincode || "",
   };
 
   const status = mapBackendStatusToFrontend(order.status);
@@ -116,8 +124,8 @@ const normalizeApiOrder = (order = {}) => {
     id: order._id || order.id,
     orderNumber: order.orderNumber || `ORD-${String(order._id || "").slice(-6).toUpperCase()}`,
     createdAt: order.createdAt,
-    customerName: order.user?.name || "Customer",
-    customerEmail: order.user?.email || "",
+    customerName: order.user?.name || order.shippingAddress?.fullName || "Customer",
+    customerEmail: order.user?.email || order.shippingAddress?.phone || "",
     total: order.totalAmount?.INR || 0,
     status,
     paymentStatus: order.paymentStatus || "Paid",
@@ -134,7 +142,7 @@ const normalizeApiCart = (cart = {}) => {
   const items = (Array.isArray(cart.items) ? cart.items : [])
     .map((entry) => {
       const product = entry.product;
-      if (!product) return null;
+      if (!product || typeof product !== "object") return null;
 
       // Find variant to get price and attributes
       const variant = Array.isArray(product.variants)
@@ -146,26 +154,33 @@ const normalizeApiCart = (cart = {}) => {
         const p = variant.prices.find((pr) => pr.currency === "INR");
         if (p) price = p.amount;
       }
+      // Fallback: try priceRange or direct price field
+      if (!price && product.priceRange?.min) price = product.priceRange.min;
       if (!price && product.price) price = product.price;
 
       const attributes = variant?.attributes || {};
-      const color =
-        attributes.color ||
-        (typeof attributes.get === "function" ? attributes.get("color") : "") ||
-        "Default";
-      const size =
-        attributes.size ||
-        (typeof attributes.get === "function" ? attributes.get("size") : "") ||
-        "Standard";
+      const getAttr = (key) =>
+        attributes[key] ||
+        (typeof attributes.get === "function" ? attributes.get(key) : "") ||
+        "";
+
+      const color = getAttr("color") || "Default";
+      const size = getAttr("size") || "Standard";
+
+      // Build image url: try coverImage, then images array
+      const image =
+        product.coverImage ||
+        (Array.isArray(product.images) ? product.images[0] : "") ||
+        "";
 
       return {
         id: entry._id || entry.id,
         productId: product._id || product.id,
-        name: product.name,
+        name: product.name || "Jewellery Item",
         slug: product.slug || "",
-        image: product.coverImage || product.images?.[0] || "",
+        image,
         price,
-        quantity: entry.quantity,
+        quantity: entry.quantity || 1,
         selectedColor: color,
         selectedSize: size,
         sku: entry.sku,
@@ -207,8 +222,8 @@ export const storefrontService = {
     };
   },
 
-  async getProducts(search = "", userId = null) {
-    const products = await catalogService.getProducts(search);
+  async getProducts(search = "", options = {}) {
+    const products = await catalogService.getProducts(search, options);
     return products.map((product) => ({
       ...product,
       rating: 0,
@@ -267,91 +282,35 @@ export const storefrontService = {
     );
   },
 
-  async addToCart(userId, productId) {
-    try {
-      const product = await catalogService.getProductById(productId);
-      const defaultVariant = product.variants?.find((v) => v.isDefault) || product.variants?.[0];
-      const sku = defaultVariant?.sku;
+  // addToCart — accepts sku directly from the caller (no extra product API call needed)
+  async addToCart(userId, productId, sku, quantity = 1) {
+    if (!sku) throw new Error("No variant SKU available for this product.");
 
-      if (sku) {
-        await apiClient.post("/api/v1/cart/add", {
-          productId,
-          sku,
-          quantity: 1,
-        });
-        return true;
-      }
-    } catch (error) {
-      if (!isApiFallbackError(error)) throw error;
-    }
-
-    return mockApiClient.mutate((db) => {
-      if (!db.carts[userId]) db.carts[userId] = [];
-
-      const existingItem = db.carts[userId].find((entry) => entry.productId === productId);
-
-      if (existingItem) {
-        existingItem.quantity += 1;
-      } else {
-        const product = db.products.find((entry) => entry.id === productId);
-
-        db.carts[userId].unshift({
-          id: crypto.randomUUID(),
-          productId,
-          quantity: 1,
-          selectedColor: product?.colors?.[0]?.name || "Default",
-          selectedSize: product?.sizes?.[0] || "Standard",
-        });
-      }
-
-      return db;
+    await apiClient.post("/api/v1/cart/add", {
+      productId,
+      sku,
+      quantity,
     });
+    return true;
   },
 
   async getCart(userId, couponCode = "") {
-    try {
-      const cart = await apiClient.get("/api/v1/cart/");
-      return normalizeApiCart(cart);
-    } catch (error) {
-      if (!isApiFallbackError(error)) throw error;
-    }
-
-    return mockApiClient.query((db) => hydrateCart(db, userId, couponCode));
+    const cart = await apiClient.get("/api/v1/cart/");
+    return normalizeApiCart(cart);
   },
 
   async updateCartQuantity(userId, itemId, nextQuantity) {
-    try {
-      await apiClient.patch(`/api/v1/cart/item/${itemId}`, {
-        quantity: nextQuantity,
-      });
-      return true;
-    } catch (error) {
-      if (!isApiFallbackError(error)) throw error;
+    // Quantity 0 or below — remove the item entirely
+    if (nextQuantity <= 0) {
+      return storefrontService.removeCartItem(userId, itemId);
     }
-
-    return mockApiClient.mutate((db) => {
-      db.carts[userId] = (db.carts[userId] || []).flatMap((entry) => {
-        if (entry.id !== itemId) return [entry];
-        if (nextQuantity <= 0) return [];
-        return [{ ...entry, quantity: nextQuantity }];
-      });
-
-      return db;
-    });
+    await apiClient.patch(`/api/v1/cart/item/${itemId}`, { quantity: nextQuantity });
+    return true;
   },
 
   async removeCartItem(userId, itemId) {
-    try {
-      await apiClient.delete(`/api/v1/cart/item/${itemId}`);
-      return true;
-    } catch (error) {
-      if (!isApiFallbackError(error)) throw error;
-    }
-
-    return mockApiClient.mutate((db) => {
-      db.carts[userId] = (db.carts[userId] || []).filter((entry) => entry.id !== itemId);
-      return db;
-    });
+    await apiClient.delete(`/api/v1/cart/item/${itemId}`);
+    return true;
   },
 
   async applyCoupon(code) {
@@ -450,12 +409,12 @@ export const storefrontService = {
 
   // Address and checkout management
   async getAddresses(userId) {
-    const response = await apiClient.get("/api/v1/address/");
+    const response = await apiClient.get("/api/v1/address");
     return Array.isArray(response) ? response : [];
   },
 
   async createAddress(userId, payload) {
-    const response = await apiClient.post("/api/v1/address/", {
+    const response = await apiClient.post("/api/v1/address", {
       label: payload.label || "Home",
       fullName: payload.fullName,
       phone: payload.phone,
@@ -493,7 +452,7 @@ export const storefrontService = {
 
   async createOrder(userId, { addressId }) {
     try {
-      const response = await apiClient.post("/api/v1/orders/", {
+      const response = await apiClient.post("/api/v1/orders", {
         addressId,
       });
       return response;

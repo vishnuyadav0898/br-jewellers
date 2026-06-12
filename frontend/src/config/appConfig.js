@@ -6,7 +6,7 @@ export const appConfig = {
   storageKey: "br-jewellers-frontend-v2",
   mockDatabaseKey: "br-jewellers-frontend-demo-db-v2",
   defaultLanguage: "en",
-  defaultCurrency: "INR",
+  defaultCurrency: "USD",
   supportedLanguages: [
     { value: "en", label: "English" },
     { value: "hi", label: "Hindi" },
@@ -14,16 +14,13 @@ export const appConfig = {
   supportedCurrencies: [
     { value: "INR", label: "INR" },
     { value: "USD", label: "USD" },
-    { value: "EUR", label: "EUR" },
   ],
   currencyRates: {
     INR: 1,
     USD: 0.012,
-    EUR: 0.011,
   },
   countryCurrencyMap: {
     IN: "INR",
     US: "USD",
-    EU: "EUR",
   },
 };

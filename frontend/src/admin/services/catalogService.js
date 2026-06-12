@@ -52,21 +52,17 @@ const resolveCategory = (db, payload) => {
 export const normalizeApiProduct = (product = {}) => {
   const rawVariants = Array.isArray(product.variants) ? product.variants : [];
   const variants = rawVariants.map((v) => {
-    // Map attributes Map/object to top level variant keys for frontend compatibility
+    // Map attributes Map/object to top-level variant keys for frontend compatibility
     const attrs = {};
     if (v.attributes) {
       if (typeof v.attributes.get === "function") {
-        v.attributes.forEach((val, key) => {
-          attrs[key] = val;
-        });
+        v.attributes.forEach((val, key) => { attrs[key] = val; });
       } else {
-        Object.entries(v.attributes).forEach(([key, val]) => {
-          attrs[key] = val;
-        });
+        Object.entries(v.attributes).forEach(([key, val]) => { attrs[key] = val; });
       }
     }
 
-    // Map prices array back to price: { INR, USD }
+    // Map prices array → price: { INR, USD }
     const price = { INR: 0, USD: 0 };
     if (Array.isArray(v.prices)) {
       v.prices.forEach((p) => {
@@ -75,19 +71,18 @@ export const normalizeApiProduct = (product = {}) => {
       });
     }
 
-    // Extract image URLs from variant images
     const images = Array.isArray(v.images)
       ? v.images.map((img) => (typeof img === "string" ? img : img?.url)).filter(Boolean)
       : [];
 
     return {
       sku: v.sku || "",
-      name: attrs.name || product.name || "",
+      name: attrs.name || "",
       material: attrs.material || "Gold",
       color: attrs.color || "Gold",
       purity: attrs.purity || "22K",
       size: attrs.size || "One Size",
-      stock: Number(attrs.stock || 0),
+      stock: Number(attrs.stock ?? 0),
       isAvailable: v.isAvailable !== false,
       isDefault: Boolean(v.isDefault),
       price,
@@ -98,7 +93,7 @@ export const normalizeApiProduct = (product = {}) => {
 
   const variantPrices = variants
     .map((v) => Number(v.price?.INR))
-    .filter((price) => Number.isFinite(price) && price > 0);
+    .filter((p) => Number.isFinite(p) && p > 0);
 
   const price = Number(product.priceRange?.min ?? product.price ?? variantPrices[0] ?? 0);
   const originalPrice = Number(
@@ -107,37 +102,36 @@ export const normalizeApiProduct = (product = {}) => {
 
   const colors = variants.length
     ? variants
-        .map((v) => v.color)
-        .filter(Boolean)
-        .filter((color, index, entries) => entries.indexOf(color) === index)
-        .map((color) => ({ name: color, code: "#D9A44F" }))
+        .map((v) => v.color).filter(Boolean)
+        .filter((c, i, arr) => arr.indexOf(c) === i)
+        .map((c) => ({ name: c, code: "#D9A44F" }))
     : normalizeColors(product.colors || ["Gold"]);
 
   const sizes = variants.length
-    ? variants
-        .map((v) => v.size)
-        .filter(Boolean)
-        .filter((size, index, entries) => entries.indexOf(size) === index)
+    ? variants.map((v) => v.size).filter(Boolean).filter((s, i, arr) => arr.indexOf(s) === i)
     : parseList(product.sizes, ["One Size"]);
 
   const stock = variants.length
     ? variants.reduce((total, v) => total + Number(v.stock || 0), 0)
     : Number(product.stock || 0);
 
-  const imageList = [product.coverImage, ...(Array.isArray(product.images) ? product.images : [])].filter(Boolean);
+  const imageList = [
+    product.coverImage,
+    ...(Array.isArray(product.images) ? product.images : []),
+  ].filter(Boolean);
 
-  // Extract gemstone, badge, occasions from tags
-  let gemstone = "Gold";
+  // --- Gemstone: prefer top-level field, fall back to tag scan ---
+  let gemstone = product.gemstone || "";
   let badge = "BR Edit";
-  let occasions = [];
-  if (Array.isArray(product.tags)) {
+  if (!gemstone && Array.isArray(product.tags)) {
     const gemTags = ["diamond", "gold", "ruby", "emerald", "sapphire", "platinum", "silver", "pearl"];
-    const foundGem = product.tags.find((t) => gemTags.includes(t.toLowerCase()));
-    if (foundGem) {
-      gemstone = foundGem.charAt(0).toUpperCase() + foundGem.slice(1);
-      badge = gemstone;
-    }
+    const found = product.tags.find((t) => gemTags.includes(String(t).toLowerCase()));
+    if (found) gemstone = found.charAt(0).toUpperCase() + found.slice(1);
   }
+  if (gemstone) badge = gemstone;
+
+  // --- Occasions: prefer top-level field ---
+  const occasions = Array.isArray(product.occasions) ? product.occasions : [];
 
   return {
     id: product._id || product.id,
@@ -145,17 +139,23 @@ export const normalizeApiProduct = (product = {}) => {
     slug: product.slug || "",
     name: product.name || "Untitled product",
     categoryId: product.category || "",
+    // category field from API is the ObjectId or name — store as-is, display as-is
     category: product.category || "Unassigned",
-    gemstone,
+    gemstone: gemstone || "Gold",
+    badge,
     coverImage: product.coverImage || imageList[0] || "",
     price,
     originalPrice: originalPrice || price,
+    // Preserve priceRange so admin form can read min/max directly
+    priceRange: {
+      min: product.priceRange?.min ?? price,
+      max: product.priceRange?.max ?? originalPrice,
+    },
     description: product.description || "Premium jewellery item.",
     details: product.description || "Crafted with BR Jewellers quality standards.",
     colors,
     sizes,
     featured: Boolean(product.featured),
-    badge,
     stock,
     tags: Array.isArray(product.tags) ? product.tags : [],
     occasions,
@@ -175,43 +175,49 @@ const mapFormToBackendPayload = (payload = {}) => {
   const shortDescription = payload.shortDescription?.trim() || "";
   const coverImage = payload.coverImage || "";
   const isActive = payload.isActive !== false;
-  const category = payload.category || payload.categoryId || "";
+  const category = payload.category || "";
 
   const galleryImages = parseList(payload.images).filter((img) => img && img !== coverImage);
 
-  // Combine tags, gemstone, and occasions into tags
+  // Tags — deduplicate, lowercase
   const tagsSet = new Set();
   parseList(payload.tags).forEach((t) => tagsSet.add(t.toLowerCase()));
   if (payload.gemstone) tagsSet.add(payload.gemstone.toLowerCase());
   if (payload.badge) tagsSet.add(payload.badge.toLowerCase());
-  parseList(payload.occasions).forEach((o) => tagsSet.add(o.toLowerCase()));
   const tags = Array.from(tagsSet);
+
+  // Occasions — top-level array (not merged into tags)
+  const occasions = parseList(payload.occasions).filter(Boolean);
+
+  // Gemstone — top-level string
+  const gemstone = payload.gemstone?.trim() || "";
 
   const rawVariants = Array.isArray(payload.variants) ? payload.variants : [];
   const variants = rawVariants.map((variant) => {
+    // Auto-generate variant name from attributes if not explicitly set
+    const autoName = [variant.material, variant.color, variant.purity, variant.size]
+      .map((v) => String(v || "").trim()).filter(Boolean).join("-").toLowerCase();
+
     const attributes = {};
     if (variant.material) attributes.material = String(variant.material);
     if (variant.color) attributes.color = String(variant.color);
     if (variant.purity) attributes.purity = String(variant.purity);
     if (variant.size) attributes.size = String(variant.size);
     if (variant.stock !== undefined) attributes.stock = String(variant.stock);
-    if (variant.name) attributes.name = String(variant.name);
+    // name goes into attributes per backend schema
+    attributes.name = variant.name?.trim() || autoName || "Default";
 
-    const prices = [];
     const inrVal = Number(variant.price?.INR ?? variant.price ?? 0);
     const usdVal = Number(variant.price?.USD ?? variant.usdPrice ?? Math.round(inrVal * 0.012));
+    const prices = [];
     if (inrVal > 0) prices.push({ currency: "INR", amount: inrVal });
     if (usdVal > 0) prices.push({ currency: "USD", amount: usdVal });
 
-    const variantImages = [];
-    const vImages = parseList(variant.images || variant.image_url);
-    vImages.forEach((imgUrl) => {
-      variantImages.push({ url: imgUrl, key: "" });
-    });
+    const variantImages = parseList(variant.images || variant.image_url)
+      .map((imgUrl) => ({ url: imgUrl, key: "" }));
 
     return {
       sku: variant.sku ? String(variant.sku) : undefined,
-      isAvailable: variant.isAvailable !== false,
       isDefault: Boolean(variant.isDefault),
       attributes,
       prices,
@@ -219,6 +225,7 @@ const mapFormToBackendPayload = (payload = {}) => {
     };
   });
 
+  // If no variants provided, create a single default variant
   if (variants.length === 0) {
     const priceVal = Number(payload.price ?? payload.priceRange?.min ?? 0);
     const usdPriceVal = Number(payload.usdPrice ?? Math.round(priceVal * 0.012));
@@ -226,26 +233,21 @@ const mapFormToBackendPayload = (payload = {}) => {
     const colors = parseList(payload.colors, ["Gold"]);
     const sizes = parseList(payload.sizes, ["One Size"]);
 
-    const attributes = {
-      material: payload.material || "Gold",
-      color: colors[0] || "Gold",
-      purity: payload.purity || "22K",
-      size: sizes[0] || "One Size",
-      stock: String(stockVal),
-      name: name,
-    };
-
-    const prices = [
-      { currency: "INR", amount: priceVal },
-      { currency: "USD", amount: usdPriceVal },
-    ];
-
     variants.push({
       sku: payload.sku || undefined,
-      isAvailable: true,
       isDefault: true,
-      attributes,
-      prices,
+      attributes: {
+        material: payload.material || "Gold",
+        color: colors[0] || "Gold",
+        purity: payload.purity || "22K",
+        size: sizes[0] || "One Size",
+        stock: String(stockVal),
+        name: name,
+      },
+      prices: [
+        { currency: "INR", amount: priceVal },
+        { currency: "USD", amount: usdPriceVal },
+      ],
       images: galleryImages.map((url) => ({ url, key: "" })),
     });
   }
@@ -258,8 +260,15 @@ const mapFormToBackendPayload = (payload = {}) => {
     coverImage,
     images: galleryImages,
     tags,
+    occasions,
+    gemstone,
     category,
     isActive,
+    // Send priceRange explicitly so backend can index min/max
+    priceRange: {
+      min: Number(payload.priceRange?.min ?? 0),
+      max: Number(payload.priceRange?.max ?? 0),
+    },
     variants,
   };
 };
@@ -317,7 +326,11 @@ export const catalogService = {
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
-      if (options.includeInactive) params.set("isActive", "all");
+      if (options.includeInactive) {
+        params.set("isActive", "all");
+      } else if (options.isActive !== undefined) {
+        params.set("isActive", String(options.isActive));
+      }
 
       const products = await apiClient.request(`/api/v1/product/list${params.toString() ? `?${params}` : ""}`);
       const query = search.trim().toLowerCase();
@@ -468,6 +481,19 @@ export const catalogService = {
   },
 
   async toggleFeatured(productId) {
+    try {
+      const product = await catalogService.getProductById(productId);
+      const nextFeatured = !product.featured;
+      await apiClient.request(`/api/v1/product/${productId}`, {
+        method: "PATCH",
+        auth: true,
+        body: { featured: nextFeatured },
+      });
+      return true;
+    } catch (error) {
+      if (!isApiFallbackError(error)) throw error;
+    }
+
     return mockApiClient.mutate((db) => {
       const product = db.products.find((entry) => entry.id === productId);
       if (!product) throw new Error("Product not found.");

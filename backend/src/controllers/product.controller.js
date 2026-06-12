@@ -222,7 +222,7 @@ export const bulkImportProducts = async (req, res, next) => {
     }
 
     // Standard columns for Product / Variant
-    const standardProductFields = ["name", "slug", "description", "shortDescription", "coverImage", "category"];
+    const standardProductFields = ["name", "slug", "description", "shortDescription", "coverImage", "category", "gemstone", "occasions", "featured"];
     const standardVariantFields = ["sku", "price_INR", "price_USD", "isDefault", "image_url"];
 
     const productsMap = {};
@@ -243,6 +243,7 @@ export const bulkImportProducts = async (req, res, next) => {
       }
 
       if (!productsMap[productName]) {
+        const featuredVal = row.featured === true || row.featured === "true" || row.featured === 1 || row.featured === "1" || String(row.featured || "").toLowerCase() === "yes";
         productsMap[productName] = {
           name: productName,
           slug: row.slug || productName.toLowerCase().replace(/ /g, "-"),
@@ -250,6 +251,9 @@ export const bulkImportProducts = async (req, res, next) => {
           shortDescription: row.shortDescription || "",
           coverImage: row.coverImage || "",
           category: row.category || "",
+          gemstone: row.gemstone || "",
+          occasions: row.occasions ? String(row.occasions).split(",").map((o) => o.trim()).filter(Boolean) : [],
+          featured: featuredVal,
           variants: []
         };
       }
@@ -278,6 +282,25 @@ export const bulkImportProducts = async (req, res, next) => {
     }
 
     const productsToInsert = Object.values(productsMap);
+
+    // Compute priceRange for each product based on variant prices
+    for (const product of productsToInsert) {
+      const inrPrices = [];
+      for (const variant of product.variants) {
+        const inrPrice = variant.prices.find((p) => p.currency === "INR")?.amount;
+        if (inrPrice !== undefined && !Number.isNaN(inrPrice)) {
+          inrPrices.push(inrPrice);
+        }
+      }
+      if (inrPrices.length > 0) {
+        product.priceRange = {
+          min: Math.min(...inrPrices),
+          max: Math.max(...inrPrices)
+        };
+      } else {
+        product.priceRange = { min: 0, max: 0 };
+      }
+    }
 
     await models.Product.insertMany(productsToInsert, { ordered: false });
 

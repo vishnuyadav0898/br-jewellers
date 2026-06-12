@@ -41,19 +41,19 @@ router.post(
 );
 
 router.patch(
-  "/:id",
-  verifyJWT(JWT_SECRET),
-  requireAdmin,
-  validate(productValidation.update),
-  updateProduct
-);
-
-router.patch(
   "/status/:id",
   verifyJWT(JWT_SECRET),
   requireAdmin,
   validate(productValidation.updateStatus),
   updateProductStatus
+);
+
+router.patch(
+  "/:id",
+  verifyJWT(JWT_SECRET),
+  requireAdmin,
+  validate(productValidation.update),
+  updateProduct
 );
 
 router.delete("/:id", verifyJWT(JWT_SECRET), requireAdmin, deleteProduct);

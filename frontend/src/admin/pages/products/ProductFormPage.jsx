@@ -60,6 +60,7 @@ const defaultForm = {
   },
   variants: [emptyVariant()],
   isActive: true,
+  featured: false,
 };
 
 const toTextArray = (items = []) => (items.length ? items : [""]);
@@ -68,12 +69,16 @@ const mapProductToForm = (product) => ({
   name: product.name || "",
   description: product.description || "",
   coverImage: product.coverImage || product.images?.[0] || "",
+  // Exclude coverImage from gallery list
   images: toTextArray((product.images || []).filter((image) => image !== product.coverImage)),
   tags: toTextArray(product.tags || []),
+  // gemstone: prefer top-level gemstone field (now preserved by normalizeApiProduct)
   gemstone: product.gemstone || product.badge || "",
+  // occasions: now a top-level array preserved in normalization
   occasions: toTextArray(product.occasions || []),
-  category: product.categoryId || product.category || "",
+  category: product.category || "",
   priceRange: {
+    // priceRange is now explicitly preserved in normalizeApiProduct
     min: String(product.priceRange?.min ?? product.price ?? ""),
     max: String(product.priceRange?.max ?? product.originalPrice ?? ""),
   },
@@ -91,11 +96,13 @@ const mapProductToForm = (product) => ({
         },
       }))
     : [emptyVariant()],
-  isActive: product.status ? product.status !== "Inactive" : true,
+  isActive: product.isActive !== false,
+  featured: Boolean(product.featured),
 });
 
 const compactPayload = (form) => ({
   ...form,
+  featured: Boolean(form.featured),
   images: form.images.map((item) => item.trim()).filter(Boolean),
   tags: form.tags.map((item) => item.trim()).filter(Boolean),
   occasions: form.occasions.map((item) => item.trim()).filter(Boolean),
@@ -178,7 +185,7 @@ export function ProductFormPage() {
     }
 
     if (!isEdit && categoriesQuery.data?.length && !form.category) {
-      setForm((current) => ({ ...current, category: categoriesQuery.data[0].name || categoriesQuery.data[0].id }));
+      setForm((current) => ({ ...current, category: categoriesQuery.data[0].name }));
     }
   }, [categoriesQuery.data, form.category, isEdit, productQuery.data]);
 
@@ -299,7 +306,7 @@ export function ProductFormPage() {
                 >
                   <option value="">Select category</option>
                   {(categoriesQuery.data || []).map((category) => (
-                    <option key={category.id || category.name} value={category.name || category.id}>
+                    <option key={category.name} value={category.name}>
                       {category.name}
                     </option>
                   ))}
@@ -308,9 +315,13 @@ export function ProductFormPage() {
               </label>
               <Input label="Minimum price" type="number" required error={errors.priceRange} value={form.priceRange.min} onChange={(event) => updatePriceRange("min", event.target.value)} />
               <Input label="Maximum price" type="number" required value={form.priceRange.max} onChange={(event) => updatePriceRange("max", event.target.value)} />
-              <label className="flex items-center gap-3 rounded-3xl border border-gold-100 bg-gold-50 px-4 py-3 text-sm font-medium text-stone-700">
+              <label className="flex items-center gap-3 rounded-3xl border border-gold-100 bg-gold-50 px-4 py-3 text-sm font-medium text-stone-700 cursor-pointer">
                 <input type="checkbox" checked={form.isActive} onChange={(event) => updateField("isActive", event.target.checked)} />
                 Active product
+              </label>
+              <label className="flex items-center gap-3 rounded-3xl border border-gold-100 bg-gold-50 px-4 py-3 text-sm font-medium text-stone-700 cursor-pointer">
+                <input type="checkbox" checked={form.featured} onChange={(event) => updateField("featured", event.target.checked)} />
+                Featured product
               </label>
             </div>
             <div className="mt-4">

@@ -9,6 +9,8 @@ import { storefrontService } from "../services/storefrontService";
 import { ProductCard } from "../components/ProductCard";
 import { Button } from "../../shared/components/Button";
 
+import { MetalRatesWidget } from "../../shared/components/MetalRatesWidget";
+
 export function HomePage() {
   const { t, resolveValue } = useLocale();
   const queryClient = useQueryClient();
@@ -79,6 +81,8 @@ export function HomePage() {
         ))}
       </section>
 
+      <MetalRatesWidget />
+
       <section className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -89,12 +93,10 @@ export function HomePage() {
               {resolveValue(homeContent.featuredTitle, t("home.featuredTitle"))}
             </h2>
           </div>
-          <div className="rounded-full bg-[#f7ecd6] px-4 py-2 text-sm text-[#7a541c]">
-            {t("home.samplePrice", { value: formatFromInr(featuredProducts[0]?.price || 0) })}
-          </div>
+
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {featuredProducts.map((product) => (
             <ProductCard
               key={product.id}
