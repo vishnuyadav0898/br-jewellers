@@ -33,6 +33,7 @@ const getPurityOptions = (currentValue) => {
 };
 
 const emptyVariant = () => ({
+  sku: "",
   name: "",
   material: "Gold",
   color: "",
@@ -84,6 +85,7 @@ const mapProductToForm = (product) => ({
   },
   variants: product.variants?.length
     ? product.variants.map((variant) => ({
+        sku: variant.sku || "",
         name: variant.name || "",
         material: variant.material || "Gold",
         color: variant.color || "",
@@ -376,6 +378,12 @@ export function ProductFormPage() {
                     </Button>
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
+                    <Input
+                      label="SKU"
+                      placeholder="e.g. RING-GOLD-22K-S"
+                      value={variant.sku}
+                      onChange={(event) => updateVariant(index, "sku", event.target.value)}
+                    />
                     <label className="block space-y-2">
                       <span className="text-sm font-medium text-stone-700">
                         Material<span className="ml-1 text-rose-500">*</span>

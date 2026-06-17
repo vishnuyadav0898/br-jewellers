@@ -212,12 +212,14 @@ export const storefrontService = {
 
     return {
       ...content,
-      featuredProducts: products.slice(0, 6).map((product) => ({
-        ...product,
-        rating: 0,
-        reviewCount: 0,
-        isFavorite: false,
-      })),
+      featuredProducts: products
+        .filter((product) => product.featured === true)
+        .map((product) => ({
+          ...product,
+          rating: 0,
+          reviewCount: 0,
+          isFavorite: false,
+        })),
       categories,
     };
   },

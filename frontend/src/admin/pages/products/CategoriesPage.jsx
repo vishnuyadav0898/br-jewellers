@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Plus, Search, Trash2 } from "lucide-react";
+import { Edit, Plus, Power, Search, Trash2 } from "lucide-react";
 import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
 import { Modal } from "../../../shared/components/Modal";
@@ -17,7 +17,7 @@ import { catalogService } from "../../services/catalogService";
 const defaultForm = {
   name: "",
   description: "",
-  featured: false,
+  isActive: true,
 };
 
 export function CategoriesPage() {
@@ -29,6 +29,8 @@ export function CategoriesPage() {
   const [saving, setSaving] = useState(false);
   const [deletingCategory, setDeletingCategory] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
+
   const categoriesQuery = useQuery({
     queryKey: queryKeys.adminCategories,
     queryFn: catalogService.getCategories,
@@ -50,9 +52,25 @@ export function CategoriesPage() {
     setForm({
       name: category.name || "",
       description: category.description || "",
-      featured: category.featured || false,
+      isActive: category.isActive !== false,
     });
     setErrors({});
+  };
+
+  const handleToggleStatus = async (category) => {
+    setTogglingId(category.id);
+    try {
+      await catalogService.updateCategoryStatus(category.id, !category.isActive);
+      notify.success(
+        `Category marked as ${!category.isActive ? "Active" : "Inactive"}.`,
+        { title: "Status updated" }
+      );
+      refreshCategories();
+    } catch (error) {
+      notify.error(error.message);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const handleDelete = async () => {
@@ -61,9 +79,7 @@ export function CategoriesPage() {
 
     try {
       await catalogService.deleteCategory(deletingCategory.id);
-      notify.success("Category deleted.", {
-        title: "Category removed",
-      });
+      notify.success("Category deleted.", { title: "Category removed" });
       refreshCategories();
       setDeletingCategory(null);
     } catch (error) {
@@ -83,9 +99,11 @@ export function CategoriesPage() {
     { key: "name", header: "Category" },
     { key: "description", header: "Description" },
     {
-      key: "featured",
+      key: "isActive",
       header: "Status",
-      render: (row) => <AdminStatusBadge value={row.featured ? "Featured" : "Standard"} />,
+      render: (row) => (
+        <AdminStatusBadge value={row.isActive !== false ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",
@@ -104,6 +122,17 @@ export function CategoriesPage() {
           </Button>
           <Button
             type="button"
+            tone="secondary"
+            size="sm"
+            onClick={() => handleToggleStatus(row)}
+            loading={togglingId === row.id}
+            title={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
+            aria-label={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
+          >
+            <Power className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
             tone="danger"
             size="sm"
             onClick={() => setDeletingCategory(row)}
@@ -116,6 +145,7 @@ export function CategoriesPage() {
       ),
     },
   ];
+
   const filteredCategories = (categoriesQuery.data || []).filter((category) => {
     const query = search.trim().toLowerCase();
     if (!query) return true;
@@ -158,6 +188,7 @@ export function CategoriesPage() {
         </AdminPanel>
       </AdminDataState>
 
+      {/* Create / Edit Modal */}
       <Modal
         open={Boolean(activeCategory)}
         onClose={closeModal}
@@ -179,14 +210,10 @@ export function CategoriesPage() {
               setErrors({});
               if (activeCategory?.id === "new") {
                 await catalogService.createCategory(parsed.data);
-                notify.success("Category created.", {
-                  title: "New category added",
-                });
+                notify.success("Category created.", { title: "New category added" });
               } else {
                 await catalogService.updateCategory(activeCategory.id, parsed.data);
-                notify.success("Category updated.", {
-                  title: "Category changes saved",
-                });
+                notify.success("Category updated.", { title: "Category changes saved" });
               }
               refreshCategories();
               closeModal();
@@ -213,13 +240,13 @@ export function CategoriesPage() {
             value={form.description}
             onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
           />
-          <label className="flex items-center gap-3 rounded-3xl border border-[#dcc8a1] bg-[#fffaf1] px-4 py-3 text-sm font-medium text-stone-700">
+          <label className="flex items-center gap-3 rounded-3xl border border-[#dcc8a1] bg-[#fffaf1] px-4 py-3 text-sm font-medium text-stone-700 cursor-pointer">
             <input
               type="checkbox"
-              checked={form.featured}
-              onChange={(event) => setForm((current) => ({ ...current, featured: event.target.checked }))}
+              checked={form.isActive}
+              onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
             />
-            Featured category
+            Active (visible to customers)
           </label>
           <div className="flex justify-end gap-3">
             <Button type="button" tone="secondary" onClick={closeModal}>
@@ -232,6 +259,7 @@ export function CategoriesPage() {
         </form>
       </Modal>
 
+      {/* Delete Confirm Modal */}
       <Modal
         open={Boolean(deletingCategory)}
         onClose={() => setDeletingCategory(null)}
@@ -240,13 +268,26 @@ export function CategoriesPage() {
       >
         <div className="flex flex-col gap-4 w-full">
           <p className="text-sm text-stone-600 w-full">
-            Are you sure you want to delete <span className="font-semibold text-espresso">{deletingCategory?.name}</span>? This action cannot be undone.
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-espresso">{deletingCategory?.name}</span>? This action cannot be undone.
           </p>
           <div className="flex w-full gap-3 mt-2">
-            <Button type="button" tone="secondary" className="flex-1 w-full" disabled={deleting} onClick={() => setDeletingCategory(null)}>
+            <Button
+              type="button"
+              tone="secondary"
+              className="flex-1 w-full"
+              disabled={deleting}
+              onClick={() => setDeletingCategory(null)}
+            >
               Cancel
             </Button>
-            <Button type="button" tone="danger" className="flex-1 w-full" loading={deleting} onClick={handleDelete}>
+            <Button
+              type="button"
+              tone="danger"
+              className="flex-1 w-full"
+              loading={deleting}
+              onClick={handleDelete}
+            >
               Delete
             </Button>
           </div>
