@@ -1,4 +1,4 @@
-import { Heart, ShoppingBag, Star, Loader2 } from "lucide-react";
+import { Heart, ShoppingBag, Star, Loader2, Minus, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useLocation } from "react-router-dom";
@@ -43,6 +43,13 @@ export function ProductDetailsPage() {
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [selectedPurity, setSelectedPurity] = useState("");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
+
+  const cartQuery = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => storefrontService.getCart(user.id),
+    enabled: Boolean(isAuthenticated && user?.id),
+  });
 
   const productQuery = useQuery({
     queryKey: ["product", productIdentifier],
@@ -127,6 +134,12 @@ export function ProductDetailsPage() {
       (!selectedSize || v.size === selectedSize) &&
       (!selectedMaterial || v.material === selectedMaterial) &&
       (!selectedPurity || v.purity === selectedPurity)
+  );
+
+  const cartItem = cartQuery.data?.items?.find(
+    (item) =>
+      item.productId === product.id &&
+      (!matchingVariant?.sku || item.sku === matchingVariant?.sku)
   );
 
   const getPricesDisplay = () => {
@@ -333,43 +346,93 @@ export function ProductDetailsPage() {
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              disabled={isAddingToCart || (product.variants?.length && !matchingVariant)}
-              onClick={async () => {
-                if (!isAuthenticated) {
-                  openAuthModal("login", routes.appCart);
-                  return;
-                }
+          <div className="flex flex-wrap gap-3 items-center">
+            {cartItem ? (
+              <div className="inline-flex h-11 items-center justify-between gap-4 rounded-full border border-[#dcc8a1] bg-white px-4 py-1.5 shadow-sm">
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  disabled={isUpdatingQuantity}
+                  className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50 text-[#1a120e] flex items-center justify-center"
+                  onClick={async () => {
+                    setIsUpdatingQuantity(true);
+                    try {
+                      await storefrontService.updateCartQuantity(user.id, cartItem.id, cartItem.quantity - 1);
+                      queryClient.invalidateQueries({ queryKey: ["cart"] });
+                    } catch (err) {
+                      notify.error(err.message || "Failed to update quantity");
+                    } finally {
+                      setIsUpdatingQuantity(false);
+                    }
+                  }}
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="min-w-8 text-center text-base font-semibold text-[#1a120e]">
+                  {isUpdatingQuantity ? (
+                    <Loader2 className="h-4 w-4 animate-spin mx-auto text-[#b88733]" />
+                  ) : (
+                    cartItem.quantity
+                  )}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  disabled={isUpdatingQuantity}
+                  className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50 text-[#1a120e] flex items-center justify-center"
+                  onClick={async () => {
+                    setIsUpdatingQuantity(true);
+                    try {
+                      await storefrontService.updateCartQuantity(user.id, cartItem.id, cartItem.quantity + 1);
+                      queryClient.invalidateQueries({ queryKey: ["cart"] });
+                    } catch (err) {
+                      notify.error(err.message || "Failed to update quantity");
+                    } finally {
+                      setIsUpdatingQuantity(false);
+                    }
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                disabled={isAddingToCart || (product.variants?.length && !matchingVariant)}
+                onClick={async () => {
+                  if (!isAuthenticated) {
+                    openAuthModal("login", routes.appCart);
+                    return;
+                  }
 
-                const sku = matchingVariant?.sku;
-                if (!sku) {
-                  notify.error("This product variant is currently unavailable.");
-                  return;
-                }
+                  const sku = matchingVariant?.sku;
+                  if (!sku) {
+                    notify.error("This product variant is currently unavailable.");
+                    return;
+                  }
 
-                setIsAddingToCart(true);
-                try {
-                  await storefrontService.addToCart(user.id, product.id, sku);
-                  notify.success(`Added ${product.name} to cart.`, {
-                    title: "Cart updated",
-                    iconKey: "order",
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["cart"] });
-                } catch (err) {
-                  notify.error(err.message || "Failed to add to cart");
-                } finally {
-                  setIsAddingToCart(false);
-                }
-              }}
-            >
-              {isAddingToCart ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ShoppingBag className="h-4 w-4" />
-              )}
-              {isAddingToCart ? "Adding..." : "Add to cart"}
-            </Button>
+                  setIsAddingToCart(true);
+                  try {
+                    await storefrontService.addToCart(user.id, product.id, sku);
+                    notify.success(`Added ${product.name} to cart.`, {
+                      title: "Cart updated",
+                      iconKey: "order",
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["cart"] });
+                  } catch (err) {
+                    notify.error(err.message || "Failed to add to cart");
+                  } finally {
+                    setIsAddingToCart(false);
+                  }
+                }}
+              >
+                {isAddingToCart ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShoppingBag className="h-4 w-4" />
+                )}
+                {isAddingToCart ? "Adding..." : "Add to cart"}
+              </Button>
+            )}
             <Button
               tone="secondary"
               onClick={async () => {

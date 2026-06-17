@@ -9,16 +9,17 @@ const getProductReviews = (db, productId) =>
   (db.reviews || []).filter((entry) => entry.productId === productId);
 
 const enrichProduct = (db, product, userId = null) => {
-  const reviews = getProductReviews(db, product.id);
+  const normalized = catalogService.normalizeApiProduct(product);
+  const reviews = getProductReviews(db, normalized.id);
   const rating = reviews.length
     ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
     : 0;
 
   return {
-    ...product,
+    ...normalized,
     rating,
     reviewCount: reviews.length,
-    isFavorite: userId ? (db.favorites[userId] || []).includes(product.id) : false,
+    isFavorite: userId ? (db.favorites[userId] || []).includes(normalized.id) : false,
   };
 };
 

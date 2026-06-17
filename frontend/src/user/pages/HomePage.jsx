@@ -9,8 +9,6 @@ import { storefrontService } from "../services/storefrontService";
 import { ProductCard } from "../components/ProductCard";
 import { Button } from "../../shared/components/Button";
 
-import { MetalRatesWidget } from "../../shared/components/MetalRatesWidget";
-
 export function HomePage() {
   const { t, resolveValue } = useLocale();
   const queryClient = useQueryClient();
@@ -81,8 +79,6 @@ export function HomePage() {
         ))}
       </section>
 
-      <MetalRatesWidget />
-
       <section className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -96,24 +92,19 @@ export function HomePage() {
 
         </div>
 
-        {(() => {
-          const cols = Math.min(featuredProducts.length, 4) || 1;
-          return (
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-            >
-              {featuredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-                  onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot"] })}
-                />
-              ))}
-            </div>
-          );
-        })()}
+        <div
+          className="grid gap-6"
+          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
+        >
+          {featuredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
+              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot"] })}
+            />
+          ))}
+        </div>
       </section>
     </div>
   );

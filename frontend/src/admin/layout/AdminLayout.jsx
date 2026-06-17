@@ -1,7 +1,17 @@
+import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { useAppStore } from "../../shared/store/useAppStore";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { Loader } from "../../shared/components/Loader";
+
+function AdminLayoutLoader() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <Loader label="Loading admin view..." />
+    </div>
+  );
+}
 
 export function AdminLayout() {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
@@ -24,7 +34,9 @@ export function AdminLayout() {
         <div className="flex h-full flex-col">
           <Topbar />
           <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-            <Outlet />
+            <Suspense fallback={<AdminLayoutLoader />}>
+              <Outlet />
+            </Suspense>
           </main>
         </div>
       </div>

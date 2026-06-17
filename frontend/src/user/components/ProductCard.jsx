@@ -1,6 +1,6 @@
-import { Heart, Loader2, Gem } from "lucide-react";
+import { Heart, Loader2, Gem, Minus, Plus } from "lucide-react";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { Button } from "../../shared/components/Button";
@@ -24,10 +24,19 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
   const { isAuthenticated, openAuthModal, user } = useSession();
   const queryClient = useQueryClient();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  const cartQuery = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => storefrontService.getCart(user.id),
+    enabled: Boolean(isAuthenticated && user?.id),
+  });
+
+  const cartItem = cartQuery.data?.items?.find((item) => item.productId === product.id);
+
   return (
-    <article className="group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full max-w-[380px] mx-auto flex flex-col h-full">
+    <article className="group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full flex flex-col h-full">
       <div className="relative">
         <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="block aspect-[4/4.3] overflow-hidden bg-[#f9f0de]">
           {imageError || !product.images?.[0] ? (
@@ -102,53 +111,63 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
             >
               {t("productCard.viewDetails")}
             </Link>
-            <Button
-              tone="accent"
-              disabled={isAddingToCart}
-              className="h-9 sm:h-11 px-2 text-[10px] sm:text-xs font-semibold w-full"
-              onClick={async () => {
-                if (!isAuthenticated) {
-                  openAuthModal("login", routes.appCart);
-                  return;
-                }
+            {cartItem ? (
+              <Button
+                tone="secondary"
+                disabled
+                className="h-9 sm:h-11 px-2 text-[10px] sm:text-xs font-semibold w-full opacity-65 cursor-not-allowed border-[#dbc8a2] bg-[#fdfaf2] text-[#8a5d18]"
+              >
+                {t("productCard.added")}
+              </Button>
+            ) : (
+              <Button
+                tone="accent"
+                disabled={isAddingToCart}
+                className="h-9 sm:h-11 px-2 text-[10px] sm:text-xs font-semibold w-full"
+                onClick={async () => {
+                  if (!isAuthenticated) {
+                    openAuthModal("login", routes.appCart);
+                    return;
+                  }
 
-                // Resolve SKU from already-loaded product variants — no extra API call
-                const variant =
-                  product.variants?.find((v) => v.isDefault && v.sku) ||
-                  product.variants?.find((v) => v.isAvailable !== false && v.sku) ||
-                  product.variants?.[0];
+                  // Resolve SKU from already-loaded product variants — no extra API call
+                  const variant =
+                    product.variants?.find((v) => v.isDefault && v.sku) ||
+                    product.variants?.find((v) => v.isAvailable !== false && v.sku) ||
+                    product.variants?.[0];
 
-                const sku = variant?.sku;
-                if (!sku) {
-                  notify.error("This product is currently unavailable.");
-                  return;
-                }
+                  const sku = variant?.sku;
+                  if (!sku) {
+                    notify.error("This product is currently unavailable.");
+                    return;
+                  }
 
-                setIsAddingToCart(true);
-                try {
-                  await storefrontService.addToCart(user.id, product.id, sku);
-                  notify.success(t("productCard.addedToCart"), {
-                    title: t("productCard.cartUpdated"),
-                    iconKey: "order",
-                  });
-                  queryClient.invalidateQueries({ queryKey: ["cart"] });
-                  onAdded?.();
-                } catch (err) {
-                  notify.error(err.message || "Failed to add to cart");
-                } finally {
-                  setIsAddingToCart(false);
-                }
-              }}
-            >
-              {isAddingToCart ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                t("productCard.addToCart")
-              )}
-            </Button>
+                  setIsAddingToCart(true);
+                  try {
+                    await storefrontService.addToCart(user.id, product.id, sku);
+                    notify.success(t("productCard.addedToCart"), {
+                      title: t("productCard.cartUpdated"),
+                      iconKey: "order",
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["cart"] });
+                    onAdded?.();
+                  } catch (err) {
+                    notify.error(err.message || "Failed to add to cart");
+                  } finally {
+                    setIsAddingToCart(false);
+                  }
+                }}
+              >
+                {isAddingToCart ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  t("productCard.addToCart")
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>

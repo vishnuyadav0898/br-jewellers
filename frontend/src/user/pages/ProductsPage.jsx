@@ -10,7 +10,6 @@ import { storefrontService } from "../services/storefrontService";
 import { catalogService } from "../../admin/services/catalogService";
 import { ProductCard } from "../components/ProductCard";
 
-import { MetalRatesWidget } from "../../shared/components/MetalRatesWidget";
 
 export function ProductsPage() {
   const { t } = useLocale();
@@ -160,7 +159,6 @@ export function ProductsPage() {
         </div>
       </section>
 
-      <MetalRatesWidget />
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         {/* Desktop Persistent Sidebar */}
