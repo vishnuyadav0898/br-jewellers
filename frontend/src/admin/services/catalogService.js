@@ -50,7 +50,38 @@ const resolveCategory = (db, payload) => {
 };
 
 export const normalizeApiProduct = (product = {}) => {
-  const rawVariants = Array.isArray(product.variants) ? product.variants : [];
+  const rawVariants = Array.isArray(product.variants) ? [...product.variants] : [];
+  if (rawVariants.length === 0) {
+    const priceVal = Number(product.price ?? product.priceRange?.min ?? 0);
+    const usdPriceVal = Number(product.usdPrice ?? Math.round(priceVal * 0.012));
+    const stockVal = Number(product.stock ?? 10);
+    const colorsList = parseList(product.colors || ["Gold"]);
+    const sizesList = parseList(product.sizes || ["One Size"]);
+    const imageList = [
+      product.coverImage,
+      ...(Array.isArray(product.images) ? product.images : []),
+    ].filter(Boolean);
+
+    rawVariants.push({
+      sku: product.sku || `SKU-${toTitleSlug(product.name || "item")}-DEFAULT`.toUpperCase(),
+      isDefault: true,
+      isAvailable: true,
+      attributes: {
+        material: product.gemstone || "Gold",
+        color: typeof colorsList[0] === "object" ? colorsList[0].name : colorsList[0] || "Gold",
+        purity: "22K",
+        size: sizesList[0] || "One Size",
+        stock: String(stockVal),
+        name: product.name || "Default",
+      },
+      prices: [
+        { currency: "INR", amount: priceVal },
+        { currency: "USD", amount: usdPriceVal },
+      ],
+      images: imageList.map((url) => ({ url, key: "" })),
+    });
+  }
+
   const variants = rawVariants.map((v) => {
     // Map attributes Map/object to top-level variant keys for frontend compatibility
     const attrs = {};
@@ -76,7 +107,7 @@ export const normalizeApiProduct = (product = {}) => {
       : [];
 
     return {
-      sku: v.sku || "",
+      sku: v.sku || `SKU-${toTitleSlug(product.name || "item")}-DEFAULT`.toUpperCase(),
       name: attrs.name || "",
       material: attrs.material || "Gold",
       color: attrs.color || "Gold",
@@ -361,6 +392,7 @@ export const catalogService = {
             .filter(Boolean)
             .some((value) => String(value).toLowerCase().includes(query));
         })
+        .map(normalizeApiProduct)
         .sort((left, right) => left.name.localeCompare(right.name));
     });
   },
@@ -376,7 +408,7 @@ export const catalogService = {
     return mockApiClient.query((db) => {
       const product = db.products.find((entry) => entry.id === identifier || entry.slug === identifier);
       if (!product) throw new Error("Product not found.");
-      return product;
+      return normalizeApiProduct(product);
     });
   },
 
@@ -396,6 +428,7 @@ export const catalogService = {
 
       return (featured.length ? featured : (initialData.products || []).filter((product) => product.featured))
         .filter((product) => product.featured)
+        .map(normalizeApiProduct)
         .sort((left, right) => left.name.localeCompare(right.name));
     });
   },

@@ -395,7 +395,8 @@ const writeDatabase = (value) => {
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const withDelay = async (handler) => {
-  await delay(220 + Math.round(Math.random() * 280));
+  // Reduced artificial delay to make the UI and database queries load instantly
+  await delay(10 + Math.round(Math.random() * 15));
   return handler();
 };
 
