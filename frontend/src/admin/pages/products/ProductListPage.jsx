@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Eye, EyeOff, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Edit, Eye, EyeOff, Plus, Search, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { routes } from "../../../config/routes";
 import { palette } from "../../../config/palette";
@@ -35,7 +35,6 @@ export function ProductListPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [selectedPurity, setSelectedPurity] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
 
   const deferredSearch = useDeferredValue(search);
 
@@ -226,17 +225,20 @@ export function ProductListPage() {
             </Button>
           }
         />
-        <div className="mt-5 flex flex-col gap-4">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,420px)_auto] items-center">
-            <Input
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by product name, category, gemstone, or tag"
-            />
-            <div className="flex gap-1 rounded-3xl bg-[#f5e9d4]/40 p-1 md:max-w-xs">
+        <div className="mt-5 flex flex-col gap-3">
+          {/* Row 1: Search + Status tabs */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <Input
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search by product name, category, gemstone, or tag"
+              />
+            </div>
+            <div className="flex gap-1 rounded-3xl bg-[#f5e9d4]/40 p-1">
               {[
                 [true, "Active"],
                 [false, "Inactive"],
@@ -249,10 +251,11 @@ export function ProductListPage() {
                     setStatusFilter(val);
                     setPage(1);
                   }}
-                  className={`flex-1 rounded-3xl py-2 text-center text-xs font-semibold transition ${statusFilter === val
-                    ? "bg-gold-500 text-white shadow-md shadow-gold-100"
-                    : "text-stone-600 hover:bg-gold-50 hover:text-gold-700"
-                    }`}
+                  className={`rounded-3xl px-4 py-2 text-xs font-semibold transition ${
+                    statusFilter === val
+                      ? "bg-gold-500 text-white shadow-md shadow-gold-100"
+                      : "text-stone-600 hover:bg-gold-50 hover:text-gold-700"
+                  }`}
                 >
                   {label}
                 </button>
@@ -260,103 +263,55 @@ export function ProductListPage() {
             </div>
           </div>
 
+          {/* Row 2: Dropdowns + count + clear */}
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              tone="secondary"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-1.5"
+            <select
+              value={selectedCategory}
+              className="rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
+              onChange={(event) => { setSelectedCategory(event.target.value); setPage(1); }}
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              {showFilters ? "Hide Filters" : "More Filters"}
-              {(selectedCategory || selectedMaterial || selectedPurity) && (
-                <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-gold-500 text-[9px] font-bold text-white">
-                  !
-                </span>
-              )}
-            </Button>
+              <option value="">All Categories</option>
+              {(categoriesQuery.data || []).map((cat) => (
+                <option key={cat.id || cat.name} value={cat.name}>{cat.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedMaterial}
+              className="rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
+              onChange={(event) => { setSelectedMaterial(event.target.value); setPage(1); }}
+            >
+              <option value="">All Materials</option>
+              {["Gold", "Silver", "Platinum", "Rose Gold", "White Gold"].map((mat) => (
+                <option key={mat} value={mat}>{mat}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedPurity}
+              className="rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
+              onChange={(event) => { setSelectedPurity(event.target.value); setPage(1); }}
+            >
+              <option value="">All Purities</option>
+              {["24K", "22K", "18K", "14K"].map((pur) => (
+                <option key={pur} value={pur}>{pur}</option>
+              ))}
+            </select>
+
             {(selectedCategory || selectedMaterial || selectedPurity) && (
-              <Button
+              <button
                 type="button"
-                tone="danger"
-                size="sm"
-                onClick={() => {
-                  setSelectedCategory("");
-                  setSelectedMaterial("");
-                  setSelectedPurity("");
-                  setPage(1);
-                }}
+                className="rounded-3xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition"
+                onClick={() => { setSelectedCategory(""); setSelectedMaterial(""); setSelectedPurity(""); setPage(1); }}
               >
-                Clear Filters
-              </Button>
+                Clear filters
+              </button>
             )}
-          </div>
 
-          {showFilters && (
-            <div className="grid gap-3 sm:grid-cols-3 rounded-2xl border border-gold-100 bg-[#f5e9d4]/10 p-4 transition-all">
-              <label className="block space-y-1">
-                <span className="text-xs font-semibold text-stone-600">Category</span>
-                <select
-                  value={selectedCategory}
-                  className="w-full rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
-                  onChange={(event) => {
-                    setSelectedCategory(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">All Categories</option>
-                  {(categoriesQuery.data || []).map((cat) => (
-                    <option key={cat.id || cat.name} value={cat.name}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block space-y-1">
-                <span className="text-xs font-semibold text-stone-600">Material</span>
-                <select
-                  value={selectedMaterial}
-                  className="w-full rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
-                  onChange={(event) => {
-                    setSelectedMaterial(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">All Materials</option>
-                  {["Gold", "Silver", "Platinum", "Rose Gold", "White Gold"].map((mat) => (
-                    <option key={mat} value={mat}>
-                      {mat}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block space-y-1">
-                <span className="text-xs font-semibold text-stone-600">Purity</span>
-                <select
-                  value={selectedPurity}
-                  className="w-full rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
-                  onChange={(event) => {
-                    setSelectedPurity(event.target.value);
-                    setPage(1);
-                  }}
-                >
-                  <option value="">All Purities</option>
-                  {["24K", "22K", "18K", "14K"].map((pur) => (
-                    <option key={pur} value={pur}>
-                      {pur}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="ml-auto inline-flex items-center gap-1.5 text-xs text-stone-500">
+              <Search className="h-3.5 w-3.5 text-gold-700" />
+              {paginated.totalRows} product{paginated.totalRows === 1 ? "" : "s"}
             </div>
-          )}
-
-          <div className="inline-flex items-center gap-2 text-sm text-stone-500">
-            <Search className="h-4 w-4 text-gold-700" />
-            {paginated.totalRows} product{paginated.totalRows === 1 ? "" : "s"}
           </div>
         </div>
       </AdminPanel>

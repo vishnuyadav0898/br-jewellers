@@ -528,8 +528,9 @@ export const catalogService = {
         id,
         name,
         slug: toTitleSlug(name),
-        description: "",
-        productCount: 0,
+        description: category?.description || "",
+        isActive: category?.isActive !== false,
+        productCount: category?.productCount || 0,
       };
     });
   },
@@ -537,6 +538,8 @@ export const catalogService = {
   async createCategory(payload) {
     await apiClient.post("/api/v1/category/create", {
       name: payload.name.trim(),
+      description: payload.description?.trim() || "",
+      isActive: payload.isActive !== false,
     });
     return true;
   },
@@ -544,6 +547,15 @@ export const catalogService = {
   async updateCategory(categoryId, payload) {
     await apiClient.patch(`/api/v1/category/${categoryId}`, {
       name: payload.name.trim(),
+      description: payload.description?.trim() || "",
+      isActive: payload.isActive !== false,
+    });
+    return true;
+  },
+
+  async updateCategoryStatus(categoryId, isActive) {
+    await apiClient.patch(`/api/v1/category/${categoryId}`, {
+      isActive: Boolean(isActive),
     });
     return true;
   },

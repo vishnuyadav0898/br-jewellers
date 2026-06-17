@@ -112,8 +112,8 @@ export const returnRequestSchema = z.object({
 
 export const categorySchema = z.object({
   name: requiredString("Category name", 2),
-  description: z.string().trim(),
-  featured: z.boolean(),
+  description: z.string().trim().optional().default(""),
+  isActive: z.boolean().default(true),
 });
 
 export const adminUserSchema = z.object({

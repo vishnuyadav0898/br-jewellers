@@ -37,16 +37,46 @@ export function FeaturedProductsPage() {
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {products.map((product) => (
-            <AdminPanel key={product.id} className="flex h-full flex-col">
-              <img src={product.images?.[0]} alt={product.name} className="h-48 w-full rounded-[22px] object-cover" />
-              <div className="mt-4 flex flex-1 flex-col">
-                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
+            <AdminPanel key={product.id} className="flex flex-col p-3">
+              {/* Image — fixed height, smaller */}
+              <img
+                src={product.images?.[0]}
+                alt={product.name}
+                className="h-36 w-full rounded-[16px] object-cover flex-shrink-0"
+              />
+
+              {/* Body — grows to fill remaining space */}
+              <div className="mt-3 flex flex-1 flex-col min-h-0">
+                {/* Category eyebrow */}
+                <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9f6d22] truncate">
                   {product.category}
                 </div>
-                <h3 className="mt-2 font-display text-3xl text-[#1d130f]">{product.name}</h3>
-                <p className="mt-2 text-sm leading-6 text-stone-600">{product.description}</p>
-                <div className="mt-4 text-sm font-semibold text-[#1d130f]">{formatFromInr(product.price)}</div>
-                <div className="mt-4 pt-4">
+
+                {/* Product name — max 2 lines */}
+                <h3
+                  className="mt-1 font-display text-lg text-[#1d130f] leading-snug"
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {product.name}
+                </h3>
+
+                {/* Description — exactly 1 line, truncated */}
+                <p className="mt-1 text-xs text-stone-500 truncate">
+                  {product.description}
+                </p>
+
+                {/* Price */}
+                <div className="mt-2 text-sm font-semibold text-[#1d130f]">
+                  {formatFromInr(product.price)}
+                </div>
+
+                {/* Button pinned to bottom */}
+                <div className="mt-auto pt-3">
                   <Button
                     tone={product.featured ? "secondary" : "accent"}
                     className="w-full"
@@ -55,10 +85,7 @@ export function FeaturedProductsPage() {
                         await catalogService.toggleFeatured(product.id);
                         notify.success(
                           product.featured ? "Removed from featured." : "Marked as featured.",
-                          {
-                            title: "Featured collection updated",
-                            iconKey: "sparkle",
-                          }
+                          { title: "Featured collection updated", iconKey: "sparkle" }
                         );
                         queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
                         queryClient.invalidateQueries({ queryKey: queryKeys.adminFeaturedProducts });

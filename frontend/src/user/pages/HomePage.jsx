@@ -96,16 +96,24 @@ export function HomePage() {
 
         </div>
 
-        <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {featuredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot"] })}
-            />
-          ))}
-        </div>
+        {(() => {
+          const cols = Math.min(featuredProducts.length, 4) || 1;
+          return (
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+            >
+              {featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
+                  onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot"] })}
+                />
+              ))}
+            </div>
+          );
+        })()}
       </section>
     </div>
   );
