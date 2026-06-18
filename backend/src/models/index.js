@@ -6,6 +6,8 @@ import Order from "./order.model.js";
 import Category from "./category.model.js";
 import Wishlist from "./wishlist.model.js";
 import Blog from "./blog.model.js";
+import ContentPage from "./content_page.model.js";
+import Permission from "./permission.model.js";
 
 const models = {
   Product,
@@ -16,6 +18,8 @@ const models = {
   Category,
   Wishlist,
   Blog,
+  ContentPage,
+  Permission,
 };
 
 export default models;

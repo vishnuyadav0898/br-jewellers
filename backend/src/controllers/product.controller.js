@@ -153,7 +153,7 @@ export const updateProduct = async (req, res, next) => {
     }
 
     await models.Product.findByIdAndUpdate(id, req.body, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 

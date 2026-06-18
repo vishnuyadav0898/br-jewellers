@@ -13,6 +13,12 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    permissions: [
+      {
+        module: { type: String, required: true },
+        actions: { type: [String], default: [] },
+      },
+    ],
     googleId: { type: String },
   },
   { timestamps: true }

@@ -8,7 +8,7 @@ import {
 } from "../controllers/order.controller.js";
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { requireAdmin } from "../middlewares/role.middleware.js";
+import { checkPermission } from "../middlewares/role.middleware.js";
 import { validate } from "../middlewares/validate.js";
 import { orderValidation } from "../validations/order.validation.js";
 
@@ -30,7 +30,7 @@ router.get("/:id", verifyJWT(JWT_SECRET), getOrderById);
 router.patch(
   "/:id/status",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Order", "Update"),
   validate(orderValidation.updateStatus),
   updateOrderStatus
 );
