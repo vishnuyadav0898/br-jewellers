@@ -8,6 +8,9 @@ import Wishlist from "./wishlist.model.js";
 import Blog from "./blog.model.js";
 import ContentPage from "./content_page.model.js";
 import Permission from "./permission.model.js";
+import Coupon from "./coupon.model.js";
+import CouponAssignment from "./coupon_assignment.model.js";
+import CouponUsage from "./coupon_usage.model.js";
 
 const models = {
   Product,
@@ -20,6 +23,9 @@ const models = {
   Blog,
   ContentPage,
   Permission,
+  Coupon,
+  CouponAssignment,
+  CouponUsage,
 };
 
 export default models;

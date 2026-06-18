@@ -39,6 +39,7 @@ const options = {
       { name: "Blog", description: "Editorial blog management" },
       { name: "Content", description: "Dynamic content page management" },
       { name: "Permission", description: "RBAC Permission management" },
+      { name: "Coupon", description: "Coupon and Discount module" },
     ],
     components: {
       securitySchemes: {

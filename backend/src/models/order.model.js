@@ -60,6 +60,11 @@ const orderSchema = new mongoose.Schema(
       INR: { type: Number },
       USD: { type: Number },
     },
+    couponCode: { type: String },
+    discountAmount: {
+      INR: { type: Number, default: 0 },
+      USD: { type: Number, default: 0 },
+    },
   },
   { timestamps: true }
 );
