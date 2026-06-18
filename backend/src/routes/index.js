@@ -11,6 +11,7 @@ import wishlistRoutes from "./wishlist.routes.js";
 import blogsRoutes from "./blogs.routes.js";
 import contentRoutes from "./content.routes.js";
 import permissionRoutes from "./permission.routes.js";
+import couponRoutes from "./coupon.routes.js";
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use("/api/v1/wishlist", wishlistRoutes);
 router.use("/api/v1/blogs", blogsRoutes);
 router.use("/api/v1/content", contentRoutes);
 router.use("/api/v1/permissions", permissionRoutes);
+router.use("/api/v1/coupons", couponRoutes);
 
 export default router;

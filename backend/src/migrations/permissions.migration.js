@@ -5,13 +5,18 @@ import User from "../models/user.model.js";
 import { logger } from "../utils/logger.js";
 
 const PERMISSIONS = [
+  { name: "Spare-Inventory-Stock", actions: ["View", "Add", "Update", "Delete", "Spare-In", "Spare-Out", "History"] },
+  { name: "Blogs-Social-Media", actions: ["Add", "Update", "Delete"] },
+  { name: "Plant-Category", actions: ["View", "Add", "Update", "Delete", "Approval"] },
+  { name: "Items", actions: ["View", "Add", "Update", "Delete"] },
   { name: "Product", actions: ["Add", "Update", "Delete"] },
   { name: "Category", actions: ["Add", "Update", "Delete"] },
   { name: "Blog", actions: ["Add", "Update", "Delete"] },
   { name: "Order", actions: ["Update"] },
   { name: "User", actions: ["Add", "Update", "Delete"] },
   { name: "Content", actions: ["Update"] },
-  { name: "Permission", actions: ["View", "Assign"] }
+  { name: "Permission", actions: ["View", "Assign"] },
+  { name: "Coupon", actions: ["View", "Add", "Update", "Delete", "Assign", "Analytics"] }
 ];
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@gmail.com";
