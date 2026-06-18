@@ -1,5 +1,4 @@
 import models from "../models/index.js";
-import User from "../models/user.model.js";
 import { comparePassword } from "../utils/hash.js";
 import {
   generateAccessToken,
@@ -28,7 +27,7 @@ export const register = async (req, res, next) => {
       ]);
     }
 
-    const user = await User.create({
+    const user = await models.User.create({
       name,
       email,
       password,
@@ -144,7 +143,7 @@ export const googleLogin = async (req, res, next) => {
       }
     } else {
       // Create new user (no password needed for Google users)
-      user = await User.create({
+      user = await models.User.create({
         name,
         email,
         googleId,

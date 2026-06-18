@@ -1,4 +1,4 @@
-import Category from "../models/category.model.js";
+import models from "../models/index.js";
 import ResponseHandler from "../utils/responseHandler.js";
 
 export const createCategory = async (req, res, next) => {
@@ -9,12 +9,12 @@ export const createCategory = async (req, res, next) => {
       return ResponseHandler.badRequest(res, "Category name is required");
     }
 
-    const existing = await Category.findOne({ name });
+    const existing = await models.Category.findOne({ name });
     if (existing) {
       return ResponseHandler.badRequest(res, "Category already exists");
     }
 
-    await Category.create({ name, description });
+    await models.Category.create({ name, description });
 
     return ResponseHandler.created(res, "Category created successfully");
   } catch (err) {
@@ -24,7 +24,7 @@ export const createCategory = async (req, res, next) => {
 
 export const getCategories = async (req, res, next) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await models.Category.find().sort({ name: 1 });
     
     return ResponseHandler.success(
       res,
@@ -45,12 +45,12 @@ export const updateCategory = async (req, res, next) => {
       return ResponseHandler.badRequest(res, "Category name is required");
     }
 
-    const existing = await Category.findOne({ name, _id: { $ne: id } });
+    const existing = await models.Category.findOne({ name, _id: { $ne: id } });
     if (existing) {
       return ResponseHandler.badRequest(res, "Category name already exists");
     }
 
-    const category = await Category.findByIdAndUpdate(id, { name, description });
+    const category = await models.Category.findByIdAndUpdate(id, { name, description });
 
     if (!category) {
       return ResponseHandler.notFound(res, "Category not found");
@@ -66,7 +66,7 @@ export const deleteCategory = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const category = await Category.findByIdAndDelete(id);
+    const category = await models.Category.findByIdAndDelete(id);
 
     if (!category) {
       return ResponseHandler.notFound(res, "Category not found");
@@ -87,7 +87,7 @@ export const toggleCategoryStatus = async (req, res, next) => {
       return ResponseHandler.badRequest(res, "Valid status ('active' or 'inactive') is required");
     }
 
-    const category = await Category.findByIdAndUpdate(id, { status }, { new: true });
+    const category = await models.Category.findByIdAndUpdate(id, { status }, { new: true });
 
     if (!category) {
       return ResponseHandler.notFound(res, "Category not found");

@@ -1,5 +1,4 @@
-import Cart from "../models/cart.model.js";
-import Product from "../models/product.model.js";
+import models from "../models/index.js";
 import ResponseHandler from "../utils/responseHandler.js";
 
 export const addToCart = async (req, res, next) => {
@@ -7,7 +6,7 @@ export const addToCart = async (req, res, next) => {
     const { productId, sku, quantity = 1 } = req.body;
 
     // Validate product exists
-    const product = await Product.findById(productId);
+    const product = await models.Product.findById(productId);
     if (!product) {
       return ResponseHandler.notFound(res, "Product not found");
     }
@@ -20,10 +19,10 @@ export const addToCart = async (req, res, next) => {
 
 
     // Find or create cart for this user
-    let cart = await Cart.findOne({ user: req.user.id });
+    let cart = await models.Cart.findOne({ user: req.user.id });
 
     if (!cart) {
-      cart = await Cart.create({
+      cart = await models.Cart.create({
         user: req.user.id,
         items: [{ product: productId, sku, quantity }],
       });
@@ -54,7 +53,7 @@ export const addToCart = async (req, res, next) => {
 
 export const getCart = async (req, res, next) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id }).populate(
+    const cart = await models.Cart.findOne({ user: req.user.id }).populate(
       "items.product"
     );
 
@@ -76,7 +75,7 @@ export const updateCartItem = async (req, res, next) => {
     const { id } = req.params;
     const { quantity } = req.body;
 
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await models.Cart.findOne({ user: req.user.id });
 
     if (!cart) {
       return ResponseHandler.notFound(res, "Cart not found");
@@ -101,7 +100,7 @@ export const removeCartItem = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await models.Cart.findOne({ user: req.user.id });
 
     if (!cart) {
       return ResponseHandler.notFound(res, "Cart not found");
@@ -124,7 +123,7 @@ export const removeCartItem = async (req, res, next) => {
 
 export const clearCart = async (req, res, next) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await models.Cart.findOne({ user: req.user.id });
 
     if (!cart) {
       return ResponseHandler.notFound(res, "Cart not found");
