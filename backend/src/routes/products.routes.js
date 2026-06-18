@@ -12,7 +12,7 @@ import {
 } from "../controllers/product.controller.js";
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { requireAdmin } from "../middlewares/role.middleware.js";
+import { checkPermission } from "../middlewares/role.middleware.js";
 import { validate } from "../middlewares/validate.js";
 import { productValidation } from "../validations/product.validation.js";
 
@@ -27,7 +27,7 @@ router.get("/:id", getProductById);
 router.post(
   "/create",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Product", "Add"),
   validate(productValidation.create),
   createProduct
 );
@@ -35,7 +35,7 @@ router.post(
 router.post(
   "/bulk-import",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Product", "Add"),
   upload.single("file"),
   bulkImportProducts
 );
@@ -43,7 +43,7 @@ router.post(
 router.patch(
   "/status/:id",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Product", "Update"),
   validate(productValidation.updateStatus),
   updateProductStatus
 );
@@ -51,11 +51,11 @@ router.patch(
 router.patch(
   "/:id",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Product", "Update"),
   validate(productValidation.update),
   updateProduct
 );
 
-router.delete("/:id", verifyJWT(JWT_SECRET), requireAdmin, deleteProduct);
+router.delete("/:id", verifyJWT(JWT_SECRET), checkPermission("Product", "Delete"), deleteProduct);
 
 export default router;

@@ -9,6 +9,8 @@ import addressRoutes from "./address.routes.js";
 import orderRoutes from "./orders.routes.js";
 import wishlistRoutes from "./wishlist.routes.js";
 import blogsRoutes from "./blogs.routes.js";
+import contentRoutes from "./content.routes.js";
+import permissionRoutes from "./permission.routes.js";
 
 const router = Router();
 
@@ -21,5 +23,7 @@ router.use("/api/v1/address", addressRoutes);
 router.use("/api/v1/orders", orderRoutes);
 router.use("/api/v1/wishlist", wishlistRoutes);
 router.use("/api/v1/blogs", blogsRoutes);
+router.use("/api/v1/content", contentRoutes);
+router.use("/api/v1/permissions", permissionRoutes);
 
 export default router;

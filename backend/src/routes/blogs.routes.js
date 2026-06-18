@@ -7,7 +7,7 @@ import {
   deleteBlog,
 } from "../controllers/blog.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { requireAdmin } from "../middlewares/role.middleware.js";
+import { checkPermission } from "../middlewares/role.middleware.js";
 import { validate } from "../middlewares/validate.js";
 import { blogValidation } from "../validations/blog.validation.js";
 
@@ -22,7 +22,7 @@ router.get("/:id", getBlogById);
 router.post(
   "/",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Blog", "Add"),
   validate(blogValidation.create),
   createBlog
 );
@@ -30,11 +30,11 @@ router.post(
 router.patch(
   "/:id",
   verifyJWT(JWT_SECRET),
-  requireAdmin,
+  checkPermission("Blog", "Update"),
   validate(blogValidation.update),
   updateBlog
 );
 
-router.delete("/:id", verifyJWT(JWT_SECRET), requireAdmin, deleteBlog);
+router.delete("/:id", verifyJWT(JWT_SECRET), checkPermission("Blog", "Delete"), deleteBlog);
 
 export default router;

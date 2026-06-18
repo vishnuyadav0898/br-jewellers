@@ -57,7 +57,7 @@ export const updateAddress = async (req, res, next) => {
     }
 
     const updatedAddress = await models.Address.findByIdAndUpdate(id, req.body, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 

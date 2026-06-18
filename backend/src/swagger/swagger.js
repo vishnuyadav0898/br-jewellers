@@ -38,6 +38,7 @@ const options = {
       { name: "Wishlist", description: "User wishlist management" },
       { name: "Blog", description: "Editorial blog management" },
       { name: "Content", description: "Dynamic content page management" },
+      { name: "Permission", description: "RBAC Permission management" },
     ],
     components: {
       securitySchemes: {

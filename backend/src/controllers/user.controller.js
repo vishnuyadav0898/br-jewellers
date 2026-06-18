@@ -10,7 +10,14 @@ export const userMe = async (req, res, next) => {
       return ResponseHandler.notFound(res, "User not found");
     }
 
-    return ResponseHandler.success(res, "User fetched", user);
+    const wishlist = await models.Wishlist.findOne({ user: req.user.id }).populate(
+      "products"
+    );
+
+    return ResponseHandler.success(res, "User fetched", {
+      ...user.toObject(),
+      wishlist: wishlist?.products || [],
+    });
   } catch (err) {
     return ResponseHandler.handleErrors(err, req, res, next);
   }
@@ -77,7 +84,7 @@ export const updateUser = async (req, res, next) => {
     }
 
     const user = await models.User.findByIdAndUpdate(req.params.id, data, {
-      new: true,
+      returnDocument: "after",
     }).select("-password");
 
     if (!user) {

@@ -43,7 +43,7 @@ export const updateBlog = async (req, res, next) => {
   try {
     const { id } = req.params;
     const blog = await models.Blog.findByIdAndUpdate(id, req.body, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     }).populate("author", "name email");
 

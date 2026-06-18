@@ -87,7 +87,7 @@ export const toggleCategoryStatus = async (req, res, next) => {
       return ResponseHandler.badRequest(res, "Valid status ('active' or 'inactive') is required");
     }
 
-    const category = await models.Category.findByIdAndUpdate(id, { status }, { new: true });
+    const category = await models.Category.findByIdAndUpdate(id, { status }, { returnDocument: "after" });
 
     if (!category) {
       return ResponseHandler.notFound(res, "Category not found");
