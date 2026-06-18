@@ -4,6 +4,8 @@ import Cart from "./cart.model.js";
 import Address from "./address.model.js";
 import Order from "./order.model.js";
 import Category from "./category.model.js";
+import Wishlist from "./wishlist.model.js";
+import Blog from "./blog.model.js";
 
 const models = {
   Product,
@@ -12,6 +14,8 @@ const models = {
   Address,
   Order,
   Category,
+  Wishlist,
+  Blog,
 };
 
 export default models;

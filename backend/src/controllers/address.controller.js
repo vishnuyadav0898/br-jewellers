@@ -1,4 +1,4 @@
-import Address from "../models/address.model.js";
+import models from "../models/index.js";
 import ResponseHandler from "../utils/responseHandler.js";
 
 export const createAddress = async (req, res, next) => {
@@ -7,13 +7,13 @@ export const createAddress = async (req, res, next) => {
 
     // If isDefault is true, unset isDefault on all other addresses for this user
     if (data.isDefault) {
-      await Address.updateMany(
+      await models.Address.updateMany(
         { user: req.user.id, isDefault: true },
         { isDefault: false }
       );
     }
 
-    const address = await Address.create(data);
+    const address = await models.Address.create(data);
 
     return ResponseHandler.created(res, "Address created successfully");
   } catch (err) {
@@ -23,7 +23,7 @@ export const createAddress = async (req, res, next) => {
 
 export const getAddresses = async (req, res, next) => {
   try {
-    const addresses = await Address.find({ user: req.user.id }).sort({
+    const addresses = await models.Address.find({ user: req.user.id }).sort({
       isDefault: -1,
       createdAt: -1,
     });
@@ -42,7 +42,7 @@ export const updateAddress = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const address = await Address.findOne({ _id: id, user: req.user.id });
+    const address = await models.Address.findOne({ _id: id, user: req.user.id });
 
     if (!address) {
       return ResponseHandler.notFound(res, "Address not found");
@@ -50,13 +50,13 @@ export const updateAddress = async (req, res, next) => {
 
     // If isDefault is being set to true, unset on others first
     if (req.body.isDefault) {
-      await Address.updateMany(
+      await models.Address.updateMany(
         { user: req.user.id, _id: { $ne: id }, isDefault: true },
         { isDefault: false }
       );
     }
 
-    const updatedAddress = await Address.findByIdAndUpdate(id, req.body, {
+    const updatedAddress = await models.Address.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
     });
@@ -74,7 +74,7 @@ export const deleteAddress = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const address = await Address.findOneAndDelete({
+    const address = await models.Address.findOneAndDelete({
       _id: id,
       user: req.user.id,
     });

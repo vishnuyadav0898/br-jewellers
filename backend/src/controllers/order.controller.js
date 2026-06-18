@@ -1,7 +1,4 @@
-import Order from "../models/order.model.js";
-import Cart from "../models/cart.model.js";
-import Address from "../models/address.model.js";
-import Product from "../models/product.model.js";
+import models from "../models/index.js";
 import ResponseHandler from "../utils/responseHandler.js";
 
 // Valid status transitions (current → allowed next statuses)
@@ -32,7 +29,7 @@ export const createOrder = async (req, res, next) => {
     const { addressId, items: bodyItems } = req.body;
 
     // Validate address belongs to user
-    const address = await Address.findById(addressId);
+    const address = await models.Address.findById(addressId);
 
     if (!address) {
       return ResponseHandler.notFound(res, "Address not found");
@@ -51,7 +48,7 @@ export const createOrder = async (req, res, next) => {
     if (bodyItems && bodyItems.length > 0) {
       // Use items from request body
       for (const item of bodyItems) {
-        const product = await Product.findById(item.productId);
+        const product = await models.Product.findById(item.productId);
         if (!product) {
           return ResponseHandler.notFound(
             res,
@@ -84,14 +81,14 @@ export const createOrder = async (req, res, next) => {
       }
     } else {
       // Pull items from user's cart
-      const cart = await Cart.findOne({ user: userId });
+      const cart = await models.Cart.findOne({ user: userId });
 
       if (!cart || !cart.items || cart.items.length === 0) {
         return ResponseHandler.badRequest(res, "Cart is empty");
       }
 
       for (const cartItem of cart.items) {
-        const product = await Product.findById(cartItem.product);
+        const product = await models.Product.findById(cartItem.product);
         if (!product) {
           return ResponseHandler.notFound(
             res,
@@ -146,7 +143,7 @@ export const createOrder = async (req, res, next) => {
     };
 
     // Create order
-    const order = await Order.create({
+    const order = await models.Order.create({
       user: userId,
       items: orderItems,
       shippingAddress,
@@ -155,7 +152,7 @@ export const createOrder = async (req, res, next) => {
 
     // Clear cart if items were pulled from it
     if (!bodyItems || bodyItems.length === 0) {
-      await Cart.findOneAndUpdate({ user: userId }, { items: [] });
+      await models.Cart.findOneAndUpdate({ user: userId }, { items: [] });
     }
 
     return ResponseHandler.created(res, "Order created successfully");
@@ -180,7 +177,7 @@ export const getOrders = async (req, res, next) => {
       filter.user = userId;
     }
 
-    const orders = await Order.find(filter)
+    const orders = await models.Order.find(filter)
       .populate("items.product", "name coverImage")
       .sort({ createdAt: -1 });
 
@@ -195,7 +192,7 @@ export const getOrderById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id)
+    const order = await models.Order.findById(id)
       .populate("items.product", "name coverImage images category")
       .populate("user", "name email");
 
@@ -220,7 +217,7 @@ export const updateOrderStatus = async (req, res, next) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const order = await Order.findById(id);
+    const order = await models.Order.findById(id);
 
     if (!order) {
       return ResponseHandler.notFound(res, "Order not found");

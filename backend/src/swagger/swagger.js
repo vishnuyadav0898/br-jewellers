@@ -14,7 +14,7 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "E-commerce API",
+      title: "BR Jewellers",
       version: "1.0.0",
       description: "BR Jewellers E-commerce REST API with JWT authentication",
     },
@@ -35,6 +35,9 @@ const options = {
       { name: "Cart", description: "Shopping cart" },
       { name: "Address", description: "User addresses" },
       { name: "Order", description: "Order management" },
+      { name: "Wishlist", description: "User wishlist management" },
+      { name: "Blog", description: "Editorial blog management" },
+      { name: "Content", description: "Dynamic content page management" },
     ],
     components: {
       securitySchemes: {
