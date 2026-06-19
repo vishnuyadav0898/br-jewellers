@@ -16,7 +16,9 @@ const PERMISSIONS = [
   { name: "User", actions: ["Add", "Update", "Delete"] },
   { name: "Content", actions: ["Update"] },
   { name: "Permission", actions: ["View", "Assign"] },
-  { name: "Coupon", actions: ["View", "Add", "Update", "Delete", "Assign", "Analytics"] }
+  { name: "Coupon", actions: ["View", "Add", "Update", "Delete", "Assign", "Analytics"] },
+  { name: "Returns", actions: ["View", "Update"] },
+  { name: "Notifications", actions: ["View", "Send"] }
 ];
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@gmail.com";
