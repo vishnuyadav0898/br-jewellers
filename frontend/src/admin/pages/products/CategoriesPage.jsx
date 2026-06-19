@@ -7,6 +7,7 @@ import { Modal } from "../../../shared/components/Modal";
 import { queryKeys } from "../../../shared/constants/queryKeys";
 import { notify } from "../../../shared/utils/notify";
 import { categorySchema, getValidationErrors } from "../../../shared/utils/validation";
+import { PermissionGuard } from "../../../shared/components/PermissionGuard";
 import { AdminDataState } from "../../components/AdminDataState";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { AdminPanel } from "../../components/AdminPanel";
@@ -110,37 +111,41 @@ export function CategoriesPage() {
       header: "Actions",
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            tone="secondary"
-            size="sm"
-            onClick={() => openEdit(row)}
-            title="Edit Category"
-            aria-label="Edit Category"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            tone="secondary"
-            size="sm"
-            onClick={() => handleToggleStatus(row)}
-            loading={togglingId === row.id}
-            title={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
-            aria-label={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
-          >
-            <Power className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            tone="danger"
-            size="sm"
-            onClick={() => setDeletingCategory(row)}
-            title="Delete Category"
-            aria-label="Delete Category"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <PermissionGuard module="Category" action="Update">
+            <Button
+              type="button"
+              tone="secondary"
+              size="sm"
+              onClick={() => openEdit(row)}
+              title="Edit Category"
+              aria-label="Edit Category"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              tone="secondary"
+              size="sm"
+              onClick={() => handleToggleStatus(row)}
+              loading={togglingId === row.id}
+              title={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
+              aria-label={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
+            >
+              <Power className="h-4 w-4" />
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard module="Category" action="Delete">
+            <Button
+              type="button"
+              tone="danger"
+              size="sm"
+              onClick={() => setDeletingCategory(row)}
+              title="Delete Category"
+              aria-label="Delete Category"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </PermissionGuard>
         </div>
       ),
     },
@@ -161,23 +166,23 @@ export function CategoriesPage() {
         <AdminPageHeader
           eyebrow="Products"
           title="Product categories"
-          description="Manage product taxonomy through the backend category API when available, with mock fallback for local create, edit, and delete workflows."
+          description="Manage product collections and taxonomy definitions to structure your catalog."
           actions={
-            <Button onClick={openCreate}>
-              <Plus className="h-4 w-4" />
-              Add category
-            </Button>
+            <PermissionGuard module="Category" action="Add">
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                Add category
+              </Button>
+            </PermissionGuard>
           }
         />
-        <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,420px)_auto] md:items-center">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search categories"
-          />
-          <div className="inline-flex items-center gap-2 text-sm text-stone-500">
-            <Search className="h-4 w-4 text-gold-700" />
-            {filteredCategories.length} categor{filteredCategories.length === 1 ? "y" : "ies"}
+        <div className="mt-5 flex justify-end">
+          <div className="w-full max-w-md">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search categories"
+            />
           </div>
         </div>
       </AdminPanel>

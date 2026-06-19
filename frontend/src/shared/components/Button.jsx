@@ -13,6 +13,7 @@ const sizes = {
   sm: "h-10 px-4 text-sm",
   md: "h-11 px-5 text-sm",
   lg: "h-12 px-6 text-base",
+  icon: "p-0 text-sm",
 };
 
 export const Button = forwardRef(

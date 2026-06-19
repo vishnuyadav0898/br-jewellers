@@ -1,4 +1,5 @@
 import { apiClient } from "../../shared/services/apiClient";
+import { mockApiClient } from "../../shared/services/mockApiClient";
 
 const normalizeApiUser = (user = {}) => ({
   id: user._id || user.id,
@@ -17,17 +18,19 @@ const normalizeApiUser = (user = {}) => ({
 });
 
 export const usersService = {
-  async getUsers(role = "") {
+  async getUsers(role = "", includeMetrics = true) {
     const suffix = role ? `?role=${role === "customer" ? "user" : role}` : "";
     const res = await apiClient.get(`/api/v1/user/list${suffix}`);
     const users = res.data || [];
 
     let orders = [];
-    try {
-      const orderRes = await apiClient.get("/api/v1/orders");
-      orders = orderRes.data || [];
-    } catch (e) {
-      console.warn("Failed to fetch orders for user metrics calculation:", e);
+    if (includeMetrics) {
+      try {
+        const orderRes = await apiClient.get("/api/v1/orders");
+        orders = orderRes.data || [];
+      } catch (e) {
+        console.warn("Failed to fetch orders for user metrics calculation:", e);
+      }
     }
 
     return users.map((user) => {
@@ -101,5 +104,55 @@ export const usersService = {
   async deleteUser(userId) {
     await apiClient.delete(`/api/v1/user/${userId}`);
     return true;
+  },
+
+  async getAllPermissions() {
+    try {
+      const res = await apiClient.get("/api/v1/permissions/list");
+      return res || [];
+    } catch (e) {
+      return [
+        { name: "Product", actions: ["Add", "Update", "Delete"] },
+        { name: "Category", actions: ["Add", "Update", "Delete"] },
+        { name: "Blog", actions: ["Add", "Update", "Delete"] },
+        { name: "Order", actions: ["Update"] },
+        { name: "User", actions: ["Add", "Update", "Delete"] },
+        { name: "Content", actions: ["Update"] },
+        { name: "Permission", actions: ["View", "Assign"] }
+      ];
+    }
+  },
+
+  async getUserPermissions(userId) {
+    try {
+      const res = await apiClient.get(`/api/v1/permissions/user/${userId}`);
+      if (Array.isArray(res)) return res;
+      if (res?.permissions && Array.isArray(res.permissions)) return res.permissions;
+      if (res?.data && Array.isArray(res.data)) return res.data;
+      if (res?.data?.permissions && Array.isArray(res.data.permissions)) return res.data.permissions;
+      return [];
+    } catch (e) {
+      return mockApiClient.query((db) => {
+        const user = db.users?.find((u) => u.id === userId || u._id === userId);
+        return user?.permissions || [];
+      });
+    }
+  },
+
+  async assignUserPermissions(userId, permissions) {
+    try {
+      const res = await apiClient.patch(`/api/v1/permissions/user/${userId}`, {
+        permissions,
+      });
+      return res;
+    } catch (e) {
+      return mockApiClient.mutate((db) => {
+        const user = db.users?.find((u) => u.id === userId || u._id === userId);
+        if (user) {
+          user.permissions = permissions;
+        }
+        return db;
+      });
+    }
   },
 };

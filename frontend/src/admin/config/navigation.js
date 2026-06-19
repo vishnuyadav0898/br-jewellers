@@ -7,6 +7,7 @@ import {
   RefreshCcw,
   Settings,
   Users,
+  TicketPercent,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -18,22 +19,31 @@ export const adminNavigation = [
     to: routes.adminDashboard,
   },
   {
-    key: "products",
-    labelKey: "admin.nav.products",
-    icon: Boxes,
-    children: [
-      { labelKey: "admin.nav.productList", to: routes.adminProductsList },
-      { labelKey: "admin.nav.categories", to: routes.adminCategories },
-      { labelKey: "admin.nav.featuredProducts", to: routes.adminFeaturedProducts },
-      { labelKey: "admin.nav.bulkUpload", to: routes.adminBulkUpload },
-    ],
-  },
-  {
     key: "users",
     labelKey: "admin.nav.users",
     icon: Users,
     children: [
       { labelKey: "admin.nav.userList", to: routes.adminUsersList },
+    ],
+  },
+  {
+    key: "products",
+    labelKey: "admin.nav.products",
+    icon: Boxes,
+    children: [
+      { labelKey: "admin.nav.categories", to: routes.adminCategories },
+      { labelKey: "admin.nav.productList", to: routes.adminProductsList },
+      { labelKey: "admin.nav.featuredProducts", to: routes.adminFeaturedProducts },
+      { labelKey: "admin.nav.bulkUpload", to: routes.adminBulkUpload },
+    ],
+  },
+  {
+    key: "coupons",
+    labelKey: "admin.nav.coupons",
+    icon: TicketPercent,
+    children: [
+      { labelKey: "admin.nav.couponList", to: routes.adminCouponsList },
+      { labelKey: "admin.nav.couponAssign", to: routes.adminCouponsAssign },
     ],
   },
   {

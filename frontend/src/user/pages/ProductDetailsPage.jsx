@@ -44,6 +44,13 @@ export function ProductDetailsPage() {
   const [selectedPurity, setSelectedPurity] = useState("");
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [brokenImages, setBrokenImages] = useState({});
+  const [priceKey, setPriceKey] = useState(0);
+
+  useEffect(() => {
+    setPriceKey((prev) => prev + 1);
+  }, [selectedColor, selectedSize, selectedMaterial, selectedPurity]);
 
   const cartQuery = useQuery({
     queryKey: ["cart", user?.id],
@@ -53,20 +60,7 @@ export function ProductDetailsPage() {
 
   const productQuery = useQuery({
     queryKey: ["product", productIdentifier],
-    queryFn: async () => {
-      let resolvedId = productIdentifier;
-      if (productIdentifier && !productIdentifier.match(/^[0-9a-fA-F]{24}$/)) {
-        const productsList = await storefrontService.getProducts("");
-        const matched = productsList.find(
-          (p) => p.slug === productIdentifier || slugify(p.name) === productIdentifier
-        );
-        if (!matched) {
-          throw new Error("Product not found");
-        }
-        resolvedId = matched.id;
-      }
-      return storefrontService.getProductById(resolvedId);
-    },
+    queryFn: () => storefrontService.getProductById(productIdentifier),
   });
 
   useEffect(() => {
@@ -79,11 +73,12 @@ export function ProductDetailsPage() {
 
     // Try to find the default variant or first available variant to pre-populate options
     const defaultVariant = product.variants?.find((v) => v.isDefault) || product.variants?.[0];
+    const defaultAttrs = defaultVariant?.attributes || defaultVariant || {};
 
-    setSelectedColor(defaultVariant?.color || product.colors?.[0]?.name || "");
-    setSelectedSize(defaultVariant?.size || product.sizes?.[0] || "");
-    setSelectedMaterial(defaultVariant?.material || "");
-    setSelectedPurity(defaultVariant?.purity || "");
+    setSelectedColor(defaultAttrs.color || product.colors?.[0]?.name || "");
+    setSelectedSize(defaultAttrs.size || product.sizes?.[0] || "");
+    setSelectedMaterial(defaultAttrs.material || "");
+    setSelectedPurity(defaultAttrs.purity || "");
   }, [productQuery.data?.product]);
 
   if (productQuery.isLoading) {
@@ -103,19 +98,19 @@ export function ProductDetailsPage() {
 
   // Extract unique attribute choices from variants for selectors
   const uniqueMaterials = product.variants?.length
-    ? [...new Set(product.variants.map((v) => v.material).filter(Boolean))]
+    ? [...new Set(product.variants.map((v) => (v.attributes?.material || v.material)).filter(Boolean))]
     : [];
 
   const uniquePurities = product.variants?.length
-    ? [...new Set(product.variants.map((v) => v.purity).filter(Boolean))]
+    ? [...new Set(product.variants.map((v) => (v.attributes?.purity || v.purity)).filter(Boolean))]
     : [];
 
   const uniqueColors = product.variants?.length
-    ? [...new Set(product.variants.map((v) => v.color).filter(Boolean))]
+    ? [...new Set(product.variants.map((v) => (v.attributes?.color || v.color)).filter(Boolean))]
     : [];
 
   const uniqueSizes = product.variants?.length
-    ? [...new Set(product.variants.map((v) => v.size).filter(Boolean))]
+    ? [...new Set(product.variants.map((v) => (v.attributes?.size || v.size)).filter(Boolean))]
     : [];
 
   const colorsList = uniqueColors.length
@@ -129,12 +124,77 @@ export function ProductDetailsPage() {
 
   // Helper to find variant matching current options
   const matchingVariant = product.variants?.find(
-    (v) =>
-      (!selectedColor || v.color === selectedColor) &&
-      (!selectedSize || v.size === selectedSize) &&
-      (!selectedMaterial || v.material === selectedMaterial) &&
-      (!selectedPurity || v.purity === selectedPurity)
+    (v) => {
+      const attrs = v.attributes || v;
+      return (!selectedColor || attrs.color === selectedColor) &&
+             (!selectedSize || attrs.size === selectedSize) &&
+             (!selectedMaterial || attrs.material === selectedMaterial) &&
+             (!selectedPurity || attrs.purity === selectedPurity);
+    }
   );
+
+  const isOptionAvailable = (type, value) => {
+    if (!product.variants || product.variants.length === 0) return true;
+    return product.variants.some((v) => {
+      const attrs = v.attributes || v;
+      const matchMaterial = type === "material" ? (attrs.material === value) : (!selectedMaterial || attrs.material === selectedMaterial);
+      const matchPurity = type === "purity" ? (attrs.purity === value) : (!selectedPurity || attrs.purity === selectedPurity);
+      const matchColor = type === "color" ? (attrs.color === value) : (!selectedColor || attrs.color === selectedColor);
+      const matchSize = type === "size" ? (attrs.size === value) : (!selectedSize || attrs.size === selectedSize);
+      return matchMaterial && matchPurity && matchColor && matchSize;
+    });
+  };
+
+  const handleSelectAttribute = (type, value) => {
+    let nextMaterial = selectedMaterial;
+    let nextPurity = selectedPurity;
+    let nextColor = selectedColor;
+    let nextSize = selectedSize;
+
+    if (type === "material") nextMaterial = value;
+    else if (type === "purity") nextPurity = value;
+    else if (type === "color") nextColor = value;
+    else if (type === "size") nextSize = value;
+
+    const isValid = product.variants?.some((v) => {
+      const attrs = v.attributes || v;
+      return (!nextMaterial || attrs.material === nextMaterial) &&
+             (!nextPurity || attrs.purity === nextPurity) &&
+             (!nextColor || attrs.color === nextColor) &&
+             (!nextSize || attrs.size === nextSize);
+    });
+
+    if (!isValid) {
+      const fallbackVariant = product.variants?.find((v) => {
+        const attrs = v.attributes || v;
+        if (type === "material" && attrs.material !== value) return false;
+        if (type === "purity" && attrs.purity !== value) return false;
+        if (type === "color" && attrs.color !== value) return false;
+        if (type === "size" && attrs.size !== value) return false;
+        return true;
+      });
+
+      if (fallbackVariant) {
+        const fallbackAttrs = fallbackVariant.attributes || fallbackVariant;
+        nextMaterial = fallbackAttrs.material || "";
+        nextPurity = fallbackAttrs.purity || "";
+        nextColor = fallbackAttrs.color || "";
+        nextSize = fallbackAttrs.size || "";
+      }
+    }
+
+    setSelectedMaterial(nextMaterial);
+    setSelectedPurity(nextPurity);
+    setSelectedColor(nextColor);
+    setSelectedSize(nextSize);
+  };
+
+  const getButtonClass = (isActive) => {
+    if (isActive) {
+      return "border-[#1a120e] bg-[#1a120e] text-[#f8ebca]";
+    }
+    return "border-[#dbc8a2] bg-white text-[#1a120e] hover:border-[#1a120e]";
+  };
 
   const cartItem = cartQuery.data?.items?.find(
     (item) =>
@@ -143,22 +203,21 @@ export function ProductDetailsPage() {
   );
 
   const getPricesDisplay = () => {
-    if (product.variants?.length && !matchingVariant) {
-      return (
-        <div className="text-sm font-medium text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 inline-block">
-          Combination not available. Please select other options.
-        </div>
-      );
-    }
-
     let inrPrice = 0;
     let usdPrice = 0;
-    if (matchingVariant && matchingVariant.price) {
-      inrPrice = matchingVariant.price.INR;
-      usdPrice = matchingVariant.price.USD;
-    } else {
-      inrPrice = product.price;
-      usdPrice = Math.round(product.price * 0.012); // Fallback approximation
+    if (matchingVariant) {
+      if (matchingVariant.prices && Array.isArray(matchingVariant.prices)) {
+        inrPrice = matchingVariant.prices.find((p) => p.currency === "INR")?.amount || 0;
+        usdPrice = matchingVariant.prices.find((p) => p.currency === "USD")?.amount || 0;
+      } else if (matchingVariant.price) {
+        inrPrice = matchingVariant.price.INR || 0;
+        usdPrice = matchingVariant.price.USD || 0;
+      }
+    }
+
+    if (!inrPrice) {
+      inrPrice = product.price || 0;
+      usdPrice = Math.round(inrPrice * 0.012); // Fallback approximation
     }
 
     const activePrice = currency === "USD" ? usdPrice : inrPrice;
@@ -169,7 +228,7 @@ export function ProductDetailsPage() {
     const hasDiscount = originalPriceInActiveCurrency > activePrice;
 
     return (
-      <div className="space-y-3">
+      <div key={priceKey} className="space-y-3 animate-pricePop">
         <div className="flex items-end gap-3 flex-wrap">
           <div className="text-4xl font-semibold text-[#1a120e]">
             {formatCurrencyValue(activePrice, currency, language)}
@@ -180,6 +239,11 @@ export function ProductDetailsPage() {
             </div>
           )}
         </div>
+        {product.variants?.length && !matchingVariant ? (
+          <div className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-2.5 py-1.5 inline-block">
+            Combination not available. Showing base product price.
+          </div>
+        ) : null}
       </div>
     );
   };
@@ -194,30 +258,70 @@ export function ProductDetailsPage() {
         <span className="text-[#1a120e]">{product.name}</span>
       </div>
 
-      <section className="grid gap-6 rounded-[36px] border border-[#dfccab] bg-white/90 p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)] lg:grid-cols-[1fr_0.95fr]">
-        {product.images && product.images.length > 1 ? (
-          <div className="grid grid-cols-[72px_1fr] gap-4 sm:grid-cols-[88px_1fr]">
-            <div className="flex max-h-[520px] flex-col gap-3 overflow-y-auto pr-1">
-              {product.images.map((image, index) => (
-                <button
-                  key={image}
-                  type="button"
-                  className={`shrink-0 overflow-hidden rounded-[18px] border ${selectedImage === index ? "border-[#1a120e]" : "border-[#e3d2b0]"}`}
-                  onClick={() => setSelectedImage(index)}
-                >
-                  <img src={image} alt={`${product.name} view ${index + 1}`} className="aspect-square w-full object-cover" />
-                </button>
-              ))}
+      <section className="grid gap-6 rounded-[28px] sm:rounded-[36px] border border-[#dfccab] bg-white/90 p-4 sm:p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)] lg:grid-cols-[1fr_0.95fr]">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          {product.images && product.images.length > 1 ? (
+            <div className="flex flex-col-reverse gap-4 sm:grid sm:grid-cols-[88px_1fr]">
+              <div className="flex flex-row sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto max-h-[520px] pb-2 sm:pb-0 pr-1">
+                {product.images.map((image, index) => (
+                  <button
+                    key={image}
+                    type="button"
+                    className={`shrink-0 w-16 h-16 sm:w-20 sm:h-20 overflow-hidden rounded-[18px] border transition-all ${
+                      selectedImage === index ? "border-[#1a120e] ring-2 ring-[#f4e4bd]" : "border-[#e3d2b0]"
+                    }`}
+                    onClick={() => setSelectedImage(index)}
+                  >
+                    {brokenImages[index] ? (
+                      <div className="h-full w-full flex items-center justify-center bg-stone-100 text-stone-400">
+                        <Star className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <img
+                        src={image}
+                        alt={`${product.name} view ${index + 1}`}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        onError={() => setBrokenImages((prev) => ({ ...prev, [index]: true }))}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="overflow-hidden rounded-[28px] bg-[#f9f0de] w-full h-[320px] sm:h-[500px]">
+                {brokenImages[selectedImage] ? (
+                  <div className="h-full w-full flex flex-col items-center justify-center bg-stone-100 text-stone-400">
+                    <Star className="h-8 w-8 animate-pulse" />
+                  </div>
+                ) : (
+                  <img
+                    src={product.images[selectedImage]}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={() => setBrokenImages((prev) => ({ ...prev, [selectedImage]: true }))}
+                  />
+                )}
+              </div>
             </div>
-            <div className="overflow-hidden rounded-[28px] bg-[#f9f0de]">
-              <img src={product.images[selectedImage]} alt={product.name} className="aspect-[4/4.5] w-full object-cover" />
+          ) : (
+            <div className="overflow-hidden rounded-[28px] bg-[#f9f0de] w-full h-[320px] sm:h-[500px]">
+              {brokenImages[0] ? (
+                <div className="h-full w-full flex flex-col items-center justify-center bg-stone-100 text-stone-400">
+                  <Star className="h-8 w-8 animate-pulse" />
+                </div>
+              ) : (
+                <img
+                  src={product.images?.[0] || product.coverImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={() => setBrokenImages((prev) => ({ ...prev, 0: true }))}
+                />
+              )}
             </div>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-[28px] bg-[#f9f0de]">
-            <img src={product.images?.[0] || product.coverImage} alt={product.name} className="aspect-[4/4.5] w-full object-cover" />
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="space-y-6">
           <div>
@@ -245,48 +349,71 @@ export function ProductDetailsPage() {
 
           {getPricesDisplay()}
 
-          <p className="text-base leading-7 text-stone-600">{product.description}</p>
-          <p className="text-sm leading-7 text-stone-500">{product.details}</p>
+          <div>
+            <p className={`text-base leading-7 text-stone-600 ${isDescExpanded ? "" : "line-clamp-2"}`}>
+              {product.description}
+            </p>
+            {product.description && product.description.length > 120 && (
+              <button
+                type="button"
+                onClick={() => setIsDescExpanded(!isDescExpanded)}
+                className="mt-1 text-sm font-semibold text-[#8a5d18] hover:text-[#5c3e10] transition-colors"
+              >
+                {isDescExpanded ? "Show Less" : "... More"}
+              </button>
+            )}
+          </div>
+
+          {(matchingVariant?.attributes?.purity || matchingVariant?.purity) && (
+            <div className="text-sm text-stone-500 font-medium flex items-center gap-1.5 mt-1">
+              <span className="font-semibold text-stone-700">Purity:</span>
+              <span className="rounded-full bg-[#f8ebca] px-2.5 py-0.5 text-xs font-semibold text-[#7a541c]">
+                {matchingVariant.attributes?.purity || matchingVariant.purity}
+              </span>
+            </div>
+          )}
+
+          {product.details && product.details !== product.description && (
+            <p className="text-sm leading-7 text-stone-500">{product.details}</p>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             {uniqueMaterials.length > 1 && (
               <div className="rounded-[24px] bg-[#fff7ea] p-4">
                 <div className="text-sm font-semibold text-[#1a120e]">Material</div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {uniqueMaterials.map((material) => (
-                    <button
-                      key={material}
-                      type="button"
-                      onClick={() => setSelectedMaterial(material)}
-                      className={`rounded-full border px-4 py-2 text-sm transition ${selectedMaterial === material
-                        ? "border-[#1a120e] bg-[#1a120e] text-[#f8ebca]"
-                        : "border-[#dbc8a2] bg-white text-[#1a120e]"
-                        }`}
-                    >
-                      {material}
-                    </button>
-                  ))}
+                  {uniqueMaterials.map((material) => {
+                    return (
+                      <button
+                        key={material}
+                        type="button"
+                        onClick={() => handleSelectAttribute("material", material)}
+                        className={`rounded-full border px-4 py-2 text-sm transition ${getButtonClass(selectedMaterial === material)}`}
+                      >
+                        {material}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {uniquePurities.length > 1 && (
+            {uniquePurities.length > 0 && (
               <div className="rounded-[24px] bg-[#fff7ea] p-4">
                 <div className="text-sm font-semibold text-[#1a120e]">Purity</div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {uniquePurities.map((purity) => (
-                    <button
-                      key={purity}
-                      type="button"
-                      onClick={() => setSelectedPurity(purity)}
-                      className={`rounded-full border px-4 py-2 text-sm transition ${selectedPurity === purity
-                        ? "border-[#1a120e] bg-[#1a120e] text-[#f8ebca]"
-                        : "border-[#dbc8a2] bg-white text-[#1a120e]"
-                        }`}
-                    >
-                      {purity}
-                    </button>
-                  ))}
+                  {uniquePurities.map((purity) => {
+                    return (
+                      <button
+                        key={purity}
+                        type="button"
+                        onClick={() => handleSelectAttribute("purity", purity)}
+                        className={`rounded-full border px-4 py-2 text-sm transition ${getButtonClass(selectedPurity === purity)}`}
+                      >
+                        {purity}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -295,20 +422,19 @@ export function ProductDetailsPage() {
               <div className="rounded-[24px] bg-[#fff7ea] p-4">
                 <div className="text-sm font-semibold text-[#1a120e]">Finish</div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {colorsList.map((color) => (
-                    <button
-                      key={color.name}
-                      type="button"
-                      onClick={() => setSelectedColor(color.name)}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${selectedColor === color.name
-                        ? "border-[#1a120e] bg-[#1a120e] text-[#f8ebca]"
-                        : "border-[#dbc8a2] bg-white text-[#1a120e]"
-                        }`}
-                    >
-                      <span className="h-3 w-3 rounded-full border border-black/10" style={{ backgroundColor: color.code }} />
-                      {color.name}
-                    </button>
-                  ))}
+                  {colorsList.map((color) => {
+                    return (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => handleSelectAttribute("color", color.name)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${getButtonClass(selectedColor === color.name)}`}
+                      >
+                        <span className="h-3 w-3 rounded-full border border-black/10" style={{ backgroundColor: color.code }} />
+                        {color.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -317,19 +443,18 @@ export function ProductDetailsPage() {
               <div className="rounded-[24px] bg-[#fff7ea] p-4">
                 <div className="text-sm font-semibold text-[#1a120e]">Size</div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {sizesList.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setSelectedSize(size)}
-                      className={`rounded-full border px-4 py-2 text-sm transition ${selectedSize === size
-                        ? "border-[#1a120e] bg-[#1a120e] text-[#f8ebca]"
-                        : "border-[#dbc8a2] bg-white text-[#1a120e]"
-                        }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {sizesList.map((size) => {
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => handleSelectAttribute("size", size)}
+                        className={`rounded-full border px-4 py-2 text-sm transition ${getButtonClass(selectedSize === size)}`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -348,56 +473,19 @@ export function ProductDetailsPage() {
 
           <div className="flex flex-wrap gap-3 items-center">
             {cartItem ? (
-              <div className="inline-flex h-11 items-center justify-between gap-4 rounded-full border border-[#dcc8a1] bg-white px-4 py-1.5 shadow-sm">
-                <button
-                  type="button"
-                  aria-label="Decrease quantity"
-                  disabled={isUpdatingQuantity}
-                  className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50 text-[#1a120e] flex items-center justify-center"
-                  onClick={async () => {
-                    setIsUpdatingQuantity(true);
-                    try {
-                      await storefrontService.updateCartQuantity(user.id, cartItem.id, cartItem.quantity - 1);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    } catch (err) {
-                      notify.error(err.message || "Failed to update quantity");
-                    } finally {
-                      setIsUpdatingQuantity(false);
-                    }
-                  }}
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="min-w-8 text-center text-base font-semibold text-[#1a120e]">
-                  {isUpdatingQuantity ? (
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto text-[#b88733]" />
-                  ) : (
-                    cartItem.quantity
-                  )}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Increase quantity"
-                  disabled={isUpdatingQuantity}
-                  className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50 text-[#1a120e] flex items-center justify-center"
-                  onClick={async () => {
-                    setIsUpdatingQuantity(true);
-                    try {
-                      await storefrontService.updateCartQuantity(user.id, cartItem.id, cartItem.quantity + 1);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    } catch (err) {
-                      notify.error(err.message || "Failed to update quantity");
-                    } finally {
-                      setIsUpdatingQuantity(false);
-                    }
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
+              <Button
+                as={Link}
+                to={routes.appCart}
+                tone="secondary"
+                className="w-full sm:w-auto flex-1 sm:flex-initial sm:px-8"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                View in Cart
+              </Button>
             ) : (
               <Button
                 disabled={isAddingToCart || (product.variants?.length && !matchingVariant)}
+                className="w-full sm:w-auto flex-1 sm:flex-initial sm:px-8"
                 onClick={async () => {
                   if (!isAuthenticated) {
                     openAuthModal("login", routes.appCart);
@@ -435,23 +523,29 @@ export function ProductDetailsPage() {
             )}
             <Button
               tone="secondary"
+              className="w-full sm:w-auto flex-1 sm:flex-initial sm:px-8"
               onClick={async () => {
                 if (!isAuthenticated) {
                   openAuthModal("login", routes.appFavorites);
                   return;
                 }
 
+                const wasFavorite = product.isFavorite;
                 await storefrontService.toggleFavorite(user.id, product.id);
-                queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] });
-                queryClient.invalidateQueries({ queryKey: ["products"] });
-                queryClient.invalidateQueries({ queryKey: ["favorites", user.id] });
-                notify.success(
-                  product.isFavorite ? "Removed from favorites." : "Saved to favorites.",
-                  {
-                    title: "Favorites updated",
-                    iconKey: "sparkle",
-                  }
-                );
+                await Promise.all([
+                  queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] }),
+                  queryClient.invalidateQueries({ queryKey: ["products"] }),
+                  queryClient.invalidateQueries({ queryKey: ["favorites", user.id] }),
+                ]);
+                setTimeout(() => {
+                  notify.success(
+                    wasFavorite ? "Removed from favorites." : "Saved to favorites.",
+                    {
+                      title: "Favorites updated",
+                      iconKey: "sparkle",
+                    }
+                  );
+                }, 150);
               }}
             >
               <Heart className={`h-4 w-4 ${product.isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />

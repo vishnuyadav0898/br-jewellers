@@ -35,10 +35,16 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
 
   const cartItem = cartQuery.data?.items?.find((item) => item.productId === product.id);
 
+  const displayDescription = product.description
+    ? (product.description.length > 70
+      ? product.description.slice(0, 67) + "..."
+      : product.description)
+    : "";
+
   return (
-    <article className="group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full flex flex-col h-full">
+    <article className="group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full max-w-[360px] mx-auto flex flex-col h-full">
       <div className="relative">
-        <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="block aspect-[4/4.3] overflow-hidden bg-[#f9f0de]">
+        <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="block h-36 sm:h-44 w-full overflow-hidden bg-[#f9f0de]">
           {imageError || !product.images?.[0] ? (
             <div className="flex h-full w-full flex-col items-center justify-center gap-1 sm:gap-2 p-3 text-[#d5a957]/45">
               <Gem className="h-8 w-8 sm:h-10 sm:w-10 animate-pulse" />
@@ -49,6 +55,7 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
               src={product.images[0]}
               alt={product.name}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              loading="lazy"
               onError={() => setImageError(true)}
             />
           )}
@@ -69,32 +76,39 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
               return;
             }
 
+            const wasFavorite = product.isFavorite;
             await storefrontService.toggleFavorite(user.id, product.id);
-            queryClient.invalidateQueries({ queryKey: ["favorites", user.id] });
-            notify.success(
-              product.isFavorite
-                ? t("productCard.favoriteRemoved")
-                : t("productCard.favoriteSaved"),
-              {
-                title: t("productCard.favoritesUpdated"),
-                iconKey: "sparkle",
-              }
-            );
-            onFavoriteChanged?.();
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: ["favorites", user.id] }),
+              queryClient.invalidateQueries({ queryKey: ["products"] }),
+              queryClient.invalidateQueries({ queryKey: ["catalog"] })
+            ]);
+            setTimeout(() => {
+              notify.success(
+                wasFavorite
+                  ? t("productCard.favoriteRemoved")
+                  : t("productCard.favoriteSaved"),
+                {
+                  title: t("productCard.favoritesUpdated"),
+                  iconKey: "sparkle",
+                }
+              );
+              onFavoriteChanged?.();
+            }, 150);
           }}
         >
           <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${product.isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />
         </button>
       </div>
-      <div className="p-3 sm:p-5 flex flex-col flex-1 justify-between">
-        <div className="space-y-1 sm:space-y-2">
+      <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between">
+        <div className="space-y-1">
           <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.24em] text-[#9e6c24]">{product.category}</p>
-          <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="mt-1 block font-display text-base sm:text-2xl lg:text-3xl text-[#1b120f] transition hover:text-[#8a5d18] line-clamp-1">
+          <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="mt-0.5 block font-display text-sm sm:text-base lg:text-lg text-[#1b120f] transition hover:text-[#8a5d18] line-clamp-1">
             {product.name}
           </Link>
-          <p className="mt-1 text-xs sm:text-sm leading-6 text-stone-600 line-clamp-2 hidden sm:block">{product.description}</p>
+          <p className="mt-0.5 text-[11px] sm:text-xs leading-relaxed text-stone-600 line-clamp-2 block">{displayDescription}</p>
         </div>
-        <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 border-t border-stone-100 mt-3 sm:mt-5">
+        <div className="space-y-2 sm:space-y-3 pt-2 sm:pt-3 border-t border-stone-100 mt-2 sm:mt-3">
           <div className="flex items-center justify-between gap-1">
             <span className="text-lg sm:text-2xl font-bold text-[#1b120f]">{formatFromInr(product.price)}</span>
             {product.badge && (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Button } from "../../shared/components/Button";
@@ -7,7 +7,7 @@ import { Loader } from "../../shared/components/Loader";
 import { useLocale } from "../../shared/localization";
 import { useSession } from "../../shared/hooks/useSession";
 import { storefrontService } from "../services/storefrontService";
-import { catalogService } from "../../admin/services/catalogService";
+import { catalogService } from "../../shared/services/catalogService";
 import { ProductCard } from "../components/ProductCard";
 
 
@@ -16,6 +16,32 @@ export function ProductsPage() {
   const queryClient = useQueryClient();
   const { user } = useSession();
   const [search, setSearch] = useState("");
+  
+  // Dynamic Sticky Height Check
+  const [isTall, setIsTall] = useState(false);
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const checkHeight = () => {
+      if (sidebarRef.current) {
+        const height = sidebarRef.current.offsetHeight;
+        setIsTall(height > window.innerHeight - 140);
+      }
+    };
+
+    checkHeight();
+
+    const observer = new MutationObserver(checkHeight);
+    if (sidebarRef.current) {
+      observer.observe(sidebarRef.current, { childList: true, subtree: true });
+    }
+
+    window.addEventListener("resize", checkHeight);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", checkHeight);
+    };
+  }, []);
   
   // Drawer states
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -162,7 +188,12 @@ export function ProductsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         {/* Desktop Persistent Sidebar */}
-        <aside className="hidden lg:block h-fit rounded-[34px] border border-[#dfccab] bg-white/85 p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)] space-y-6">
+        <aside
+          ref={sidebarRef}
+          className={`hidden lg:block sticky z-20 h-fit rounded-[34px] border border-[#dfccab] bg-white/85 p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)] space-y-6 ${
+            isTall ? "bottom-6 self-end" : "top-28 self-start"
+          }`}
+        >
           <div className="flex items-center justify-between border-b border-gold-100 pb-4">
             <h2 className="font-display text-2xl text-[#1a120e] flex items-center gap-2">
               <SlidersHorizontal className="h-5 w-5 text-gold-700" />

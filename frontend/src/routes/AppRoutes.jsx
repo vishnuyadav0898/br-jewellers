@@ -2,6 +2,7 @@ import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { adminRouteRedirects, routes, userRouteRedirects } from "../config/routes";
 import { ProtectedRoute } from "../shared/components/ProtectedRoute";
+import { PermissionGuard } from "../shared/components/PermissionGuard";
 import { UserLayout } from "../shared/layout/UserLayout";
 import { AdminLayout } from "../admin/layout/AdminLayout";
 
@@ -36,6 +37,12 @@ const ProfilePage = lazy(() =>
 );
 const UserChangePasswordPage = lazy(() =>
   import("../user/pages/ChangePasswordPage").then((module) => ({ default: module.UserChangePasswordPage }))
+);
+const BlogsPage = lazy(() =>
+  import("../user/pages/BlogsPage").then((module) => ({ default: module.BlogsPage }))
+);
+const BlogDetailsPage = lazy(() =>
+  import("../user/pages/BlogDetailsPage").then((module) => ({ default: module.BlogDetailsPage }))
 );
 
 const AdminDashboardPage = lazy(() =>
@@ -104,6 +111,12 @@ const FinanceReportsPage = lazy(() =>
 const ChangePasswordPage = lazy(() =>
   import("../admin/pages/settings/ChangePasswordPage").then((module) => ({ default: module.ChangePasswordPage }))
 );
+const CouponListPage = lazy(() =>
+  import("../admin/pages/coupons/CouponListPage").then((module) => ({ default: module.CouponListPage }))
+);
+const CouponAssignPage = lazy(() =>
+  import("../admin/pages/coupons/CouponAssignPage").then((module) => ({ default: module.CouponAssignPage }))
+);
 
 export function AppRoutes() {
   return (
@@ -116,6 +129,8 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
+        <Route path="blogs" element={<BlogsPage />} />
+        <Route path="blogs/:id" element={<BlogDetailsPage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/:slug" element={<ProductDetailsPage />} />
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
@@ -139,27 +154,65 @@ export function AppRoutes() {
           ))}
 
           <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="products/list" element={<ProductListPage />} />
-          <Route path="products/create" element={<ProductFormPage />} />
-          <Route path="products/:productId/edit" element={<ProductFormPage />} />
-          <Route path="products/:productId" element={<AdminProductDetailsPage />} />
-          <Route path="products/categories" element={<CategoriesPage />} />
-          <Route path="products/featured" element={<FeaturedProductsPage />} />
-          <Route path="products/bulk-upload" element={<BulkUploadPage />} />
-          <Route path="users/list" element={<UserListPage />} />
-          <Route path="users/details/:userId" element={<UserDetailsPage />} />
-          <Route path="orders/all" element={<AllOrdersPage />} />
-          <Route path="orders/pending" element={<PendingOrdersPage />} />
-          <Route key="orders-tracking" path="orders/tracking" element={<OrderTrackingPage />} />
-          <Route path="refunds/requests" element={<ReturnRequestsPage />} />
-          <Route path="refunds/status" element={<RefundStatusPage />} />
-          <Route path="content/home" element={<HomeContentPage />} />
-          <Route path="content/about" element={<AboutContentPage />} />
-          <Route path="content/contact" element={<ContactContentPage />} />
-          <Route path="content/banners" element={<BannerManagementPage />} />
-          <Route path="content/blogs" element={<BlogManagementPage />} />
-          <Route path="analytics" element={<AnalyticsOverviewPage />} />
-          <Route path="analytics/finance" element={<FinanceReportsPage />} />
+
+          {/* Product Module Routes */}
+          <Route element={<PermissionGuard module="Product" isRoute />}>
+            <Route path="products/list" element={<ProductListPage />} />
+            <Route path="products/:productId" element={<AdminProductDetailsPage />} />
+            
+            <Route element={<PermissionGuard module="Product" action="Add" isRoute />}>
+              <Route path="products/create" element={<ProductFormPage />} />
+              <Route path="products/bulk-upload" element={<BulkUploadPage />} />
+            </Route>
+            
+            <Route element={<PermissionGuard module="Product" action="Update" isRoute />}>
+              <Route path="products/:productId/edit" element={<ProductFormPage />} />
+              <Route path="products/featured" element={<FeaturedProductsPage />} />
+            </Route>
+          </Route>
+
+          {/* Category Module Routes */}
+          <Route element={<PermissionGuard module="Category" isRoute />}>
+            <Route path="products/categories" element={<CategoriesPage />} />
+          </Route>
+
+          {/* User Module Routes */}
+          <Route element={<PermissionGuard module="User" isRoute />}>
+            <Route path="users/list" element={<UserListPage />} />
+            <Route path="users/details/:userId" element={<UserDetailsPage />} />
+          </Route>
+
+          {/* Order Module Routes */}
+          <Route element={<PermissionGuard module="Order" isRoute />}>
+            <Route path="orders/all" element={<AllOrdersPage />} />
+            <Route path="orders/pending" element={<PendingOrdersPage />} />
+            <Route key="orders-tracking" path="orders/tracking" element={<OrderTrackingPage />} />
+            <Route path="refunds/requests" element={<ReturnRequestsPage />} />
+            <Route path="refunds/status" element={<RefundStatusPage />} />
+            
+            <Route path="analytics" element={<AnalyticsOverviewPage />} />
+            <Route path="analytics/finance" element={<FinanceReportsPage />} />
+          </Route>
+
+          {/* Content Module Routes */}
+          <Route element={<PermissionGuard module="Content" action="Update" isRoute />}>
+            <Route path="content/home" element={<HomeContentPage />} />
+            <Route path="content/about" element={<AboutContentPage />} />
+            <Route path="content/contact" element={<ContactContentPage />} />
+            <Route path="content/banners" element={<BannerManagementPage />} />
+          </Route>
+
+          {/* Blog Module Routes */}
+          <Route element={<PermissionGuard module="Blog" isRoute />}>
+            <Route path="content/blogs" element={<BlogManagementPage />} />
+          </Route>
+
+          {/* Coupon Module Routes */}
+          <Route element={<PermissionGuard module="Coupon" isRoute />}>
+            <Route path="coupons/list" element={<CouponListPage />} />
+            <Route path="coupons/assign" element={<CouponAssignPage />} />
+          </Route>
+
           <Route path="settings" element={<Navigate to="/admin/profile" replace />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="change-password" element={<ChangePasswordPage />} />

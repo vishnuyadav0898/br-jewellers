@@ -20,6 +20,12 @@ export function Header() {
   const isAdmin = user?.role === "admin";
   const isCustomer = !isAdmin;
   const visibleNavigation = userNavigation;
+  const isTabActive = (item) => {
+    if (item.to === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(item.to);
+  };
 
   useEffect(() => {
     setAccountOpen(false);
@@ -51,8 +57,8 @@ export function Header() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                cn("text-sm font-semibold text-stone-600 transition hover:text-[#1a120e]", isActive && "text-[#1a120e]")
+              className={() =>
+                cn("text-sm font-semibold transition hover:text-[#1a120e]", isTabActive(item) ? "text-[#8a5d18]" : "text-stone-600")
               }
             >
               {t(item.labelKey)}
@@ -224,14 +230,14 @@ export function Header() {
         <nav className="border-t border-[#e4d4b2] bg-[#fffbf4] px-4 py-6 shadow-lg lg:hidden space-y-6">
           {/* Main Navigation Links */}
           <div className="space-y-1">
-            {visibleNavigation.map((item) => (
+             {visibleNavigation.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
+                className={() =>
                   cn(
-                    "block rounded-xl px-4 py-3 text-base font-semibold text-stone-600 transition hover:bg-[#fcf5eb] hover:text-[#1a120e]",
-                    isActive && "bg-[#fcf5eb] text-[#1a120e]"
+                    "block rounded-xl px-4 py-3 text-base font-semibold transition hover:bg-[#fcf5eb] hover:text-[#1a120e]",
+                    isTabActive(item) ? "bg-[#fcf5eb] text-[#8a5d18]" : "text-stone-600"
                   )
                 }
               >

@@ -108,7 +108,7 @@ export function OrderTrackingPage() {
             <div className="mt-3 space-y-3">
               {order.items.map((item) => (
                 <div key={`${order.id}-${item.productId}`} className="flex items-center gap-3 text-sm text-[#ebddc2]">
-                  <img src={item.image} alt={item.name} className="h-14 w-12 rounded-[14px] object-cover" />
+                  <img src={item.image} alt={item.name} className="h-14 w-12 rounded-[14px] object-cover" loading="lazy" />
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-[#f8efdc]">{item.name}</div>
                     <div>Qty {item.quantity}</div>

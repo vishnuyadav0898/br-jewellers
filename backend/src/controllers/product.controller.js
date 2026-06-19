@@ -14,9 +14,14 @@ export const listProducts = async (req, res, next) => {
       maxPrice,
       tags,
       search,
+      featured,
     } = req.query;
 
     const filter = {};
+
+    if (featured !== undefined) {
+      filter.featured = featured === "true";
+    }
 
     if (!isActive) {
       filter.isActive = true;
@@ -115,7 +120,12 @@ export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const product = await models.Product.findById(id);
+    let product;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      product = await models.Product.findById(id);
+    } else {
+      product = await models.Product.findOne({ slug: id });
+    }
 
     if (!product) {
       return ResponseHandler.notFound(res, "Product not found");

@@ -30,7 +30,8 @@
     "orders": "ऑर्डर",
     "returns": "रिटर्न",
     "about": "हमारे बारे में",
-    "contact": "संपर्क करें"
+    "contact": "संपर्क करें",
+    "blogs": "ब्लॉग"
   },
   "header": {
     "adminPanel": "एडमिन पैनल",
@@ -166,6 +167,9 @@
   "admin": {
     "nav": {
       "dashboard": "डैशबोर्ड",
+      "coupons": "कूपन",
+      "couponList": "कूपन सूची",
+      "couponAssign": "कूपन असाइन करें",
       "products": "उत्पाद",
       "productList": "उत्पाद सूची",
       "createProduct": "उत्पाद बनाएं",

@@ -148,9 +148,9 @@ export const bannerSchema = z.object({
 
 export const blogSchema = z.object({
   title: requiredString("Title", 2),
-  excerpt: requiredString("Excerpt", 10),
-  author: z.string().trim(),
-  readTime: z.string().trim(),
+  excerpt: z.string().trim().optional(),
+  author: z.string().trim().optional(),
+  readTime: z.string().trim().optional(),
   coverImage: requiredString("Cover image", 5),
   content: requiredString("Content", 20),
 });
@@ -186,6 +186,7 @@ export const productSchema = z
     variants: z
       .array(
         z.object({
+          sku: z.string().trim().optional(),
           name: requiredString("Variant name", 2),
           material: requiredString("Material", 2),
           color: requiredString("Color", 2),

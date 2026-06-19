@@ -1,9 +1,12 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Pencil, Plus, Search, Trash2, Shield } from "lucide-react";
+import { routes } from "../../../config/routes";
 import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
 import { Modal } from "../../../shared/components/Modal";
+import { PermissionGuard } from "../../../shared/components/PermissionGuard";
 import { queryKeys } from "../../../shared/constants/queryKeys";
 import { createAdminUserSchema, adminUserSchema, getValidationErrors } from "../../../shared/utils/validation";
 import { notify } from "../../../shared/utils/notify";
@@ -38,7 +41,7 @@ export function UserListPage() {
 
   const usersQuery = useQuery({
     queryKey: [...queryKeys.adminUsers, role],
-    queryFn: () => usersService.getUsers(role),
+    queryFn: () => usersService.getUsers(role, false),
   });
 
   const filteredUsers = useMemo(() => {
@@ -152,10 +155,12 @@ export function UserListPage() {
           title="User management"
           description="Manage customers and admin users directly on the live database catalog."
           actions={
-            <Button onClick={openCreate}>
-              <Plus className="h-4 w-4" />
-              Create admin
-            </Button>
+            <PermissionGuard module="User" action="Add">
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                Create admin
+              </Button>
+            </PermissionGuard>
           }
         />
         <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_minmax(0,420px)_auto] lg:items-center">
@@ -171,9 +176,8 @@ export function UserListPage() {
                   setRole(value);
                   setPage(1);
                 }}
-                className={`flex-1 text-center rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  role === value ? "bg-espresso text-gold-50" : "text-espresso hover:bg-white"
-                }`}
+                className={`flex-1 text-center rounded-full px-4 py-2 text-sm font-semibold transition ${role === value ? "bg-espresso text-gold-50" : "text-espresso hover:bg-white"
+                  }`}
               >
                 {label}
               </button>
@@ -189,7 +193,6 @@ export function UserListPage() {
           />
           <div className="inline-flex items-center gap-2 text-sm text-stone-500">
             <Search className="h-4 w-4 text-gold-700" />
-            {filteredUsers.length} user{filteredUsers.length === 1 ? "" : "s"}
           </div>
         </div>
       </AdminPanel>
@@ -205,7 +208,9 @@ export function UserListPage() {
                   render: (row) => (
                     <div className="flex items-center gap-3">
                       <img src={row.avatar} alt={row.name} className="h-11 w-11 rounded-full bg-gold-50" />
-                      <span className="font-semibold text-espresso">{row.name}</span>
+                      <Link to={routes.adminUserDetails(row.id)} className="font-semibold text-espresso hover:underline hover:text-gold-700">
+                        {row.name}
+                      </Link>
                     </div>
                   ),
                 },
@@ -221,12 +226,29 @@ export function UserListPage() {
                   header: "Actions",
                   render: (row) => (
                     <div className="flex flex-wrap gap-2">
-                      <Button tone="secondary" size="sm" onClick={() => openEdit(row)} title="Edit user" aria-label="Edit user">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button tone="danger" size="sm" onClick={() => setDeletingUser(row)} title="Delete user" aria-label="Delete user">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <PermissionGuard module="Permission" action="View">
+                        <Button
+                          tone="secondary"
+                          size="icon"
+                          className="h-8 w-8"
+                          as={Link}
+                          to={routes.adminUserDetails(row.id)}
+                          title="Manage Permissions"
+                          aria-label="Manage Permissions"
+                        >
+                          <Shield className="h-4 w-4 text-[#8a5d18]" />
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard module="User" action="Update">
+                        <Button tone="secondary" size="icon" className="h-8 w-8" onClick={() => openEdit(row)} title="Edit user" aria-label="Edit user">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </PermissionGuard>
+                      <PermissionGuard module="User" action="Delete">
+                        <Button tone="danger" size="icon" className="h-8 w-8" onClick={() => setDeletingUser(row)} title="Delete user" aria-label="Delete user">
+                          <Trash2 className="h-4 w-4 text-white" />
+                        </Button>
+                      </PermissionGuard>
                     </div>
                   ),
                 },

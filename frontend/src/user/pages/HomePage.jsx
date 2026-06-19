@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { routes } from "../../config/routes";
@@ -19,11 +20,22 @@ export function HomePage() {
     queryFn: () => storefrontService.getHomeSnapshot(),
   });
 
+  const [showAll, setShowAll] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (homeQuery.isLoading) {
     return <Loader label={t("common.loading")} />;
   }
 
   const { banners = [], featuredProducts = [], activeCoupons = [], homeContent = {} } = homeQuery.data || {};
+  const initialLimit = isMobile ? 6 : 8;
+  const visibleProducts = showAll ? featuredProducts : featuredProducts.slice(0, initialLimit);
 
   return (
     <div className="space-y-8">
@@ -96,7 +108,7 @@ export function HomePage() {
           className="grid gap-6"
           style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
         >
-          {featuredProducts.map((product) => (
+          {visibleProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -105,6 +117,19 @@ export function HomePage() {
             />
           ))}
         </div>
+
+        {featuredProducts.length > initialLimit && !showAll && (
+          <div className="flex justify-center pt-8">
+            <Link to={routes.appProducts}>
+              <Button
+                tone="secondary"
+                className="px-8 py-3 rounded-full font-semibold border-[#dfccab] hover:bg-[#fff9f0] transition-colors"
+              >
+                View More
+              </Button>
+            </Link>
+          </div>
+        )}
       </section>
     </div>
   );

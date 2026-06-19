@@ -30,7 +30,8 @@
     "orders": "Orders",
     "returns": "Returns",
     "about": "About Us",
-    "contact": "Contact Us"
+    "contact": "Contact Us",
+    "blogs": "Blogs"
   },
   "header": {
     "adminPanel": "Admin panel",
@@ -166,6 +167,9 @@
   "admin": {
     "nav": {
       "dashboard": "Dashboard",
+      "coupons": "Coupons",
+      "couponList": "Coupon List",
+      "couponAssign": "Assign Coupon",
       "products": "Products",
       "productList": "Product List",
       "createProduct": "Create Product",

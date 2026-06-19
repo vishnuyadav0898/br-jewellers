@@ -49,10 +49,7 @@ export function Topbar() {
           </Button>
 
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9e6c24]">
-              {t(meta.sectionKey)}
-            </div>
-            <h1 className="mt-1 font-display text-4xl leading-none text-[#1a120e]">
+            <h1 className="font-display text-4xl leading-none text-[#1a120e]">
               {t(meta.pageKey)}
             </h1>
           </div>
