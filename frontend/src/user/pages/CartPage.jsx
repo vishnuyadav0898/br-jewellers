@@ -14,6 +14,8 @@ import { useSession } from "../../shared/hooks/useSession";
 import { useAppStore } from "../../shared/store/useAppStore";
 import { notify } from "../../shared/utils/notify";
 import { storefrontService } from "../services/storefrontService";
+import { Skeleton, CartItemSkeleton } from "../../shared/components/Skeleton";
+
 
 export function CartPage() {
   const { t } = useLocale();
@@ -191,7 +193,39 @@ export function CartPage() {
   };
 
   if (cartQuery.isLoading) {
-    return <Loader label={t("common.loading")} />;
+    return (
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <section className="space-y-4 rounded-[34px] border border-[#dfccab] bg-white/85 p-6 shadow-[0_18px_55px_rgba(40,24,13,0.07)]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#9e6c24]">
+              {t("cart.eyebrow")}
+            </p>
+            <h1 className="mt-2 font-display text-5xl text-[#1a120e]">{t("cart.title")}</h1>
+            <p className="mt-2 text-sm leading-6 text-stone-600">{t("cart.subtitle")}</p>
+          </div>
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <CartItemSkeleton key={index} />
+            ))}
+          </div>
+        </section>
+
+        <aside className="space-y-4 rounded-[34px] border border-[#dfccab] bg-[#17100d] p-6 text-[#f8efdc] shadow-[0_18px_60px_rgba(32,21,15,0.25)]">
+          <Skeleton className="h-6 w-32 bg-stone-700/60" />
+          <Skeleton className="h-10 w-48 bg-stone-700/60" />
+          <div className="flex gap-2">
+            <Skeleton className="h-12 flex-1 rounded-xl bg-stone-700/60" />
+            <Skeleton className="h-12 w-20 rounded-xl bg-stone-700/60" />
+          </div>
+          <div className="space-y-3 rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <Skeleton className="h-4 w-full bg-stone-700/60" />
+            <Skeleton className="h-4 w-5/6 bg-stone-700/60" />
+            <Skeleton className="h-4 w-2/3 bg-stone-700/60" />
+          </div>
+          <Skeleton className="h-12 w-full rounded-full bg-stone-700/60" />
+        </aside>
+      </div>
+    );
   }
 
   // ── Order Placed Success Screen ──────────────────────────────────────────────
