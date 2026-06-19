@@ -30,9 +30,9 @@
  *                     productId:
  *                       type: string
  *                       example: "665a1b2c3d4e5f6a7b8c9d01"
- *                     variantIndex:
- *                       type: number
- *                       example: 0
+ *                     sku:
+ *                       type: string
+ *                       example: "RING-GLD-14K-SZ6"
  *                     quantity:
  *                       type: number
  *                       example: 2
@@ -52,7 +52,7 @@
  *                   user: "665a1b2c3d4e5f6a7b8c9d0a"
  *                   items:
  *                     - product: "665a1b2c3d4e5f6a7b8c9d01"
- *                       variantIndex: 0
+ *                       sku: "RING-GLD-14K-SZ6"
  *                       quantity: 2
  *                       price:
  *                         INR: 15000
@@ -138,7 +138,7 @@
  *                           _id: "665a1b2c3d4e5f6a7b8c9d01"
  *                           name: "Diamond Solitaire Ring"
  *                           coverImage: "https://cdn.example.com/ring-cover.jpg"
- *                         variantIndex: 0
+ *                         sku: "RING-GLD-14K-SZ6"
  *                         quantity: 2
  *                         price:
  *                           INR: 15000
@@ -166,7 +166,7 @@
  *                           _id: "665a1b2c3d4e5f6a7b8c9d02"
  *                           name: "Gold Chain Necklace"
  *                           coverImage: "https://cdn.example.com/necklace-cover.jpg"
- *                         variantIndex: 1
+ *                         sku: "NKLC-GLD-22K"
  *                         quantity: 1
  *                         price:
  *                           INR: 45000
@@ -230,7 +230,7 @@
  *                           - "https://cdn.example.com/ring-1.jpg"
  *                           - "https://cdn.example.com/ring-2.jpg"
  *                         category: "Rings"
- *                       variantIndex: 0
+ *                       sku: "RING-GLD-14K-SZ6"
  *                       quantity: 2
  *                       price:
  *                         INR: 15000
@@ -306,7 +306,7 @@
  *                   user: "665a1b2c3d4e5f6a7b8c9d0a"
  *                   items:
  *                     - product: "665a1b2c3d4e5f6a7b8c9d01"
- *                       variantIndex: 0
+ *                       sku: "RING-GLD-14K-SZ6"
  *                       quantity: 2
  *                       price:
  *                         INR: 15000

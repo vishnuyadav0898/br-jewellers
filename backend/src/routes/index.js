@@ -12,6 +12,8 @@ import blogsRoutes from "./blogs.routes.js";
 import contentRoutes from "./content.routes.js";
 import permissionRoutes from "./permission.routes.js";
 import couponRoutes from "./coupon.routes.js";
+import returnRoutes from "./return.routes.js";
+import notificationRoutes from "./notification.routes.js";
 
 const router = Router();
 
@@ -27,5 +29,7 @@ router.use("/api/v1/blogs", blogsRoutes);
 router.use("/api/v1/content", contentRoutes);
 router.use("/api/v1/permissions", permissionRoutes);
 router.use("/api/v1/coupons", couponRoutes);
+router.use("/api/v1/returns", returnRoutes);
+router.use("/api/v1/notifications", notificationRoutes);
 
 export default router;

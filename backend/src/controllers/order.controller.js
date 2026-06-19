@@ -1,5 +1,6 @@
 import models from "../models/index.js";
 import ResponseHandler from "../utils/responseHandler.js";
+import { NotificationService } from "../services/notification.service.js";
 
 // Valid status transitions (current → allowed next statuses)
 const STATUS_ORDER = ["pending", "confirmed", "shipped", "delivered"];
@@ -233,6 +234,16 @@ export const updateOrderStatus = async (req, res, next) => {
 
     order.status = status;
     await order.save();
+
+    // 🔹 Trigger Notification for status changes
+    if (status === "shipped" || status === "delivered") {
+      await NotificationService.sendToUsers([order.user], {
+        title: `Order ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        message: `Your order ${order.orderNumber} has been ${status}.`,
+        type: "order",
+        relatedId: order._id,
+      });
+    }
 
     return ResponseHandler.success(
       res,

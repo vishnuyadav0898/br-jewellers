@@ -40,6 +40,8 @@ const options = {
       { name: "Content", description: "Dynamic content page management" },
       { name: "Permission", description: "RBAC Permission management" },
       { name: "Coupon", description: "Coupon and Discount module" },
+      { name: "Returns", description: "Order Return & Refund Module" },
+      { name: "Notifications", description: "Push and In-App Notification Management" },
     ],
     components: {
       securitySchemes: {

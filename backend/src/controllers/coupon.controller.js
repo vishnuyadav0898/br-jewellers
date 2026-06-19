@@ -1,5 +1,6 @@
 import models from "../models/index.js";
 import ResponseHandler from "../utils/responseHandler.js";
+import { NotificationService } from "../services/notification.service.js";
 
 export const createCoupon = async (req, res, next) => {
   try {
@@ -73,7 +74,15 @@ export const assignCoupon = async (req, res, next) => {
       user: userId,
     });
 
-    return ResponseHandler.created(res, "Coupon assigned successfully");
+    // 🔹 Trigger Notification
+    await NotificationService.sendToUsers([userId], {
+      title: "New Coupon Assigned!",
+      message: `You have received a special coupon: ${coupon.code}. Check your profile to use it!`,
+      type: "coupon",
+      relatedId: coupon._id,
+    });
+
+    return ResponseHandler.created(res, "Coupon assigned successfully", assignment);
   } catch (error) {
     return ResponseHandler.handleErrors(error, req, res, next);
   }

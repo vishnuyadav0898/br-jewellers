@@ -11,6 +11,9 @@ import Permission from "./permission.model.js";
 import Coupon from "./coupon.model.js";
 import CouponAssignment from "./coupon_assignment.model.js";
 import CouponUsage from "./coupon_usage.model.js";
+import ReturnRequest from "./return.model.js";
+import Notification from "./notification.model.js";
+import UserDevice from "./user_device.model.js";
 
 const models = {
   Product,
@@ -26,6 +29,9 @@ const models = {
   Coupon,
   CouponAssignment,
   CouponUsage,
+  ReturnRequest,
+  Notification,
+  UserDevice,
 };
 
 export default models;
