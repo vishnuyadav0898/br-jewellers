@@ -16,6 +16,15 @@ export function ProductsPage() {
   const queryClient = useQueryClient();
   const { user } = useSession();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search query to improve page response speed
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
   
   // Dynamic Sticky Height Check
   const [isTall, setIsTall] = useState(false);
