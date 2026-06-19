@@ -5,6 +5,8 @@ export const routes = {
   appProductDetails: (slug = ":slug") => `/products/${slug}`,
   appAbout: "/about",
   appContact: "/contact",
+  appBlogs: "/blogs",
+  appBlogDetails: (id = ":id") => `/blogs/${id}`,
   appCart: "/cart",
   appFavorites: "/favorites",
   appOrders: "/orders",
@@ -44,6 +46,7 @@ export const routes = {
 export const userNavigation = [
   { labelKey: "nav.home", to: routes.appHome },
   { labelKey: "nav.products", to: routes.appProducts },
+  { labelKey: "nav.blogs", to: routes.appBlogs },
   { labelKey: "nav.about", to: routes.appAbout },
   { labelKey: "nav.contact", to: routes.appContact },
 ];

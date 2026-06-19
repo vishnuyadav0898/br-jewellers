@@ -38,6 +38,12 @@ const ProfilePage = lazy(() =>
 const UserChangePasswordPage = lazy(() =>
   import("../user/pages/ChangePasswordPage").then((module) => ({ default: module.UserChangePasswordPage }))
 );
+const BlogsPage = lazy(() =>
+  import("../user/pages/BlogsPage").then((module) => ({ default: module.BlogsPage }))
+);
+const BlogDetailsPage = lazy(() =>
+  import("../user/pages/BlogDetailsPage").then((module) => ({ default: module.BlogDetailsPage }))
+);
 
 const AdminDashboardPage = lazy(() =>
   import("../admin/pages/dashboard/DashboardPage").then((module) => ({ default: module.DashboardPage }))
@@ -123,6 +129,8 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
+        <Route path="blogs" element={<BlogsPage />} />
+        <Route path="blogs/:id" element={<BlogDetailsPage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/:slug" element={<ProductDetailsPage />} />
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
