@@ -1,18 +1,17 @@
 export function AdminPageHeader({ eyebrow, title, description, actions }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="max-w-3xl">
-        {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9f6d22]">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="mt-2 font-display text-4xl text-[#1d130f] sm:text-5xl">{title}</h1>
+    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 w-full">
+      <div className="flex-1 min-w-0">
+        <h1 className="font-display text-4xl text-[#1d130f] sm:text-5xl">{title}</h1>
         {description ? (
-          <p className="mt-3 text-sm leading-6 text-stone-600">{description}</p>
+          <p className="mt-3 text-sm leading-relaxed text-stone-600 max-w-3xl">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap gap-3 self-start md:self-center md:pt-4">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }

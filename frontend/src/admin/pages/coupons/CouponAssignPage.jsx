@@ -85,15 +85,25 @@ export function CouponAssignPage() {
   const columns = [
     {
       key: "coupon",
-      header: "Coupon Code",
+      header: "Coupon Details",
       render: (row) => (
         <div className="flex items-center gap-2.5">
-          <Ticket className="h-4 w-4 text-stone-400" />
-          <div>
+          <Ticket className="h-4 w-4 text-stone-400 shrink-0" />
+          <div className="space-y-0.5">
             <span className="rounded bg-[#fff7ea] px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-[#9f6d22] ring-1 ring-[#e9c97b]">
               {row.coupon?.code || "UNKNOWN"}
             </span>
-            <div className="mt-0.5 text-xs text-stone-500 font-medium">{row.coupon?.name}</div>
+            <div className="text-xs text-stone-500 font-medium">{row.coupon?.name}</div>
+            <div className="text-[11px] text-stone-500">
+              {row.coupon?.discountType === "percentage" ? (
+                <span>{row.coupon.discountValue}% Off{row.coupon.maxDiscount?.INR > 0 ? ` (Cap: ₹${row.coupon.maxDiscount.INR})` : ""}</span>
+              ) : (
+                <span>Fixed: ₹{row.coupon?.fixedDiscountValue?.INR || 0} / ${row.coupon?.fixedDiscountValue?.USD || 0}</span>
+              )}
+            </div>
+            {row.coupon?.minOrderAmount?.INR > 0 && (
+              <div className="text-[10px] text-stone-400">Min order: ₹{row.coupon.minOrderAmount.INR}</div>
+            )}
           </div>
         </div>
       ),
@@ -103,12 +113,56 @@ export function CouponAssignPage() {
       header: "Assigned To",
       render: (row) => (
         <div className="flex items-center gap-2.5">
-          <User className="h-4 w-4 text-stone-400" />
+          <User className="h-4 w-4 text-stone-400 shrink-0" />
           <div>
             <div className="text-sm font-semibold text-stone-800">{row.user?.name || "Deleted User"}</div>
             <div className="text-xs text-stone-500">{row.user?.email || "N/A"}</div>
           </div>
         </div>
+      ),
+    },
+    {
+      key: "targeting",
+      header: "Targeting",
+      render: (row) => {
+        const coupon = row.coupon;
+        if (!coupon) return <span className="text-[11px] text-stone-400 italic">—</span>;
+        const hasMaterials = coupon.applicableMaterials?.length > 0;
+        const hasCategories = coupon.applicableCategories?.length > 0;
+        const orderNum = coupon.applicableOnOrderNumber;
+
+        if (!hasMaterials && !hasCategories && !orderNum) {
+          return <span className="text-[11px] text-stone-400 italic">All items</span>;
+        }
+
+        return (
+          <div className="space-y-0.5 text-[11px]">
+            {orderNum && (
+              <span className="inline-block rounded bg-[#fff0ec] px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 border border-rose-100">
+                {Number(orderNum) === 1 ? "1st Order" : `Order #${orderNum}`}
+              </span>
+            )}
+            {hasMaterials && (
+              <div className="text-stone-600 capitalize">{coupon.applicableMaterials.join(", ")}</div>
+            )}
+            {hasCategories && (
+              <div className="text-stone-600">{coupon.applicableCategories.join(", ")}</div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (row) => (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+          row.isUsed
+            ? "bg-stone-100 text-stone-500"
+            : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+        }`}>
+          {row.isUsed ? "Used" : "Available"}
+        </span>
       ),
     },
     {

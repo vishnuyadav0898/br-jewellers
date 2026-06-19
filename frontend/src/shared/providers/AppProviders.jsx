@@ -1,4 +1,5 @@
-import { BrowserRouter } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, useLocation } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import { RouteAwareErrorBoundary } from "../components/AppErrorBoundary";
@@ -6,9 +7,20 @@ import { LocalizationBootstrap } from "./LocalizationBootstrap";
 import { NotificationBootstrap } from "./NotificationBootstrap";
 import { queryClient } from "../services/queryClient";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 export function AppProviders({ children }) {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <RouteAwareErrorBoundary>
         <QueryClientProvider client={queryClient}>
           {children}

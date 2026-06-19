@@ -79,7 +79,7 @@ export function BannerManagementPage() {
         loadingLabel="Loading banners..."
         empty={!banners.length}
         emptyTitle="No banners yet"
-        emptyDescription="Create a banner to populate the home page carousel in mock data."
+        emptyDescription="Create a banner to populate the home page carousel with promotional content."
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {banners.map((banner) => (

@@ -266,6 +266,7 @@ export function CartPage() {
                 src={item.image}
                 alt={item.name}
                 className="h-28 w-24 rounded-[22px] object-cover bg-[#f5ead2]"
+                loading="lazy"
                 onError={(e) => {
                   e.target.style.display = "none";
                 }}

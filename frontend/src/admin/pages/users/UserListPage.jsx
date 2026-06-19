@@ -176,9 +176,8 @@ export function UserListPage() {
                   setRole(value);
                   setPage(1);
                 }}
-                className={`flex-1 text-center rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  role === value ? "bg-espresso text-gold-50" : "text-espresso hover:bg-white"
-                }`}
+                className={`flex-1 text-center rounded-full px-4 py-2 text-sm font-semibold transition ${role === value ? "bg-espresso text-gold-50" : "text-espresso hover:bg-white"
+                  }`}
               >
                 {label}
               </button>
@@ -194,7 +193,6 @@ export function UserListPage() {
           />
           <div className="inline-flex items-center gap-2 text-sm text-stone-500">
             <Search className="h-4 w-4 text-gold-700" />
-            {filteredUsers.length} user{filteredUsers.length === 1 ? "" : "s"}
           </div>
         </div>
       </AdminPanel>

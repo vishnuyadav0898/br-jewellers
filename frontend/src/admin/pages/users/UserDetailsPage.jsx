@@ -111,7 +111,7 @@ export function UserDetailsPage() {
 
       <AdminDataState query={userQuery} loadingLabel="Loading customer profile...">
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <AdminPanel>
+          <AdminPanel className={user?.role === "admin" ? "xl:col-span-2" : ""}>
             <div className="flex items-center gap-4">
               <img src={user?.avatar} alt={user?.name} className="h-20 w-20 rounded-full" />
               <div>
@@ -124,15 +124,17 @@ export function UserDetailsPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[22px] bg-[#fff9ef] p-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
-                  Lifetime spend
+            <div className={`mt-5 grid gap-4 ${user?.role !== "admin" ? "md:grid-cols-2" : ""}`}>
+              {user?.role !== "admin" && (
+                <div className="rounded-[22px] bg-[#fff9ef] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
+                    Lifetime spend
+                  </div>
+                  <div className="mt-2 font-display text-3xl text-[#1d130f]">
+                    {formatFromInr(user?.totalSpend || 0)}
+                  </div>
                 </div>
-                <div className="mt-2 font-display text-3xl text-[#1d130f]">
-                  {formatFromInr(user?.totalSpend || 0)}
-                </div>
-              </div>
+              )}
               <div className="rounded-[22px] bg-[#fff9ef] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
                   Address
@@ -144,32 +146,34 @@ export function UserDetailsPage() {
             </div>
           </AdminPanel>
 
-          <AdminPanel>
-            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">Orders</div>
-            <h2 className="mt-2 font-display text-3xl text-[#1d130f]">Recent order history</h2>
-            <div className="mt-5 space-y-4">
-              {orders.length ? (
-                orders.map((order) => (
-                  <article key={order.id} className="rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-[#1d130f]">{order.orderNumber}</div>
-                        <div className="text-sm text-stone-500">{formatDate(order.createdAt, language)}</div>
+          {user?.role !== "admin" && (
+            <AdminPanel>
+              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">Orders</div>
+              <h2 className="mt-2 font-display text-3xl text-[#1d130f]">Recent order history</h2>
+              <div className="mt-5 space-y-4">
+                {orders.length ? (
+                  orders.map((order) => (
+                    <article key={order.id} className="rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="font-semibold text-[#1d130f]">{order.orderNumber}</div>
+                          <div className="text-sm text-stone-500">{formatDate(order.createdAt, language)}</div>
+                        </div>
+                        <AdminStatusBadge value={order.status} />
                       </div>
-                      <AdminStatusBadge value={order.status} />
-                    </div>
-                    <div className="mt-3 text-sm text-stone-600">
-                      Total {formatFromInr(order.total)} • {order.items.length} item(s)
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-dashed border-[#dec99f] bg-[#fffaf1] px-4 py-6 text-sm text-stone-600">
-                  No orders found for this user.
-                </div>
-              )}
-            </div>
-          </AdminPanel>
+                      <div className="mt-3 text-sm text-stone-600">
+                        Total {formatFromInr(order.total)} • {order.items.length} item(s)
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-[22px] border border-dashed border-[#dec99f] bg-[#fffaf1] px-4 py-6 text-sm text-stone-600">
+                    No orders found for this user.
+                  </div>
+                )}
+              </div>
+            </AdminPanel>
+          )}
 
           {user?.role === "admin" && (
             <PermissionGuard module="Permission" action="View">
@@ -221,27 +225,29 @@ export function UserDetailsPage() {
             </PermissionGuard>
           )}
 
-          <AdminPanel className="xl:col-span-2">
-            <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">Refunds</div>
-            <h2 className="mt-2 font-display text-3xl text-[#1d130f]">Return request history</h2>
-            <div className="mt-5 space-y-4">
-              {refunds.length ? (
-                refunds.map((refund) => (
-                  <article key={refund.id} className="rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-semibold text-[#1d130f]">{refund.orderNumber}</div>
-                      <AdminStatusBadge value={refund.status} />
-                    </div>
-                    <p className="mt-2 text-sm text-stone-600">{refund.reason}</p>
-                  </article>
-                ))
-              ) : (
-                <div className="rounded-[22px] border border-dashed border-[#dec99f] bg-[#fffaf1] px-4 py-6 text-sm text-stone-600">
-                  No return requests for this user.
-                </div>
-              )}
-            </div>
-          </AdminPanel>
+          {user?.role !== "admin" && (
+            <AdminPanel className="xl:col-span-2">
+              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">Refunds</div>
+              <h2 className="mt-2 font-display text-3xl text-[#1d130f]">Return request history</h2>
+              <div className="mt-5 space-y-4">
+                {refunds.length ? (
+                  refunds.map((refund) => (
+                    <article key={refund.id} className="rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="font-semibold text-[#1d130f]">{refund.orderNumber}</div>
+                        <AdminStatusBadge value={refund.status} />
+                      </div>
+                      <p className="mt-2 text-sm text-stone-600">{refund.reason}</p>
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-[22px] border border-dashed border-[#dec99f] bg-[#fffaf1] px-4 py-6 text-sm text-stone-600">
+                    No return requests for this user.
+                  </div>
+                )}
+              </div>
+            </AdminPanel>
+          )}
         </div>
       </AdminDataState>
     </div>

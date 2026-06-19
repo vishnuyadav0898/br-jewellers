@@ -31,7 +31,7 @@ export function RefundStatusPage() {
         loadingLabel="Loading refund statuses..."
         empty={!refunds.length}
         emptyTitle="No refund updates"
-        emptyDescription="Resolved and pending mock refund statuses will appear here."
+        emptyDescription="All resolved and pending refund status updates will appear here."
       >
         <div className="grid gap-4 md:grid-cols-2">
           {refunds.map((request) => (

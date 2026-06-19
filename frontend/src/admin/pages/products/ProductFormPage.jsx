@@ -274,12 +274,34 @@ export function ProductFormPage() {
       if (isEdit) {
         await catalogService.updateProduct(productId, parsed.data);
         notify.success("Product updated.", { title: "Catalogue updated", iconKey: "order" });
+
+        // Update the query cache directly instead of invalidating
+        queryClient.setQueriesData({ queryKey: ["admin", "products"] }, (oldProducts) => {
+          if (!oldProducts) return oldProducts;
+          return oldProducts.map((p) => {
+            if (p.id === productId || p.backendId === productId) {
+              const coverImage = parsed.data.coverImage || parsed.data.images?.[0] || p.coverImage;
+              const minPrice = parsed.data.priceRange?.min || parsed.data.price || p.price;
+              const maxPrice = parsed.data.priceRange?.max || parsed.data.originalPrice || p.originalPrice;
+              
+              return {
+                ...p,
+                ...parsed.data,
+                coverImage,
+                price: Number(minPrice),
+                originalPrice: Number(maxPrice),
+                stock: parsed.data.variants?.reduce((sum, v) => sum + Number(v.stock || 0), 0) ?? p.stock,
+              };
+            }
+            return p;
+          });
+        });
       } else {
         await catalogService.createProduct(parsed.data);
         notify.success("Product created.", { title: "New product added", iconKey: "order" });
+        queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       }
 
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.adminDashboard });
       navigate(routes.adminProductsList);
     } catch (error) {

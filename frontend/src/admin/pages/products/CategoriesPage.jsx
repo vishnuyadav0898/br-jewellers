@@ -166,7 +166,7 @@ export function CategoriesPage() {
         <AdminPageHeader
           eyebrow="Products"
           title="Product categories"
-          description="Manage product taxonomy through the backend category API when available, with mock fallback for local create, edit, and delete workflows."
+          description="Manage product collections and taxonomy definitions to structure your catalog."
           actions={
             <PermissionGuard module="Category" action="Add">
               <Button onClick={openCreate}>
@@ -176,15 +176,13 @@ export function CategoriesPage() {
             </PermissionGuard>
           }
         />
-        <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,420px)_auto] md:items-center">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search categories"
-          />
-          <div className="inline-flex items-center gap-2 text-sm text-stone-500">
-            <Search className="h-4 w-4 text-gold-700" />
-            {filteredCategories.length} categor{filteredCategories.length === 1 ? "y" : "ies"}
+        <div className="mt-5 flex justify-end">
+          <div className="w-full max-w-md">
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search categories"
+            />
           </div>
         </div>
       </AdminPanel>

@@ -32,6 +32,7 @@ const defaultForm = {
   applicableCategories: "",
   usageLimit: "",
   usagePerUser: 1,
+  applicableOnOrderNumber: "",
 };
 
 export function CouponListPage() {
@@ -80,6 +81,7 @@ export function CouponListPage() {
       applicableCategories: coupon.applicableCategories?.join(", ") || "",
       usageLimit: coupon.usageLimit ?? "",
       usagePerUser: coupon.usagePerUser ?? 1,
+      applicableOnOrderNumber: coupon.applicableOnOrderNumber ?? "",
     });
     setErrors({});
   };
@@ -154,6 +156,7 @@ export function CouponListPage() {
         isActive: form.isActive,
         usagePerUser: Number(form.usagePerUser) || 1,
         usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
+        applicableOnOrderNumber: form.applicableOnOrderNumber ? Number(form.applicableOnOrderNumber) : null,
         minOrderAmount: {
           INR: Number(form.minOrderAmountINR) || 0,
           USD: Number(form.minOrderAmountUSD) || 0,
@@ -199,41 +202,110 @@ export function CouponListPage() {
   const columns = [
     {
       key: "code",
-      header: "Code",
+      header: "Coupon Details",
       render: (row) => (
-        <div>
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="rounded-md bg-[#fff7ea] px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wider text-[#9f6d22] ring-1 ring-[#e9c97b]">
               {row.code}
             </span>
           </div>
-          <div className="mt-1 text-xs text-stone-500 font-semibold">{row.name}</div>
+          <div className="text-xs font-semibold text-stone-800">{row.name}</div>
+          {row.description && (
+            <div className="text-[10px] text-stone-500 leading-normal max-w-xs">{row.description}</div>
+          )}
         </div>
       ),
     },
     {
       key: "discount",
-      header: "Discount",
+      header: "Discount & Thresholds",
       render: (row) => {
-        if (row.discountType === "percentage") {
-          return (
-            <div>
-              <span className="font-semibold text-stone-800">{row.discountValue}% Off</span>
-              {row.maxDiscount?.INR > 0 && (
-                <div className="text-[11px] text-stone-500">Cap: ₹{row.maxDiscount.INR}</div>
-              )}
-            </div>
-          );
-        }
+        const isPercentage = row.discountType === "percentage";
         return (
-          <div>
-            <span className="font-semibold text-stone-800">Fixed Value</span>
-            <div className="text-[11px] text-stone-500">
-              ₹{row.fixedDiscountValue?.INR} / ${row.fixedDiscountValue?.USD}
+          <div className="space-y-1 text-xs">
+            <div>
+              <span className="inline-flex items-center gap-1 rounded bg-[#f5e9d4] px-1.5 py-0.5 font-semibold text-[#8e5c1e]">
+                {isPercentage ? `${row.discountValue}% Off` : "Fixed Amount"}
+              </span>
             </div>
+            {!isPercentage && (
+              <div className="text-[11px] font-medium text-stone-700">
+                Value: ₹{row.fixedDiscountValue?.INR || 0} / ${row.fixedDiscountValue?.USD || 0}
+              </div>
+            )}
+            {isPercentage && (row.maxDiscount?.INR > 0 || row.maxDiscount?.USD > 0) && (
+              <div className="text-[11px] text-stone-500">
+                Cap: ₹{row.maxDiscount.INR || 0} / ${row.maxDiscount.USD || 0}
+              </div>
+            )}
+            {(row.minOrderAmount?.INR > 0 || row.minOrderAmount?.USD > 0) && (
+              <div className="text-[11px] text-stone-500">
+                Min Order: ₹{row.minOrderAmount.INR || 0} / ${row.minOrderAmount.USD || 0}
+              </div>
+            )}
           </div>
         );
       },
+    },
+    {
+      key: "targeting",
+      header: "Targeting & Rules",
+      render: (row) => {
+        const hasMaterials = row.applicableMaterials && row.applicableMaterials.length > 0;
+        const hasCategories = row.applicableCategories && row.applicableCategories.length > 0;
+        const hasProducts = row.applicableProducts && row.applicableProducts.length > 0;
+        const targetOrder = row.applicableOnOrderNumber;
+
+        if (!hasMaterials && !hasCategories && !hasProducts && !targetOrder) {
+          return <span className="text-[11px] text-stone-400 italic">Global (All orders/items)</span>;
+        }
+
+        return (
+          <div className="space-y-1 text-xs">
+            {targetOrder && (
+              <div>
+                <span className="inline-flex items-center gap-1 rounded bg-[#fff0ec] px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 border border-rose-100">
+                  {Number(targetOrder) === 1 ? "First Order Only" : `Order #${targetOrder} Only`}
+                </span>
+              </div>
+            )}
+            {hasMaterials && (
+              <div className="text-[11px] text-stone-600">
+                <span className="font-semibold text-stone-700">Materials:</span>{" "}
+                <span className="capitalize">{row.applicableMaterials.join(", ")}</span>
+              </div>
+            )}
+            {hasCategories && (
+              <div className="text-[11px] text-stone-600">
+                <span className="font-semibold text-stone-700">Categories:</span>{" "}
+                {row.applicableCategories.join(", ")}
+              </div>
+            )}
+            {hasProducts && (
+              <div className="text-[11px] text-stone-600">
+                <span className="font-semibold text-stone-700">Products:</span>{" "}
+                {row.applicableProducts.length} items
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "usage",
+      header: "Usage & Limits",
+      render: (row) => (
+        <div className="text-xs text-stone-600 space-y-0.5">
+          <div>Used: <span className="font-semibold text-stone-800">{row.totalUsedCount || 0}</span></div>
+          {row.usageLimit && (
+            <div>Limit: <span className="font-semibold text-stone-800">{row.usageLimit}</span></div>
+          )}
+          {row.usagePerUser && (
+            <div className="text-[10px] text-stone-500">Per User Limit: {row.usagePerUser}</div>
+          )}
+        </div>
+      ),
     },
     {
       key: "validity",
@@ -248,18 +320,6 @@ export function CouponListPage() {
             <Calendar className="h-3 w-3 text-stone-400" />
             <span>To: {new Date(row.endDate).toLocaleDateString()}</span>
           </div>
-        </div>
-      ),
-    },
-    {
-      key: "usage",
-      header: "Usage Count",
-      render: (row) => (
-        <div className="text-xs text-stone-600 space-y-0.5">
-          <div>Used: <span className="font-semibold text-stone-800">{row.totalUsedCount}</span></div>
-          {row.usageLimit && (
-            <div>Limit: <span className="font-semibold text-stone-800">{row.usageLimit}</span></div>
-          )}
         </div>
       ),
     },
@@ -513,14 +573,14 @@ export function CouponListPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 label="Usage Limit"
                 type="number"
                 min={1}
                 value={form.usageLimit}
                 onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
-                placeholder="Total times usable globally"
+                placeholder="Global limit"
               />
               <Input
                 label="Usage Limit Per User"
@@ -529,6 +589,14 @@ export function CouponListPage() {
                 value={form.usagePerUser}
                 onChange={(e) => setForm({ ...form, usagePerUser: e.target.value })}
                 required
+              />
+              <Input
+                label="Target Order Number"
+                type="number"
+                min={1}
+                value={form.applicableOnOrderNumber}
+                onChange={(e) => setForm({ ...form, applicableOnOrderNumber: e.target.value })}
+                placeholder="e.g. 1 for first order"
               />
             </div>
 

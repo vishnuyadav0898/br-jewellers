@@ -69,7 +69,13 @@ export function ProductListPage() {
       notify.success("Product deleted.", {
         title: "Product removed",
       });
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      
+      // Update cache directly to avoid refetching list
+      queryClient.setQueriesData({ queryKey: ["admin", "products"] }, (oldProducts) => {
+        if (!oldProducts) return oldProducts;
+        return oldProducts.filter((p) => p.id !== deletingProduct.id && p.backendId !== deletingProduct.id);
+      });
+      
       queryClient.invalidateQueries({ queryKey: queryKeys.adminDashboard });
       setDeletingProduct(null);
     } catch (error) {
@@ -91,7 +97,26 @@ export function ProductListPage() {
           title: "Status updated",
         }
       );
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      
+      // Update cache directly to avoid refetching list
+      queryClient.setQueriesData({ queryKey: ["admin", "products"] }, (oldProducts, query) => {
+        if (!oldProducts) return oldProducts;
+        const statusFilterVal = query?.queryKey?.[4];
+        
+        return oldProducts
+          .map((p) => {
+            if (p.id === statusProduct.id || p.backendId === statusProduct.id) {
+              return { ...p, isActive: nextActive };
+            }
+            return p;
+          })
+          .filter((p) => {
+            if (statusFilterVal === true) return p.isActive === true;
+            if (statusFilterVal === false) return p.isActive === false;
+            return true;
+          });
+      });
+      
       queryClient.invalidateQueries({ queryKey: queryKeys.adminDashboard });
       setStatusProduct(null);
     } catch (error) {
@@ -222,7 +247,7 @@ export function ProductListPage() {
         <AdminPageHeader
           eyebrow="Products"
           title="Product list"
-          description="Manage catalogue records from the backend when it is reachable, with automatic mock fallback for uninterrupted admin work."
+          description="View and manage the complete product catalog, configure display parameters, and set pricing rules."
           actions={
             <div className="flex gap-2">
               <PermissionGuard module="Product" action="Add">
@@ -276,10 +301,10 @@ export function ProductListPage() {
           </div>
 
           {/* Row 2: Dropdowns + count + clear */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
             <select
               value={selectedCategory}
-              className="rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
+              className="w-full rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
               onChange={(event) => { setSelectedCategory(event.target.value); setPage(1); }}
             >
               <option value="">All Categories</option>
@@ -290,7 +315,7 @@ export function ProductListPage() {
 
             <select
               value={selectedMaterial}
-              className="rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
+              className="w-full rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
               onChange={(event) => { setSelectedMaterial(event.target.value); setPage(1); }}
             >
               <option value="">All Materials</option>
@@ -301,7 +326,7 @@ export function ProductListPage() {
 
             <select
               value={selectedPurity}
-              className="rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
+              className="w-full rounded-3xl border border-gold-100 bg-white px-3 py-2 text-xs text-stone-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-100"
               onChange={(event) => { setSelectedPurity(event.target.value); setPage(1); }}
             >
               <option value="">All Purities</option>
@@ -309,22 +334,19 @@ export function ProductListPage() {
                 <option key={pur} value={pur}>{pur}</option>
               ))}
             </select>
+          </div>
 
-            {(selectedCategory || selectedMaterial || selectedPurity) && (
+          {(selectedCategory || selectedMaterial || selectedPurity) && (
+            <div className="flex justify-end">
               <button
                 type="button"
-                className="rounded-3xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition"
+                className="rounded-3xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100 transition"
                 onClick={() => { setSelectedCategory(""); setSelectedMaterial(""); setSelectedPurity(""); setPage(1); }}
               >
                 Clear filters
               </button>
-            )}
-
-            <div className="ml-auto inline-flex items-center gap-1.5 text-xs text-stone-500">
-              <Search className="h-3.5 w-3.5 text-gold-700" />
-              {paginated.totalRows} product{paginated.totalRows === 1 ? "" : "s"}
             </div>
-          </div>
+          )}
         </div>
       </AdminPanel>
 

@@ -19,12 +19,11 @@ export const adminNavigation = [
     to: routes.adminDashboard,
   },
   {
-    key: "coupons",
-    labelKey: "admin.nav.coupons",
-    icon: TicketPercent,
+    key: "users",
+    labelKey: "admin.nav.users",
+    icon: Users,
     children: [
-      { labelKey: "admin.nav.couponList", to: routes.adminCouponsList },
-      { labelKey: "admin.nav.couponAssign", to: routes.adminCouponsAssign },
+      { labelKey: "admin.nav.userList", to: routes.adminUsersList },
     ],
   },
   {
@@ -32,18 +31,19 @@ export const adminNavigation = [
     labelKey: "admin.nav.products",
     icon: Boxes,
     children: [
-      { labelKey: "admin.nav.productList", to: routes.adminProductsList },
       { labelKey: "admin.nav.categories", to: routes.adminCategories },
+      { labelKey: "admin.nav.productList", to: routes.adminProductsList },
       { labelKey: "admin.nav.featuredProducts", to: routes.adminFeaturedProducts },
       { labelKey: "admin.nav.bulkUpload", to: routes.adminBulkUpload },
     ],
   },
   {
-    key: "users",
-    labelKey: "admin.nav.users",
-    icon: Users,
+    key: "coupons",
+    labelKey: "admin.nav.coupons",
+    icon: TicketPercent,
     children: [
-      { labelKey: "admin.nav.userList", to: routes.adminUsersList },
+      { labelKey: "admin.nav.couponList", to: routes.adminCouponsList },
+      { labelKey: "admin.nav.couponAssign", to: routes.adminCouponsAssign },
     ],
   },
   {

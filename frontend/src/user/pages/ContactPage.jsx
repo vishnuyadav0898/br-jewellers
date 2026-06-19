@@ -27,19 +27,24 @@ export function ContactPage() {
     return <Loader label="Loading contact details..." />;
   }
 
-  const page = contactQuery.data;
+  const page = contactQuery.data || {};
+  const title = page.title || "Get in touch";
+  const body = page.body || "";
+  const updatedAt = page.updatedAt || new Date().toISOString();
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
       <section className="space-y-4 rounded-[34px] border border-[#dfccab] bg-[#17100d] p-6 text-[#f8efdc] shadow-[0_18px_60px_rgba(32,21,15,0.25)]">
         <p className="text-xs font-semibold uppercase tracking-[0.34em] text-[#d5a957]">Contact us</p>
-        <h1 className="font-display text-5xl leading-tight">{page.title}</h1>
-        <div
-          className="prose prose-invert max-w-none prose-p:text-sm prose-p:leading-7 prose-p:text-[#ebddc2]"
-          dangerouslySetInnerHTML={{ __html: page.body }}
-        />
+        <h1 className="font-display text-5xl leading-tight">{title}</h1>
+        {body && (
+          <div
+            className="prose prose-invert max-w-none prose-p:text-sm prose-p:leading-7 prose-p:text-[#ebddc2]"
+            dangerouslySetInnerHTML={{ __html: body }}
+          />
+        )}
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-[#ebddc2]">
-          Last updated on {formatDate(page.updatedAt)}.
+          Last updated on {formatDate(updatedAt)}.
         </div>
       </section>
 

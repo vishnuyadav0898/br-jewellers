@@ -69,15 +69,17 @@ export function AllOrdersPage() {
           title="All orders"
           description="Order management is split from tracking so status updates and operational review stay clear and scalable."
         />
-        <div className="mt-5 max-w-md">
-          <Input
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search by order number or customer"
-          />
+        <div className="mt-5 flex justify-end">
+          <div className="w-full max-w-md">
+            <Input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by order number or customer"
+            />
+          </div>
         </div>
       </AdminPanel>
 

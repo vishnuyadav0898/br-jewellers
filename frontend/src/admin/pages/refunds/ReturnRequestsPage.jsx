@@ -46,7 +46,7 @@ export function ReturnRequestsPage() {
         <AdminPageHeader
           eyebrow="Refunds & Returns"
           title="Return requests"
-          description="Approve or reject return tickets while keeping a visible audit note in mock data for future backend parity."
+          description="Approve or reject return tickets while maintaining audit notes for tracking."
         />
       </AdminPanel>
 
@@ -55,7 +55,7 @@ export function ReturnRequestsPage() {
         loadingLabel="Loading return requests..."
         empty={!requests.length}
         emptyTitle="No return requests"
-        emptyDescription="Mock refund requests will appear here when an order is marked for return."
+        emptyDescription="Refund requests will appear here when an order is marked for return."
       >
         <div className="grid gap-4">
           {requests.map((request) => (
@@ -89,7 +89,7 @@ export function ReturnRequestsPage() {
       <Modal open={Boolean(activeRequest)} onClose={() => setActiveRequest(null)} title="Resolve return request">
         <div className="space-y-4">
           <p className="text-sm leading-6 text-stone-600">
-            Approve or reject the request and store a note that future backend workflows can preserve.
+            Approve or reject the request and record a reference note for this return ticket.
           </p>
           <Input label="Admin note" as="textarea" value={adminNote} onChange={(event) => setAdminNote(event.target.value)} />
           <div className="flex justify-end gap-3">
