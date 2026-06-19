@@ -9,7 +9,7 @@ import { useSession } from "../../shared/hooks/useSession";
 import { storefrontService } from "../services/storefrontService";
 import { catalogService } from "../../shared/services/catalogService";
 import { ProductCard } from "../components/ProductCard";
-
+import { ProductCardSkeleton } from "../../shared/components/Skeleton";
 
 export function ProductsPage() {
   const { t } = useLocale();
@@ -73,8 +73,8 @@ export function ProductsPage() {
   };
 
   const productsQuery = useQuery({
-    queryKey: ["products", search, activeFilters],
-    queryFn: () => storefrontService.getProducts(search, activeFilters),
+    queryKey: ["products", debouncedSearch, activeFilters],
+    queryFn: () => storefrontService.getProducts(debouncedSearch, activeFilters),
   });
 
   const hasActiveFilters =
@@ -220,7 +220,11 @@ export function ProductsPage() {
         {/* Products Grid */}
         <div>
           {productsQuery.isLoading ? (
-            <Loader label={t("common.loading")} />
+            <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
+            </div>
           ) : productsQuery.data?.length === 0 ? (
             <div className="rounded-[34px] border border-[#dfccab] bg-white/85 p-12 text-center shadow-[0_18px_55px_rgba(40,24,13,0.07)]">
               <h3 className="font-display text-2xl text-stone-700">No products found</h3>
