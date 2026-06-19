@@ -530,17 +530,22 @@ export function ProductDetailsPage() {
                   return;
                 }
 
+                const wasFavorite = product.isFavorite;
                 await storefrontService.toggleFavorite(user.id, product.id);
-                queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] });
-                queryClient.invalidateQueries({ queryKey: ["products"] });
-                queryClient.invalidateQueries({ queryKey: ["favorites", user.id] });
-                notify.success(
-                  product.isFavorite ? "Removed from favorites." : "Saved to favorites.",
-                  {
-                    title: "Favorites updated",
-                    iconKey: "sparkle",
-                  }
-                );
+                await Promise.all([
+                  queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] }),
+                  queryClient.invalidateQueries({ queryKey: ["products"] }),
+                  queryClient.invalidateQueries({ queryKey: ["favorites", user.id] }),
+                ]);
+                setTimeout(() => {
+                  notify.success(
+                    wasFavorite ? "Removed from favorites." : "Saved to favorites.",
+                    {
+                      title: "Favorites updated",
+                      iconKey: "sparkle",
+                    }
+                  );
+                }, 150);
               }}
             >
               <Heart className={`h-4 w-4 ${product.isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />

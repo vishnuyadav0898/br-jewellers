@@ -40,6 +40,18 @@ export function useSession() {
     onError: (error) => notify.error(error.message),
   });
 
+  const googleLoginMutation = useMutation({
+    mutationFn: authService.googleLogin,
+    onSuccess: (nextUser) => {
+      notify.success(t("session.loginSuccess", { name: nextUser.name.split(" ")[0] }), {
+        title: t("session.loginTitle"),
+        user: nextUser,
+      });
+      afterAuth(nextUser);
+    },
+    onError: (error) => notify.error(error.message),
+  });
+
   const registerMutation = useMutation({
     mutationFn: authService.register,
     onSuccess: (nextUser) => {
@@ -82,6 +94,7 @@ export function useSession() {
     openAuthModal,
     closeAuthModal,
     login: loginMutation.mutateAsync,
+    googleLogin: googleLoginMutation.mutateAsync,
     register: registerMutation.mutateAsync,
     updateProfile: (payload) => updateProfileMutation.mutateAsync({ userId: user?.id, payload }),
     changePassword: (payload) => changePasswordMutation.mutateAsync({ userId: user?.id, payload }),
@@ -96,6 +109,7 @@ export function useSession() {
     },
     isBusy:
       loginMutation.isPending ||
+      googleLoginMutation.isPending ||
       registerMutation.isPending ||
       updateProfileMutation.isPending ||
       changePasswordMutation.isPending,

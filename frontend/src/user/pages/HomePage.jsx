@@ -120,13 +120,14 @@ export function HomePage() {
 
         {featuredProducts.length > initialLimit && !showAll && (
           <div className="flex justify-center pt-8">
-            <Button
-              tone="secondary"
-              className="px-8 py-3 rounded-full font-semibold border-[#dfccab] hover:bg-[#fff9f0] transition-colors"
-              onClick={() => setShowAll(true)}
-            >
-              View More
-            </Button>
+            <Link to={routes.appProducts}>
+              <Button
+                tone="secondary"
+                className="px-8 py-3 rounded-full font-semibold border-[#dfccab] hover:bg-[#fff9f0] transition-colors"
+              >
+                View More
+              </Button>
+            </Link>
           </div>
         )}
       </section>
