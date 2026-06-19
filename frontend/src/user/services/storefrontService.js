@@ -2,8 +2,18 @@ import { apiClient } from "../../shared/services/apiClient";
 import { mockApiClient } from "../../shared/services/mockApiClient";
 import { initialData } from "../../mock/data";
 import { catalogService } from "../../admin/services/catalogService";
+import { useAppStore } from "../../shared/store/useAppStore";
 
 const isApiFallbackError = (error) => false;
+
+const isProductInWishlist = (product, user) => {
+  if (!user || !user.wishlist || !Array.isArray(user.wishlist)) return false;
+  const productId = product.id || product._id;
+  return user.wishlist.some(item => {
+    if (typeof item === "string") return item === productId;
+    return item?.id === productId || item?._id === productId;
+  });
+};
 
 const getProductReviews = (db, productId) =>
   (db.reviews || []).filter((entry) => entry.productId === productId);
@@ -15,11 +25,13 @@ const enrichProduct = (db, product, userId = null) => {
     ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
     : 0;
 
+  const user = useAppStore.getState().user;
+
   return {
     ...normalized,
     rating,
     reviewCount: reviews.length,
-    isFavorite: userId ? (db.favorites[userId] || []).includes(normalized.id) : false,
+    isFavorite: isProductInWishlist(normalized, user) || (userId ? (db.favorites[userId] || []).includes(normalized.id) : false),
   };
 };
 
@@ -62,11 +74,48 @@ const hydrateCart = (db, userId, couponCode = "") => {
   };
 };
 
-const validateCoupon = (coupon) => {
-  if (!coupon) throw new Error("Coupon was not found.");
-  if (!coupon.isEnabled) throw new Error("This coupon is currently disabled.");
-  if (new Date(coupon.expiresAt).getTime() < Date.now()) throw new Error("This coupon has expired.");
-  if (coupon.usageCount >= coupon.usageLimit) throw new Error("This coupon has reached its usage limit.");
+const resolveAndValidateCoupon = async (code, subtotal) => {
+  if (!code) return null;
+  let coupon = null;
+  
+  try {
+    const res = await apiClient.get("/api/v1/coupons/list");
+    const raw = res.data || res || {};
+    const coupons = Array.isArray(raw.data) ? raw.data : (Array.isArray(raw) ? raw : []);
+    coupon = coupons.find((c) => c.code === code.toUpperCase());
+  } catch (err) {
+    console.warn("Failed to fetch coupon from backend, falling back to mock database:", err);
+  }
+
+  if (!coupon) {
+    coupon = mockApiClient.query((db) => 
+      (db.coupons || []).find((entry) => entry.code === code.toUpperCase())
+    );
+  }
+
+  if (!coupon) {
+    throw new Error("Coupon was not found.");
+  }
+
+  const isActive = typeof coupon.isActive === "boolean" ? coupon.isActive : coupon.isEnabled;
+  if (!isActive) throw new Error("This coupon is currently disabled.");
+  
+  const endDate = coupon.endDate || coupon.expiresAt;
+  if (endDate && new Date(endDate).getTime() < Date.now()) {
+    throw new Error("This coupon has expired.");
+  }
+  
+  const usageCount = coupon.totalUsedCount ?? coupon.usageCount ?? 0;
+  const usageLimit = coupon.usageLimit;
+  if (usageLimit && usageCount >= usageLimit) {
+    throw new Error("This coupon has reached its usage limit.");
+  }
+
+  const minOrderINR = coupon.minOrderAmount?.INR ?? coupon.minOrderAmount ?? 0;
+  if (subtotal < minOrderINR) {
+    throw new Error(`Minimum order amount of ₹${minOrderINR} is required to use this coupon.`);
+  }
+
   return coupon;
 };
 
@@ -208,18 +257,47 @@ export const storefrontService = {
     const content = await mockApiClient.query((db) => ({
       homeContent: db.homeContent || {},
       banners: db.homeContent?.banners || [],
-      activeCoupons: db.coupons.filter((entry) => entry.isEnabled).slice(0, 3),
     }));
+
+    let activeCoupons = [];
+    try {
+      const res = await apiClient.get("/api/v1/coupons/list");
+      const raw = res.data || res || {};
+      const list = Array.isArray(raw.data) ? raw.data : (Array.isArray(raw) ? raw : []);
+      activeCoupons = list.filter((c) => c.isActive).slice(0, 3).map((c) => ({
+        id: c._id || c.id,
+        code: c.code,
+        name: c.name,
+        description: c.description,
+        discountPercent: c.discountType === "percentage" ? c.discountValue : 10,
+        isActive: c.isActive,
+      }));
+    } catch (e) {
+      console.warn("Failed to fetch coupons from backend for home snapshot:", e);
+      activeCoupons = await mockApiClient.query((db) =>
+        (db.coupons || []).filter((entry) => entry.isEnabled || entry.isActive).slice(0, 3).map((c) => ({
+          id: c._id || c.id,
+          code: c.code,
+          name: c.name,
+          description: c.description,
+          discountPercent: c.discountPercent || c.discountValue || 10,
+          isActive: c.isActive || c.isEnabled,
+        }))
+      );
+    }
+
+    const user = useAppStore.getState().user;
 
     return {
       ...content,
+      activeCoupons,
       featuredProducts: products
         .filter((product) => product.featured === true)
         .map((product) => ({
           ...product,
           rating: 0,
           reviewCount: 0,
-          isFavorite: false,
+          isFavorite: isProductInWishlist(product, user),
         })),
       categories,
     };
@@ -227,16 +305,18 @@ export const storefrontService = {
 
   async getProducts(search = "", options = {}) {
     const products = await catalogService.getProducts(search, options);
+    const user = useAppStore.getState().user;
     return products.map((product) => ({
       ...product,
       rating: 0,
       reviewCount: 0,
-      isFavorite: false,
+      isFavorite: isProductInWishlist(product, user),
     }));
   },
 
   async getProductById(identifier, userId = null) {
     const product = await catalogService.getProductById(identifier);
+    const user = useAppStore.getState().user;
     const relatedProducts = (await catalogService.getProducts(""))
       .filter((entry) => entry.category === product.category && entry.id !== product.id)
       .slice(0, 3)
@@ -244,7 +324,7 @@ export const storefrontService = {
         ...entry,
         rating: 0,
         reviewCount: 0,
-        isFavorite: false,
+        isFavorite: isProductInWishlist(entry, user),
       }));
 
     return {
@@ -252,7 +332,7 @@ export const storefrontService = {
         ...product,
         rating: 0,
         reviewCount: 0,
-        isFavorite: false,
+        isFavorite: isProductInWishlist(product, user),
       },
       reviews: [],
       relatedProducts,
@@ -260,23 +340,77 @@ export const storefrontService = {
   },
 
   async toggleFavorite(userId, productId) {
-    return mockApiClient
-      .mutate((db) => {
-        if (!db.favorites[userId]) {
-          db.favorites[userId] = [];
-        }
+    try {
+      const user = useAppStore.getState().user;
+      const wishlist = user?.wishlist || [];
+      const isFavorite = wishlist.some(item => {
+        if (typeof item === "string") return item === productId;
+        return item?.id === productId || item?._id === productId;
+      });
 
-        const isFavorite = db.favorites[userId].includes(productId);
-        db.favorites[userId] = isFavorite
-          ? db.favorites[userId].filter((entry) => entry !== productId)
-          : [productId, ...db.favorites[userId]];
-
-        return db;
-      })
-      .then((db) => db.favorites[userId] || []);
+      if (isFavorite) {
+        await apiClient.delete(`/api/v1/wishlist/remove/${productId}`);
+        const updatedWishlist = wishlist.filter(item => {
+          const id = typeof item === "string" ? item : (item?.id || item?._id);
+          return id !== productId;
+        });
+        useAppStore.getState().setUser({
+          ...user,
+          wishlist: updatedWishlist,
+        });
+        return updatedWishlist;
+      } else {
+        await apiClient.post("/api/v1/wishlist/add", { productId });
+        const updatedWishlist = [...wishlist, productId];
+        useAppStore.getState().setUser({
+          ...user,
+          wishlist: updatedWishlist,
+        });
+        return updatedWishlist;
+      }
+    } catch (e) {
+      console.warn("API toggleFavorite failed, falling back to mock:", e);
+      return mockApiClient
+        .mutate((db) => {
+          if (!db.favorites[userId]) {
+            db.favorites[userId] = [];
+          }
+          const isFav = db.favorites[userId].includes(productId);
+          db.favorites[userId] = isFav
+            ? db.favorites[userId].filter((entry) => entry !== productId)
+            : [productId, ...db.favorites[userId]];
+          return db;
+        })
+        .then((db) => db.favorites[userId] || []);
+    }
   },
 
   async getFavorites(userId) {
+    try {
+      const res = await apiClient.get("/api/v1/wishlist");
+      if (res && Array.isArray(res.products)) {
+        const user = useAppStore.getState().user;
+        if (user) {
+          useAppStore.getState().setUser({
+            ...user,
+            wishlist: res.products,
+          });
+        }
+        return res.products.map((p) => {
+          const id = p._id || p.id;
+          return {
+            ...p,
+            id,
+            rating: 0,
+            reviewCount: 0,
+            isFavorite: true,
+          };
+        });
+      }
+    } catch (e) {
+      console.warn("API getFavorites failed, falling back to mock:", e);
+    }
+
     return mockApiClient.query((db) =>
       (db.favorites[userId] || [])
         .map((productId) => db.products.find((product) => product.id === productId))
@@ -299,7 +433,43 @@ export const storefrontService = {
 
   async getCart(userId, couponCode = "") {
     const cart = await apiClient.get("/api/v1/cart/");
-    return normalizeApiCart(cart);
+    const normalized = normalizeApiCart(cart);
+    
+    if (couponCode) {
+      try {
+        const coupon = await resolveAndValidateCoupon(couponCode, normalized.subtotal);
+        if (coupon) {
+          let discount = 0;
+          const discountValue = coupon.discountValue ?? coupon.discountPercent ?? 0;
+          if (coupon.discountType === "fixed" || coupon.fixedDiscountValue) {
+            const fixedINR = coupon.fixedDiscountValue?.INR ?? coupon.fixedDiscountValue ?? 0;
+            discount = Math.min(fixedINR, normalized.subtotal);
+          } else {
+            discount = Math.round((normalized.subtotal * discountValue) / 100);
+            const maxDiscountINR = coupon.maxDiscount?.INR ?? coupon.maxDiscount ?? 0;
+            if (maxDiscountINR > 0) {
+              discount = Math.min(discount, maxDiscountINR);
+            }
+          }
+          
+          normalized.coupon = {
+            id: coupon._id || coupon.id,
+            code: coupon.code,
+            name: coupon.name,
+            discountPercent: coupon.discountType === "percentage" ? discountValue : 0,
+            discountType: coupon.discountType || "percentage",
+            fixedDiscountValue: coupon.fixedDiscountValue,
+          };
+          normalized.discount = discount;
+          normalized.total = Math.max(normalized.subtotal - discount, 0);
+        }
+      } catch (err) {
+        console.warn("Coupon validation failed:", err.message);
+        useAppStore.getState().setCartCouponCode("");
+        throw err;
+      }
+    }
+    return normalized;
   },
 
   async updateCartQuantity(userId, itemId, nextQuantity) {
@@ -317,10 +487,11 @@ export const storefrontService = {
   },
 
   async applyCoupon(code) {
-    return mockApiClient.query((db) => {
-      const coupon = db.coupons.find((entry) => entry.code === code.toUpperCase());
-      return validateCoupon(coupon);
-    });
+    const cartRes = await storefrontService.getCart(null, code);
+    if (!cartRes.coupon) {
+      throw new Error("Invalid coupon or minimum order value not met.");
+    }
+    return cartRes.coupon;
   },
 
   async getOrders(userId) {

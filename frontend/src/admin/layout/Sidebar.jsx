@@ -6,6 +6,7 @@ import { BrandLogo } from "../../shared/components/BrandLogo";
 import { useLocale } from "../../shared/localization";
 import { useAppStore } from "../../shared/store/useAppStore";
 import { cn } from "../../shared/utils/cn";
+import { hasPermission } from "../../shared/utils/auth";
 import { adminNavigation, getSectionForPath } from "../config/navigation";
 
 const isChildActive = (pathname, target) =>
@@ -13,9 +14,52 @@ const isChildActive = (pathname, target) =>
   pathname.startsWith(`${target}/`) ||
   (target.includes(":") && pathname.startsWith(target.split(":")[0]));
 
+const getRoutePermission = (path) => {
+  // Products
+  if (path === routes.adminProductsList) return { module: "Product" };
+  if (path === routes.adminCategories) return { module: "Category" };
+  if (path === routes.adminFeaturedProducts) return { module: "Product", action: "Update" };
+  if (path === routes.adminBulkUpload) return { module: "Product", action: "Add" };
+  
+  // Users
+  if (path === routes.adminUsersList) return { module: "User" };
+  
+  // Orders & Refunds & Analytics
+  if (
+    path === routes.adminOrdersAll ||
+    path === routes.adminOrdersPending ||
+    path === routes.adminOrderTracking ||
+    path === routes.adminRefundRequests ||
+    path === routes.adminRefundStatus ||
+    path === routes.adminAnalytics ||
+    path === routes.adminFinance
+  ) {
+    return { module: "Order" };
+  }
+  
+  // Content
+  if (
+    path === routes.adminContentHome ||
+    path === routes.adminContentAbout ||
+    path === routes.adminContentContact ||
+    path === routes.adminContentBanners
+  ) {
+    return { module: "Content", action: "Update" };
+  }
+  if (path === routes.adminContentBlogs) return { module: "Blog" };
+  
+  // Coupons
+  if (path === routes.adminCouponsList || path === routes.adminCouponsAssign) {
+    return { module: "Coupon" };
+  }
+  
+  return null;
+};
+
 export function Sidebar() {
   const location = useLocation();
   const { t } = useLocale();
+  const user = useAppStore((state) => state.user);
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
   const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
   const [expandedSection, setExpandedSection] = useState(() => getSectionForPath(location.pathname));
@@ -23,6 +67,36 @@ export function Sidebar() {
   useEffect(() => {
     setExpandedSection(getSectionForPath(location.pathname));
   }, [location.pathname]);
+
+  // Filter navigation sections & child items based on permissions
+  const filteredNavigation = adminNavigation
+    .map((item) => {
+      const parentPerm = item.to ? getRoutePermission(item.to) : null;
+      if (parentPerm && !hasPermission(user, parentPerm.module, parentPerm.action)) {
+        return null;
+      }
+
+      if (item.children) {
+        const visibleChildren = item.children.filter((child) => {
+          const childPerm = getRoutePermission(child.to);
+          if (!childPerm) return true;
+          return hasPermission(user, childPerm.module, childPerm.action);
+        });
+
+        if (visibleChildren.length === 0) {
+          return null;
+        }
+
+        return {
+          ...item,
+          children: visibleChildren,
+        };
+      }
+
+      return item;
+    })
+    .filter(Boolean);
+
 
   return (
     <aside
@@ -44,7 +118,7 @@ export function Sidebar() {
       </div>
 
       <nav className="mt-6 flex-1 space-y-2 overflow-y-auto pr-1">
-        {adminNavigation.map((item) => {
+        {filteredNavigation.map((item) => {
           const Icon = item.icon;
           const sectionActive = item.to
             ? isChildActive(location.pathname, item.to)

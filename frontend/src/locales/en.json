@@ -166,6 +166,9 @@
   "admin": {
     "nav": {
       "dashboard": "Dashboard",
+      "coupons": "Coupons",
+      "couponList": "Coupon List",
+      "couponAssign": "Assign Coupon",
       "products": "Products",
       "productList": "Product List",
       "createProduct": "Create Product",

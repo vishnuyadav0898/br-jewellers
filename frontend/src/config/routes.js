@@ -34,6 +34,8 @@ export const routes = {
   adminContentBlogs: "/admin/content/blogs",
   adminAnalytics: "/admin/analytics",
   adminFinance: "/admin/analytics/finance",
+  adminCouponsList: "/admin/coupons/list",
+  adminCouponsAssign: "/admin/coupons/assign",
   adminSettings: "/admin/settings",
   adminProfile: "/admin/profile",
   adminChangePassword: "/admin/change-password",

@@ -186,6 +186,7 @@ export const productSchema = z
     variants: z
       .array(
         z.object({
+          sku: z.string().trim().optional(),
           name: requiredString("Variant name", 2),
           material: requiredString("Material", 2),
           color: requiredString("Color", 2),

@@ -246,6 +246,14 @@ export function ProductDetailsPage() {
           {getPricesDisplay()}
 
           <p className="text-base leading-7 text-stone-600">{product.description}</p>
+          {matchingVariant?.purity && (
+            <div className="text-sm text-stone-500 font-medium flex items-center gap-1.5 mt-1">
+              <span className="font-semibold text-stone-700">Purity:</span>
+              <span className="rounded-full bg-[#f8ebca] px-2.5 py-0.5 text-xs font-semibold text-[#7a541c]">
+                {matchingVariant.purity}
+              </span>
+            </div>
+          )}
           <p className="text-sm leading-7 text-stone-500">{product.details}</p>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -270,7 +278,7 @@ export function ProductDetailsPage() {
               </div>
             )}
 
-            {uniquePurities.length > 1 && (
+            {uniquePurities.length > 0 && (
               <div className="rounded-[24px] bg-[#fff7ea] p-4">
                 <div className="text-sm font-semibold text-[#1a120e]">Purity</div>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -348,53 +356,14 @@ export function ProductDetailsPage() {
 
           <div className="flex flex-wrap gap-3 items-center">
             {cartItem ? (
-              <div className="inline-flex h-11 items-center justify-between gap-4 rounded-full border border-[#dcc8a1] bg-white px-4 py-1.5 shadow-sm">
-                <button
-                  type="button"
-                  aria-label="Decrease quantity"
-                  disabled={isUpdatingQuantity}
-                  className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50 text-[#1a120e] flex items-center justify-center"
-                  onClick={async () => {
-                    setIsUpdatingQuantity(true);
-                    try {
-                      await storefrontService.updateCartQuantity(user.id, cartItem.id, cartItem.quantity - 1);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    } catch (err) {
-                      notify.error(err.message || "Failed to update quantity");
-                    } finally {
-                      setIsUpdatingQuantity(false);
-                    }
-                  }}
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="min-w-8 text-center text-base font-semibold text-[#1a120e]">
-                  {isUpdatingQuantity ? (
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto text-[#b88733]" />
-                  ) : (
-                    cartItem.quantity
-                  )}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Increase quantity"
-                  disabled={isUpdatingQuantity}
-                  className="rounded-full bg-[#f6eacc] p-2 transition hover:bg-[#f0ddb0] disabled:opacity-50 text-[#1a120e] flex items-center justify-center"
-                  onClick={async () => {
-                    setIsUpdatingQuantity(true);
-                    try {
-                      await storefrontService.updateCartQuantity(user.id, cartItem.id, cartItem.quantity + 1);
-                      queryClient.invalidateQueries({ queryKey: ["cart"] });
-                    } catch (err) {
-                      notify.error(err.message || "Failed to update quantity");
-                    } finally {
-                      setIsUpdatingQuantity(false);
-                    }
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
+              <Button
+                as={Link}
+                to={routes.appCart}
+                tone="secondary"
+              >
+                <ShoppingBag className="h-4 w-4" />
+                View in Cart
+              </Button>
             ) : (
               <Button
                 disabled={isAddingToCart || (product.variants?.length && !matchingVariant)}

@@ -378,10 +378,16 @@ export function CartPage() {
           </div>
           {cartQuery.data.coupon ? (
             <div className="rounded-2xl bg-[#f4d994] px-4 py-3 text-sm text-[#18110d]">
-              {t("cart.summary.activeCoupon", {
-                code: cartQuery.data.coupon.code,
-                discount: cartQuery.data.coupon.discountPercent,
-              })}
+              {cartQuery.data.coupon.discountType === "fixed" ? (
+                <span>
+                  Coupon <strong>{cartQuery.data.coupon.code}</strong> is active for a flat discount of {formatFromInr(cartQuery.data.discount)}.
+                </span>
+              ) : (
+                t("cart.summary.activeCoupon", {
+                  code: cartQuery.data.coupon.code,
+                  discount: cartQuery.data.coupon.discountPercent,
+                })
+              )}
             </div>
           ) : null}
         </div>

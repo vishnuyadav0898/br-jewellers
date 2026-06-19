@@ -32,19 +32,39 @@ const getPurityOptions = (currentValue) => {
   return defaults;
 };
 
-const emptyVariant = () => ({
-  sku: "",
-  name: "",
-  material: "Gold",
-  color: "",
-  purity: "",
-  size: "",
-  stock: "0",
-  price: {
-    INR: "",
-    USD: "",
-  },
-});
+const generateVariantSku = (variant) => {
+  const parts = [
+    variant.material,
+    variant.color,
+    variant.purity,
+    variant.size,
+  ].map((s) =>
+    String(s || "")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9\s]/g, "")
+      .replace(/\s+/g, "")
+  );
+  return parts.filter(Boolean).join("-");
+};
+
+const emptyVariant = () => {
+  const v = {
+    sku: "",
+    name: "",
+    material: "Gold",
+    color: "",
+    purity: "",
+    size: "",
+    stock: "0",
+    price: {
+      INR: "",
+      USD: "",
+    },
+  };
+  v.sku = generateVariantSku(v);
+  return v;
+};
 
 const defaultForm = {
   name: "",
@@ -70,33 +90,33 @@ const mapProductToForm = (product) => ({
   name: product.name || "",
   description: product.description || "",
   coverImage: product.coverImage || product.images?.[0] || "",
-  // Exclude coverImage from gallery list
   images: toTextArray((product.images || []).filter((image) => image !== product.coverImage)),
   tags: toTextArray(product.tags || []),
-  // gemstone: prefer top-level gemstone field (now preserved by normalizeApiProduct)
   gemstone: product.gemstone || product.badge || "",
-  // occasions: now a top-level array preserved in normalization
   occasions: toTextArray(product.occasions || []),
   category: product.category || "",
   priceRange: {
-    // priceRange is now explicitly preserved in normalizeApiProduct
     min: String(product.priceRange?.min ?? product.price ?? ""),
     max: String(product.priceRange?.max ?? product.originalPrice ?? ""),
   },
   variants: product.variants?.length
-    ? product.variants.map((variant) => ({
-        sku: variant.sku || "",
-        name: variant.name || "",
-        material: variant.material || "Gold",
-        color: variant.color || "",
-        purity: variant.purity || "",
-        size: variant.size || "",
-        stock: String(variant.stock ?? 0),
-        price: {
-          INR: String(variant.price?.INR ?? ""),
-          USD: String(variant.price?.USD ?? ""),
-        },
-      }))
+    ? product.variants.map((variant) => {
+        const mapped = {
+          sku: variant.sku || "",
+          name: variant.name || "",
+          material: variant.material || "Gold",
+          color: variant.color || "",
+          purity: variant.purity || "",
+          size: variant.size || "",
+          stock: String(variant.stock ?? 0),
+          price: {
+            INR: String(variant.price?.INR ?? ""),
+            USD: String(variant.price?.USD ?? ""),
+          },
+        };
+        mapped.sku = mapped.sku || generateVariantSku(mapped);
+        return mapped;
+      })
     : [emptyVariant()],
   isActive: product.isActive !== false,
   featured: Boolean(product.featured),
@@ -120,6 +140,7 @@ const compactPayload = (form) => ({
       .join(" ");
     return {
       ...variant,
+      sku: generateVariantSku(variant),
       name: autoName || "Default Variant",
     };
   }),
@@ -206,16 +227,23 @@ export function ProductFormPage() {
       ...current,
       variants: current.variants.map((variant, itemIndex) => {
         if (itemIndex !== index) return variant;
+        let updated = { ...variant };
         if (field === "INR" || field === "USD") {
-          return { ...variant, price: { ...variant.price, [field]: value } };
+          updated.price = { ...variant.price, [field]: value };
+        } else {
+          updated[field] = value;
         }
-        return { ...variant, [field]: value };
+        updated.sku = generateVariantSku(updated);
+        return updated;
       }),
     }));
     setErrors((current) => (current.variants ? { ...current, variants: undefined } : current));
   };
 
-  const addVariant = () => updateField("variants", [...form.variants, emptyVariant()]);
+  const addVariant = () => {
+    const nextVariants = [...form.variants, emptyVariant()];
+    updateField("variants", nextVariants);
+  };
   const removeVariant = (index) =>
     updateField("variants", form.variants.length > 1 ? form.variants.filter((_, itemIndex) => itemIndex !== index) : [emptyVariant()]);
 
@@ -224,6 +252,15 @@ export function ProductFormPage() {
     setSaving(true);
 
     try {
+      // Validate unique SKUs
+      const skus = form.variants.map((v) => generateVariantSku(v));
+      const duplicateSku = skus.find((sku, idx) => skus.indexOf(sku) !== idx);
+      if (duplicateSku) {
+        notify.error(`Duplicate variant SKU detected: ${duplicateSku}. Each variant must have a unique combination of material, color, purity, and size.`);
+        setSaving(false);
+        return;
+      }
+
       const parsed = productSchema.safeParse(compactPayload(form));
 
       if (!parsed.success) {
@@ -380,9 +417,9 @@ export function ProductFormPage() {
                   <div className="grid gap-4 md:grid-cols-3">
                     <Input
                       label="SKU"
-                      placeholder="e.g. RING-GOLD-22K-S"
+                      placeholder="SKU will be auto-generated"
                       value={variant.sku}
-                      onChange={(event) => updateVariant(index, "sku", event.target.value)}
+                      disabled
                     />
                     <label className="block space-y-2">
                       <span className="text-sm font-medium text-stone-700">

@@ -7,6 +7,7 @@ import {
   RefreshCcw,
   Settings,
   Users,
+  TicketPercent,
 } from "lucide-react";
 import { routes } from "../../config/routes";
 
@@ -16,6 +17,15 @@ export const adminNavigation = [
     labelKey: "admin.nav.dashboard",
     icon: LayoutDashboard,
     to: routes.adminDashboard,
+  },
+  {
+    key: "coupons",
+    labelKey: "admin.nav.coupons",
+    icon: TicketPercent,
+    children: [
+      { labelKey: "admin.nav.couponList", to: routes.adminCouponsList },
+      { labelKey: "admin.nav.couponAssign", to: routes.adminCouponsAssign },
+    ],
   },
   {
     key: "products",

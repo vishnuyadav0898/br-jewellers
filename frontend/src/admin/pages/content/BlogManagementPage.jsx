@@ -9,6 +9,7 @@ import { formatDate } from "../../../shared/utils/formatters";
 import { useAppStore } from "../../../shared/store/useAppStore";
 import { notify } from "../../../shared/utils/notify";
 import { blogSchema, getValidationErrors } from "../../../shared/utils/validation";
+import { PermissionGuard } from "../../../shared/components/PermissionGuard";
 import { AdminDataState } from "../../components/AdminDataState";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { AdminPanel } from "../../components/AdminPanel";
@@ -69,10 +70,12 @@ export function BlogManagementPage() {
           title="Blog management"
           description="CRUD blog management is kept in the admin content layer so editorial workflows stay separate from storefront rendering."
           actions={
-            <Button onClick={openCreate}>
-              <Plus className="h-4 w-4" />
-              Create blog
-            </Button>
+            <PermissionGuard module="Blog" action="Add">
+              <Button onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                Create blog
+              </Button>
+            </PermissionGuard>
           }
         />
       </AdminPanel>
@@ -95,28 +98,32 @@ export function BlogManagementPage() {
                 <h3 className="mt-2 font-display text-3xl text-[#1d130f]">{blog.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-stone-600">{blog.excerpt}</p>
                 <div className="mt-4 flex gap-2">
-                  <Button tone="secondary" size="sm" onClick={() => openEdit(blog)}>
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    tone="danger"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        await blogsService.deleteBlog(blog.id);
-                        notify.success("Blog deleted.", {
-                          title: "Blog removed",
-                        });
-                        queryClient.invalidateQueries({ queryKey: queryKeys.adminBlogs });
-                      } catch (error) {
-                        notify.error(error.message);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
+                  <PermissionGuard module="Blog" action="Update">
+                    <Button tone="secondary" size="sm" onClick={() => openEdit(blog)}>
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  </PermissionGuard>
+                  <PermissionGuard module="Blog" action="Delete">
+                    <Button
+                      tone="danger"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await blogsService.deleteBlog(blog.id);
+                          notify.success("Blog deleted.", {
+                            title: "Blog removed",
+                          });
+                          queryClient.invalidateQueries({ queryKey: queryKeys.adminBlogs });
+                        } catch (error) {
+                          notify.error(error.message);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </PermissionGuard>
                 </div>
               </div>
             </AdminPanel>

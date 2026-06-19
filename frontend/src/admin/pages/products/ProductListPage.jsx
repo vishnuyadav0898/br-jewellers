@@ -8,6 +8,7 @@ import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
 import { Modal } from "../../../shared/components/Modal";
 import { queryKeys } from "../../../shared/constants/queryKeys";
+import { PermissionGuard } from "../../../shared/components/PermissionGuard";
 import { useMoney } from "../../../shared/hooks/useMoney";
 import { notify } from "../../../shared/utils/notify";
 import { AdminDataState } from "../../components/AdminDataState";
@@ -172,40 +173,44 @@ export function ProductListPage() {
       header: "Actions",
       render: (row) => (
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            tone="secondary"
-            size="sm"
-            onClick={() => setStatusProduct(row)}
-            title={row.isActive ? "Deactivate Product" : "Activate Product"}
-            aria-label={row.isActive ? "Deactivate Product" : "Activate Product"}
-          >
-            {row.isActive ? (
-              <Eye className="h-4 w-4 text-emerald-600" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-stone-400" />
-            )}
-          </Button>
-          <Button
-            as={Link}
-            to={routes.adminProductEdit(row.id)}
-            tone="secondary"
-            size="sm"
-            title="Edit Product"
-            aria-label="Edit Product"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            tone="danger"
-            size="sm"
-            onClick={() => setDeletingProduct(row)}
-            title="Delete Product"
-            aria-label="Delete Product"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <PermissionGuard module="Product" action="Update">
+            <Button
+              type="button"
+              tone="secondary"
+              size="sm"
+              onClick={() => setStatusProduct(row)}
+              title={row.isActive ? "Deactivate Product" : "Activate Product"}
+              aria-label={row.isActive ? "Deactivate Product" : "Activate Product"}
+            >
+              {row.isActive ? (
+                <Eye className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <EyeOff className="h-4 w-4 text-stone-400" />
+              )}
+            </Button>
+            <Button
+              as={Link}
+              to={routes.adminProductEdit(row.id)}
+              tone="secondary"
+              size="sm"
+              title="Edit Product"
+              aria-label="Edit Product"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard module="Product" action="Delete">
+            <Button
+              type="button"
+              tone="danger"
+              size="sm"
+              onClick={() => setDeletingProduct(row)}
+              title="Delete Product"
+              aria-label="Delete Product"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </PermissionGuard>
         </div>
       ),
     },
@@ -219,10 +224,17 @@ export function ProductListPage() {
           title="Product list"
           description="Manage catalogue records from the backend when it is reachable, with automatic mock fallback for uninterrupted admin work."
           actions={
-            <Button as={Link} to={routes.adminProductCreate}>
-              <Plus className="h-4 w-4" />
-              Add product
-            </Button>
+            <div className="flex gap-2">
+              <PermissionGuard module="Product" action="Add">
+                <Button as={Link} to={routes.adminBulkUpload} tone="secondary">
+                  Bulk upload
+                </Button>
+                <Button as={Link} to={routes.adminProductCreate}>
+                  <Plus className="h-4 w-4" />
+                  Add product
+                </Button>
+              </PermissionGuard>
+            </div>
           }
         />
         <div className="mt-5 flex flex-col gap-3">

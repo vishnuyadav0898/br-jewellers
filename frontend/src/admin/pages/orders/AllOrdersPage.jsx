@@ -13,6 +13,7 @@ import { AdminPagination } from "../../components/AdminPagination";
 import { AdminPanel } from "../../components/AdminPanel";
 import { AdminStatusBadge } from "../../components/AdminStatusBadge";
 import { AdminTable } from "../../components/AdminTable";
+import { PermissionGuard } from "../../../shared/components/PermissionGuard";
 import { ordersService } from "../../services/ordersService";
 
 const pageSize = 6;
@@ -23,6 +24,7 @@ export function AllOrdersPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [updatingOrder, setUpdatingOrder] = useState(null);
   const deferredSearch = useDeferredValue(search);
   const ordersQuery = useQuery({
     queryKey: queryKeys.adminOrders("all"),
@@ -121,11 +123,18 @@ export function AllOrdersPage() {
                 },
                 {
                   key: "actions",
-                  header: "Details",
+                  header: "Actions",
                   render: (row) => (
-                    <Button tone="secondary" size="sm" onClick={() => setSelectedOrder(row)}>
-                      View details
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button tone="secondary" size="sm" onClick={() => setSelectedOrder(row)}>
+                        View details
+                      </Button>
+                      <PermissionGuard module="Order" action="Update">
+                        <Button tone="primary" size="sm" onClick={() => setUpdatingOrder(row)}>
+                          Update status
+                        </Button>
+                      </PermissionGuard>
+                    </div>
                   ),
                 },
               ]}
@@ -171,45 +180,25 @@ export function AllOrdersPage() {
               </div>
             </div>
 
-            {/* Status Modification Controls */}
+            {/* Status Info (Read-only) */}
             <div className="grid gap-4 md:grid-cols-2 rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
-              <label className="flex flex-col gap-2 text-sm font-semibold text-[#1d130f]">
-                Order Status
-                <select
-                  value={selectedOrder.status}
-                  onChange={async (event) => {
-                    const nextStatus = event.target.value;
-                    await updateOrder(selectedOrder.id, { status: nextStatus }, "Order status updated.");
-                    setSelectedOrder((prev) => ({ ...prev, status: nextStatus }));
-                  }}
-                  className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2 text-sm font-normal"
-                >
-                  {["Pending", "Ordered", "Processing", "Shipped", "Delivered"].map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
+                  Order Status
+                </span>
+                <div className="mt-2 flex">
+                  <AdminStatusBadge value={selectedOrder.status} />
+                </div>
+              </div>
 
-              <label className="flex flex-col gap-2 text-sm font-semibold text-[#1d130f]">
-                Payment Status
-                <select
-                  value={selectedOrder.paymentStatus}
-                  onChange={async (event) => {
-                    const nextPayment = event.target.value;
-                    await updateOrder(selectedOrder.id, { paymentStatus: nextPayment }, "Payment status updated.");
-                    setSelectedOrder((prev) => ({ ...prev, paymentStatus: nextPayment }));
-                  }}
-                  className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2 text-sm font-normal"
-                >
-                  {["Paid", "Unpaid", "Failed"].map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
+                  Payment Status
+                </span>
+                <div className="mt-2 flex">
+                  <AdminStatusBadge value={selectedOrder.paymentStatus} />
+                </div>
+              </div>
             </div>
  
             <div className="space-y-3">
@@ -225,6 +214,68 @@ export function AllOrdersPage() {
                   <AdminStatusBadge value={selectedOrder.status} />
                 </article>
               ))}
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+
+      {/* Update Status Modal */}
+      <Modal
+        open={Boolean(updatingOrder)}
+        onClose={() => setUpdatingOrder(null)}
+        title={`Update status: ${updatingOrder?.orderNumber}`}
+        className="max-w-md w-full"
+      >
+        {updatingOrder ? (
+          <div className="space-y-5">
+            <div className="grid gap-4 rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-5">
+              <label className="flex flex-col gap-2 text-sm font-semibold text-[#1d130f]">
+                Order Status
+                <select
+                  value={updatingOrder.status}
+                  onChange={async (event) => {
+                    const nextStatus = event.target.value;
+                    await updateOrder(updatingOrder.id, { status: nextStatus }, "Order status updated.");
+                    setUpdatingOrder((prev) => ({ ...prev, status: nextStatus }));
+                    // Also sync with selectedOrder if it is currently open
+                    setSelectedOrder((prev) => (prev && prev.id === updatingOrder.id ? { ...prev, status: nextStatus } : prev));
+                  }}
+                  className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2.5 text-sm font-normal focus:border-gold-500 focus:outline-none"
+                >
+                  {["Pending", "Ordered", "Processing", "Shipped", "Delivered"].map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm font-semibold text-[#1d130f]">
+                Payment Status
+                <select
+                  value={updatingOrder.paymentStatus}
+                  onChange={async (event) => {
+                    const nextPayment = event.target.value;
+                    await updateOrder(updatingOrder.id, { paymentStatus: nextPayment }, "Payment status updated.");
+                    setUpdatingOrder((prev) => ({ ...prev, paymentStatus: nextPayment }));
+                    // Also sync with selectedOrder if it is currently open
+                    setSelectedOrder((prev) => (prev && prev.id === updatingOrder.id ? { ...prev, paymentStatus: nextPayment } : prev));
+                  }}
+                  className="rounded-full border border-[#dcc8a1] bg-white px-3 py-2.5 text-sm font-normal focus:border-gold-500 focus:outline-none"
+                >
+                  {["Paid", "Unpaid", "Failed"].map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="flex w-full gap-3 mt-4">
+              <Button type="button" tone="secondary" className="w-full" onClick={() => setUpdatingOrder(null)}>
+                Close
+              </Button>
             </div>
           </div>
         ) : null}
