@@ -66,7 +66,7 @@ export const ProductCard = memo(function ProductCard({ product, isInCart, onAdde
               width="360"
               height="176"
               decoding={priority ? "sync" : "async"}
-              fetchPriority={priority ? "high" : "auto"}
+              fetchpriority={priority ? "high" : "auto"}
               loading={priority ? "eager" : "lazy"}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               onError={() => setImageError(true)}

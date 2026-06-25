@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { routes } from "../../config/routes";
@@ -33,14 +33,39 @@ export function HomePage() {
     enabled: Boolean(user?.id),
   });
 
+  const cartQuery = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => storefrontService.getCart(user.id),
+    enabled: Boolean(user?.id),
+  });
+  const cartItems = cartQuery.data?.items || [];
+
   const [showAll, setShowAll] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  const handleCartAdded = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+  }, [queryClient]);
+
+  const handleFavoriteChanged = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["home-snapshot"] });
+  }, [queryClient]);
+
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    let timeoutId;
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsMobile(window.innerWidth < 768);
+      }, 150);
+    };
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
+
 
   if (homeQuery.isLoading) {
     return <HomeSnapshotSkeleton />;
@@ -108,7 +133,7 @@ export function HomePage() {
       <section className="grid gap-5 md:grid-cols-3">
         {banners.map((banner) => (
           <article key={banner.id} className="overflow-hidden rounded-[30px] border border-[#dfccab] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)]">
-            <img src={banner.image} alt={resolveValue(banner.title, "")} width="400" height="192" fetchPriority="high" className="h-48 w-full object-cover" />
+            <img src={banner.image} alt={resolveValue(banner.title, "")} width="400" height="192" loading="lazy" fetchpriority="auto" className="h-48 w-full object-cover" />
             <div className="space-y-3 p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9e6c24]">
                 {resolveValue(banner.tag, t("home.bannerFallbackTag"))}
@@ -146,8 +171,9 @@ export function HomePage() {
               key={product.id}
               product={product}
               priority={index < 4}
-              onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-              onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["home-snapshot"] })}
+              isInCart={cartItems.some((item) => item.productId === product.id)}
+              onAdded={handleCartAdded}
+              onFavoriteChanged={handleFavoriteChanged}
             />
           ))}
         </div>

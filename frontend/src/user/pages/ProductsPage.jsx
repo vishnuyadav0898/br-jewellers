@@ -30,6 +30,7 @@ export function ProductsPage() {
   const sidebarRef = useRef(null);
 
   useEffect(() => {
+    let timeoutId;
     const checkHeight = () => {
       if (sidebarRef.current) {
         const height = sidebarRef.current.offsetHeight;
@@ -44,10 +45,16 @@ export function ProductsPage() {
       observer.observe(sidebarRef.current, { childList: true, subtree: true });
     }
 
-    window.addEventListener("resize", checkHeight);
+    const handleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkHeight, 150);
+    };
+
+    window.addEventListener("resize", handleResize);
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", checkHeight);
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
   

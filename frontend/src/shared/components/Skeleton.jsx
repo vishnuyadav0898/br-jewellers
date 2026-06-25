@@ -11,26 +11,29 @@ export function Skeleton({ className, ...props }) {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="rounded-[30px] border border-[#eadcc0]/50 bg-white p-4 space-y-4">
+    <div className="rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white flex flex-col h-full overflow-hidden w-full max-w-[360px] mx-auto">
       {/* Product Image Skeleton */}
-      <Skeleton className="h-64 w-full rounded-[22px]" />
-      
-      {/* Category Eyebrow Skeleton */}
-      <Skeleton className="h-3 w-16" />
-      
-      {/* Title Skeleton */}
-      <Skeleton className="h-6 w-3/4" />
-      
-      {/* Rating & Review count */}
-      <div className="flex gap-2">
-        <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-3 w-8" />
+      <div className="h-36 sm:h-44 w-full bg-[#f9f0de] animate-pulse">
+        <Skeleton className="h-full w-full rounded-none" />
       </div>
+      
+      <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between space-y-3">
+        <div className="space-y-2">
+          {/* Category Eyebrow Skeleton */}
+          <Skeleton className="h-3 w-16" />
+          
+          {/* Title Skeleton */}
+          <Skeleton className="h-6 w-3/4" />
+          
+          {/* Description Skeleton */}
+          <Skeleton className="h-4 w-5/6" />
+        </div>
 
-      {/* Pricing & Add to Cart */}
-      <div className="flex items-center justify-between pt-2">
-        <Skeleton className="h-6 w-20" />
-        <Skeleton className="h-10 w-28 rounded-full" />
+        {/* Pricing & Add to Cart */}
+        <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-9 sm:h-11 w-24 rounded-full" />
+        </div>
       </div>
     </div>
   );
@@ -89,11 +92,13 @@ export function HomeSnapshotSkeleton() {
       {/* Banners section */}
       <div className="grid gap-5 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="overflow-hidden rounded-[30px] border border-[#dfccab] bg-white p-5 space-y-4">
-            <Skeleton className="h-48 w-full rounded-[20px]" />
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-5/6" />
+          <div key={i} className="overflow-hidden rounded-[30px] border border-[#dfccab] bg-white space-y-4">
+            <Skeleton className="h-48 w-full rounded-none" />
+            <div className="space-y-3 p-5">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
           </div>
         ))}
       </div>
@@ -348,7 +353,7 @@ export function AboutPageSkeleton() {
         <Skeleton className="h-6 w-5/6 mx-auto" />
       </div>
 
-      <div className="rounded-[32px] border border-[#dfccab]/50 h-[300px] sm:h-[450px] max-w-7xl mx-auto">
+      <div className="rounded-[32px] border border-[#dfccab]/50 w-full aspect-video max-w-7xl mx-auto">
         <Skeleton className="w-full h-full rounded-[32px]" />
       </div>
 

@@ -1,5 +1,5 @@
 import { Heart, ShoppingBag, Star, Loader2, Minus, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { routes } from "../../config/routes";
@@ -52,6 +52,16 @@ export function ProductDetailsPage() {
   useEffect(() => {
     setPriceKey((prev) => prev + 1);
   }, [selectedColor, selectedSize, selectedMaterial, selectedPurity]);
+
+  const handleRelatedProductAdded = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+  }, [queryClient]);
+
+  const handleRelatedProductFavoriteChanged = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] });
+    queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+  }, [queryClient, productIdentifier, user?.id]);
+
 
   const cartQuery = useQuery({
     queryKey: ["cart", user?.id],
@@ -310,7 +320,7 @@ export function ProductDetailsPage() {
                     width="500"
                     height="500"
                     className="w-full h-full object-cover"
-                    fetchPriority="high"
+                    fetchpriority="high"
                     onError={() => setBrokenImages((prev) => ({ ...prev, [selectedImage]: true }))}
                   />
                 )}
@@ -329,7 +339,7 @@ export function ProductDetailsPage() {
                   width="500"
                   height="500"
                   className="w-full h-full object-cover"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   onError={() => setBrokenImages((prev) => ({ ...prev, 0: true }))}
                 />
               )}
@@ -629,11 +639,9 @@ export function ProductDetailsPage() {
               <ProductCard
                 key={relatedProduct.id}
                 product={relatedProduct}
-                onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-                onFavoriteChanged={() => {
-                  queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] });
-                  queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
-                }}
+                isInCart={cartQuery.data?.items?.some((item) => item.productId === relatedProduct.id)}
+                onAdded={handleRelatedProductAdded}
+                onFavoriteChanged={handleRelatedProductFavoriteChanged}
               />
             ))}
           </div>

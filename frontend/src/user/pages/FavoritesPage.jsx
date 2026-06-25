@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/components/EmptyState";
 import { FavoritesPageSkeleton } from "../../shared/components/Skeleton";
@@ -20,11 +21,28 @@ export function FavoritesPage() {
     enabled: Boolean(user?.id),
   });
 
+  const cartQuery = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => storefrontService.getCart(user.id),
+    enabled: Boolean(user?.id),
+  });
+  const cartItems = cartQuery.data?.items || [];
+
+
   if (favoritesQuery.isLoading) {
     return <FavoritesPageSkeleton />;
   }
 
   const favorites = favoritesQuery.data || [];
+
+  const handleCartAdded = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+  }, [queryClient]);
+
+  const handleFavoriteChanged = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+  }, [queryClient, user?.id]);
+
 
   if (!favorites.length) {
     return (
@@ -50,8 +68,9 @@ export function FavoritesPage() {
           <ProductCard
             key={product.id}
             product={product}
-            onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-            onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] })}
+            isInCart={cartItems.some((item) => item.productId === product.id)}
+            onAdded={handleCartAdded}
+            onFavoriteChanged={handleFavoriteChanged}
           />
         ))}
       </div>

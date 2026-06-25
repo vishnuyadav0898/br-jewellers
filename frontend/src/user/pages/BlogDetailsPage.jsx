@@ -98,7 +98,8 @@ export function BlogDetailsPage() {
           alt={blog.title}
           width="1200"
           height="480"
-          fetchPriority="high"
+          loading="lazy"
+          fetchpriority="auto"
           className="w-full h-full object-cover object-center"
         />
       </div>

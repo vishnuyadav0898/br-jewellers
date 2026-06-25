@@ -6,6 +6,7 @@ import { RouteAwareErrorBoundary } from "../components/AppErrorBoundary";
 import { LocalizationBootstrap } from "./LocalizationBootstrap";
 import { NotificationBootstrap } from "./NotificationBootstrap";
 import { queryClient } from "../services/queryClient";
+import { PerformanceHUD } from "../components/PerformanceProfiler";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -37,8 +38,10 @@ export function AppProviders({ children }) {
               },
             }}
           />
+          <PerformanceHUD />
         </QueryClientProvider>
       </RouteAwareErrorBoundary>
     </BrowserRouter>
   );
 }
+

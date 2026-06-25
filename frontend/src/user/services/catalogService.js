@@ -14,12 +14,14 @@ const isProductInWishlist = (product, user) => {
 
 export const catalogService = {
   async getHomeSnapshot(userId = null) {
-    const products = await adminCatalogService.getProducts("", { featured: true });
-    const categories = await adminCatalogService.getCategories().catch(() => []);
-    const content = await mockApiClient.query((db) => ({
-      homeContent: db.homeContent || {},
-      banners: db.homeContent?.banners || [],
-    }));
+    const [products, categories, content] = await Promise.all([
+      adminCatalogService.getProducts("", { featured: true }),
+      adminCatalogService.getCategories().catch(() => []),
+      mockApiClient.query((db) => ({
+        homeContent: db.homeContent || {},
+        banners: db.homeContent?.banners || [],
+      })),
+    ]);
 
     const user = useAppStore.getState().user;
 
