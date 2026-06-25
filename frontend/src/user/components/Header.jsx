@@ -1,4 +1,4 @@
-import { Heart, LayoutDashboard, Lock, LogOut, Package, RotateCcw, ShoppingBag, User, ChevronDown, Menu, X } from "lucide-react";
+import { Heart, LayoutDashboard, Lock, LogOut, Package, RotateCcw, ShoppingBag, User, ChevronDown, Menu, X, Home, Gem, BookOpen, Info, Phone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { routes, userNavigation } from "../../config/routes";
@@ -9,6 +9,23 @@ import { PreferenceControls } from "../../shared/components/PreferenceControls";
 import { useSession } from "../../shared/hooks/useSession";
 import { useLocale } from "../../shared/localization";
 import { cn } from "../../shared/utils/cn";
+
+const getNavLinkIcon = (labelKey) => {
+  switch (labelKey) {
+    case "nav.home":
+      return <Home className="h-4 w-4" />;
+    case "nav.products":
+      return <Gem className="h-4 w-4" />;
+    case "nav.blogs":
+      return <BookOpen className="h-4 w-4" />;
+    case "nav.about":
+      return <Info className="h-4 w-4" />;
+    case "nav.contact":
+      return <Phone className="h-4 w-4" />;
+    default:
+      return null;
+  }
+};
 
 export function Header() {
   const { t } = useLocale();
@@ -58,7 +75,7 @@ export function Header() {
               key={item.to}
               to={item.to}
               className={() =>
-                cn("text-sm font-semibold transition hover:text-[#1a120e]", isTabActive(item) ? "text-[#8a5d18]" : "text-stone-600")
+                cn("text-sm font-semibold transition hover:text-[#1a120e]", isTabActive(item) ? "text-[#8a5d18]" : "text-stone-700")
               }
             >
               {t(item.labelKey)}
@@ -219,6 +236,7 @@ export function Header() {
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#ddc8a3] bg-white text-[#1a120e] hover:bg-[#fff3dd] lg:hidden"
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-label="Toggle Navigation Menu"
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -227,38 +245,107 @@ export function Header() {
 
       {/* Mobile Dropdown Navigation Menu */}
       {mobileMenuOpen && (
-        <nav className="border-t border-[#e4d4b2] bg-[#fffbf4] px-4 py-6 shadow-lg lg:hidden space-y-6">
+        <nav className="absolute left-0 right-0 top-full border-b border-[#e4d4b2]/70 bg-[#fffcf6]/95 backdrop-blur-xl px-5 py-6 shadow-[0_24px_50px_rgba(26,17,11,0.12)] lg:hidden space-y-6 animate-slideDown z-50 max-h-[85vh] overflow-y-auto">
           {/* Main Navigation Links */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
              {visibleNavigation.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={() =>
                   cn(
-                    "block rounded-xl px-4 py-3 text-base font-semibold transition hover:bg-[#fcf5eb] hover:text-[#1a120e]",
-                    isTabActive(item) ? "bg-[#fcf5eb] text-[#8a5d18]" : "text-stone-600"
+                    "flex items-center gap-3 rounded-2xl px-4 py-3.5 text-base font-semibold transition-all duration-300 border border-transparent",
+                    isTabActive(item)
+                      ? "bg-gradient-to-r from-[#f7e6c4]/45 to-transparent text-[#8a5d18] border-l-4 border-l-[#d3a347] pl-3"
+                      : "text-stone-700 hover:bg-[#fdf8ee] hover:text-[#1a120e]"
                   )
                 }
               >
-                {t(item.labelKey)}
+                <span className="text-[#a58145]">{getNavLinkIcon(item.labelKey)}</span>
+                <span>{t(item.labelKey)}</span>
               </NavLink>
             ))}
             {user?.role === "admin" ? (
               <Link
                 to={routes.adminDashboard}
-                className="block rounded-xl px-4 py-3 text-base font-semibold text-[#8a5d18] hover:bg-[#fcf5eb]"
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-base font-semibold text-[#8a5d18] bg-gradient-to-r from-[#fcf5eb] to-transparent hover:from-[#fcf5eb]/80"
               >
-                {t("common.admin")}
+                <span className="text-[#8a5d18]"><LayoutDashboard className="h-4 w-4" /></span>
+                <span>{t("common.admin")}</span>
               </Link>
             ) : null}
           </div>
 
-          <hr className="border-[#e4d4b2]/65" />
+          {/* User Account / Auth Actions */}
+          <div className="pt-2">
+            {isAuthenticated ? (
+              <div className="rounded-3xl border border-[#e4d4b2]/40 bg-[#fffaf1]/80 p-4 space-y-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#9e6c24] to-[#f4d994] font-display text-base font-bold text-[#130d0a]">
+                    {user?.name?.slice(0, 1)?.toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#1a120e]">{user?.name}</h4>
+                    <p className="text-xs text-stone-500 truncate max-w-[200px]">{user?.email}</p>
+                  </div>
+                </div>
+                
+                <hr className="border-[#e4d4b2]/45" />
 
-          {/* Preferences (Language and Currency) inside mobile menu */}
-          <div className="pt-2 flex justify-center">
-            <PreferenceControls />
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    to={routes.appProfile}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-[#e4d4b2]/60 bg-white py-2.5 text-xs font-semibold text-stone-700 hover:bg-[#fff9ef] transition"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    Profile
+                  </Link>
+                  <Link
+                    to={routes.appOrders}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-[#e4d4b2]/60 bg-white py-2.5 text-xs font-semibold text-stone-700 hover:bg-[#fff9ef] transition"
+                  >
+                    <Package className="h-3.5 w-3.5" />
+                    Orders
+                  </Link>
+                </div>
+                
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50/50 hover:bg-rose-50 border border-rose-100 py-2.5 text-xs font-semibold text-rose-700 transition"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  {t("common.logout")}
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-[#e4d4b2]/45 bg-[#fffaf1]/80 p-4 space-y-3.5 text-center shadow-sm">
+                <p className="text-xs text-stone-600 font-medium">Join BR Jewellers for access to personalized collections, orders, and more.</p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal("login")}
+                    className="inline-flex h-10 items-center justify-center rounded-2xl bg-white px-4 text-xs font-semibold text-[#20140f] ring-1 ring-[#dbc8a2] transition hover:bg-[#fff7e6]"
+                  >
+                    {t("common.login")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal("register")}
+                    className="inline-flex h-10 items-center justify-center rounded-2xl bg-[#d3a347] px-4 text-xs font-semibold text-[#120d0b] transition hover:bg-[#e2ba63]"
+                  >
+                    {t("common.register")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-2 border-t border-[#e4d4b2]/40 flex flex-col gap-3">
+            <span className="text-[9px] uppercase tracking-[0.25em] text-[#9e6c24] font-bold text-center">Preferences</span>
+            <div className="flex justify-center bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-[#e4d4b2]/20 w-fit mx-auto shadow-sm">
+              <PreferenceControls />
+            </div>
           </div>
         </nav>
       )}

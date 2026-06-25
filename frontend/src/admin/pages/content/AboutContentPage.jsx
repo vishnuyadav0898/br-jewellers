@@ -538,7 +538,7 @@ export function AboutContentPage() {
                                   <div className="space-y-3">
                                     {val.image && (
                                       <div className="w-full h-28 rounded-lg overflow-hidden border border-stone-200 shadow-sm bg-stone-100">
-                                        <img src={val.image} alt={val.title} className="w-full h-full object-cover" />
+                                        <img src={val.image} alt={val.title} width="400" height="300" className="w-full h-full object-cover" loading="lazy" />
                                       </div>
                                     )}
                                     <div>

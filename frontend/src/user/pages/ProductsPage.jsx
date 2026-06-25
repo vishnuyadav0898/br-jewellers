@@ -1,30 +1,29 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Button } from "../../shared/components/Button";
 import { Input } from "../../shared/components/Input";
-import { Loader } from "../../shared/components/Loader";
 import { useLocale } from "../../shared/localization";
 import { useSession } from "../../shared/hooks/useSession";
 import { storefrontService } from "../services/storefrontService";
 import { catalogService } from "../../shared/services/catalogService";
 import { ProductCard } from "../components/ProductCard";
 import { ProductCardSkeleton } from "../../shared/components/Skeleton";
+import { useSEO } from "../../shared/hooks/useSEO";
+
+import { useDebounce } from "../../shared/hooks/useDebounce";
 
 export function ProductsPage() {
   const { t } = useLocale();
+  useSEO({
+    title: "Catalog",
+    description: "Browse the BR Jewellers catalogue of exquisite diamonds, necklaces, rings, and handcrafted gold, silver, and platinum jewellery.",
+    keywords: "jewellery catalogue, buy necklaces online, diamond rings, gold collection, silver ornaments",
+  });
   const queryClient = useQueryClient();
   const { user } = useSession();
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // Debounce search query to improve page response speed
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [search]);
+  const debouncedSearch = useDebounce(search, 300);
   
   // Dynamic Sticky Height Check
   const [isTall, setIsTall] = useState(false);
@@ -59,6 +58,8 @@ export function ProductsPage() {
   const [selectedPurities, setSelectedPurities] = useState([]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const debouncedMinPrice = useDebounce(minPrice, 500);
+  const debouncedMaxPrice = useDebounce(maxPrice, 500);
 
   const toggleCheckbox = (list, setList, item) => {
     if (list.includes(item)) {
@@ -71,20 +72,39 @@ export function ProductsPage() {
   const categoriesQuery = useQuery({
     queryKey: ["user-categories"],
     queryFn: catalogService.getCategories,
+    staleTime: 5 * 60 * 1000, // 5 minutes — categories rarely change
   });
 
   const activeFilters = {
     category: selectedCategories.join(","),
     material: selectedMaterials.join(","),
     purity: selectedPurities.join(","),
-    minPrice: minPrice || undefined,
-    maxPrice: maxPrice || undefined,
+    minPrice: debouncedMinPrice || undefined,
+    maxPrice: debouncedMaxPrice || undefined,
   };
 
   const productsQuery = useQuery({
     queryKey: ["products", debouncedSearch, activeFilters],
     queryFn: () => storefrontService.getProducts(debouncedSearch, activeFilters),
+    staleTime: 60 * 1000, // 1 minute — avoid refetching on component re-mount
+    placeholderData: (previousData) => previousData, // keep previous results visible while new data loads
   });
+
+  const cartQuery = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => storefrontService.getCart(user.id),
+    enabled: Boolean(user?.id),
+  });
+
+  const cartItems = cartQuery.data?.items || [];
+
+  const handleCartAdded = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+  }, [queryClient]);
+
+  const handleFavoriteChanged = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+  }, [queryClient]);
 
   const hasActiveFilters =
     selectedCategories.length > 0 ||
@@ -93,7 +113,7 @@ export function ProductsPage() {
     minPrice ||
     maxPrice;
 
-  const FilterContent = () => (
+  const renderFilterContent = () => (
     <div className="space-y-6">
       {/* Categories */}
       <div className="space-y-2">
@@ -223,7 +243,7 @@ export function ProductsPage() {
               </button>
             )}
           </div>
-          <FilterContent />
+          {renderFilterContent()}
         </aside>
 
         {/* Products Grid */}
@@ -241,12 +261,14 @@ export function ProductsPage() {
             </div>
           ) : (
             <div className="grid gap-3 sm:gap-6 grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-              {(productsQuery.data || []).map((product) => (
+              {(productsQuery.data || []).map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-                  onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["products", search, activeFilters] })}
+                  isInCart={cartItems.some((item) => item.productId === product.id)}
+                  onAdded={handleCartAdded}
+                  onFavoriteChanged={handleFavoriteChanged}
+                  priority={index < 4}
                 />
               ))}
             </div>
@@ -282,7 +304,7 @@ export function ProductsPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto py-4">
-          <FilterContent />
+          {renderFilterContent()}
         </div>
 
         <div className="border-t border-[#dfccab] pt-4 flex gap-2">

@@ -92,7 +92,7 @@ export function BlogManagementPage() {
             <AdminPanel key={blog.id} className="flex flex-col justify-between h-full">
               <div className="flex flex-col h-full justify-between">
                 <div>
-                  <img src={blog.coverImage} alt={blog.title} className="h-48 w-full rounded-[22px] object-cover" />
+                  <img src={blog.coverImage} alt={blog.title} width="400" height="192" className="h-48 w-full rounded-[22px] object-cover" loading="lazy" />
                   <div className="mt-4">
                     <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">
                       {blog.author} • {formatDate(blog.publishedAt, language)}

@@ -84,7 +84,7 @@ export function BannerManagementPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {banners.map((banner) => (
             <AdminPanel key={banner.id} className="flex h-full flex-col">
-              <img src={banner.image} alt={banner.title} className="h-44 w-full rounded-[22px] object-cover" />
+              <img src={banner.image} alt={banner.title} width="400" height="176" className="h-44 w-full rounded-[22px] object-cover" loading="lazy" />
               <div className="mt-4 flex flex-1 flex-col">
                 <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#9f6d22]">{banner.tag}</div>
                 <h3 className="mt-2 font-display text-3xl text-[#1d130f]">{banner.title}</h3>

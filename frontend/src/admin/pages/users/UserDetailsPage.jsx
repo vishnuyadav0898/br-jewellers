@@ -113,7 +113,7 @@ export function UserDetailsPage() {
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <AdminPanel className={user?.role === "admin" ? "xl:col-span-2" : ""}>
             <div className="flex items-center gap-4">
-              <img src={user?.avatar} alt={user?.name} className="h-20 w-20 rounded-full" />
+              <img src={user?.avatar} alt={user?.name} width="80" height="80" className="h-20 w-20 rounded-full" loading="lazy" />
               <div>
                 <h2 className="font-display text-4xl text-[#1d130f]">{user?.name}</h2>
                 <div className="flex items-center gap-2 mt-1">

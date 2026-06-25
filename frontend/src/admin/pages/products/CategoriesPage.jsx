@@ -31,6 +31,7 @@ export function CategoriesPage() {
   const [deletingCategory, setDeletingCategory] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [togglingStatusCategory, setTogglingStatusCategory] = useState(null);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.adminCategories,
@@ -59,6 +60,7 @@ export function CategoriesPage() {
   };
 
   const handleToggleStatus = async (category) => {
+    if (!category) return;
     setTogglingId(category.id);
     try {
       await catalogService.updateCategoryStatus(category.id, !category.isActive);
@@ -67,6 +69,7 @@ export function CategoriesPage() {
         { title: "Status updated" }
       );
       refreshCategories();
+      setTogglingStatusCategory(null);
     } catch (error) {
       notify.error(error.message);
     } finally {
@@ -126,8 +129,7 @@ export function CategoriesPage() {
               type="button"
               tone="secondary"
               size="sm"
-              onClick={() => handleToggleStatus(row)}
-              loading={togglingId === row.id}
+              onClick={() => setTogglingStatusCategory(row)}
               title={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
               aria-label={row.isActive !== false ? "Deactivate Category" : "Activate Category"}
             >
@@ -294,6 +296,42 @@ export function CategoriesPage() {
               onClick={handleDelete}
             >
               Delete
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Status Toggle Confirm Modal */}
+      <Modal
+        open={Boolean(togglingStatusCategory)}
+        onClose={() => setTogglingStatusCategory(null)}
+        title="Confirm status update"
+        className="max-w-md w-full"
+      >
+        <div className="flex flex-col gap-4 w-full">
+          <p className="text-sm text-stone-600 w-full">
+            Are you sure you want to change the status of{" "}
+            <span className="font-semibold text-espresso">{togglingStatusCategory?.name}</span> to{" "}
+            <span className="font-semibold text-espresso">{togglingStatusCategory?.isActive ? "Inactive" : "Active"}</span>?
+          </p>
+          <div className="flex w-full gap-3 mt-2">
+            <Button
+              type="button"
+              tone="secondary"
+              className="flex-1 w-full"
+              disabled={togglingId !== null}
+              onClick={() => setTogglingStatusCategory(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              tone="primary"
+              className="flex-1 w-full"
+              loading={togglingId !== null}
+              onClick={() => handleToggleStatus(togglingStatusCategory)}
+            >
+              Update
             </Button>
           </div>
         </div>

@@ -3,12 +3,12 @@ import { Outlet } from "react-router-dom";
 import { useAppStore } from "../../shared/store/useAppStore";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { Loader } from "../../shared/components/Loader";
+import { PageSkeleton } from "../../shared/components/Skeleton";
 
 function AdminLayoutLoader() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <Loader label="Loading admin view..." />
+      <PageSkeleton />
     </div>
   );
 }

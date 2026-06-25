@@ -3,12 +3,12 @@ import { Outlet } from "react-router-dom";
 import { Header } from "../../user/components/Header";
 import { Footer } from "../../user/components/Footer";
 import { AuthModal } from "../components/AuthModal";
-import { Loader } from "../components/Loader";
+import { PageSkeleton } from "../components/Skeleton";
 
 function LayoutLoader() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <Loader label="Loading page..." />
+      <PageSkeleton />
     </div>
   );
 }

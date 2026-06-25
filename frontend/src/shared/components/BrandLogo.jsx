@@ -18,6 +18,8 @@ export function BrandLogo({
       <img
         src={brandLogo}
         alt={appConfig.name}
+        width="220"
+        height="69"
         className={cn("block h-auto w-[168px] max-w-full object-contain sm:w-[220px]", imageClassName)}
       />
     </Link>

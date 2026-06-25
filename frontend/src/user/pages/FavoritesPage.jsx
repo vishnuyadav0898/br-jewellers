@@ -1,11 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/components/EmptyState";
-import { Loader } from "../../shared/components/Loader";
+import { FavoritesPageSkeleton } from "../../shared/components/Skeleton";
 import { useSession } from "../../shared/hooks/useSession";
 import { storefrontService } from "../services/storefrontService";
 import { ProductCard } from "../components/ProductCard";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function FavoritesPage() {
+  useSEO({
+    title: "My Favorites",
+    description: "Manage your curated collection of favorite luxury jewellery items, engagement rings, and gold sets at BR Jewellers.",
+    keywords: "favorite jewellery, luxury wishlist, curated jewellery, saved rings, BR Jewellers",
+  });
   const queryClient = useQueryClient();
   const { user } = useSession();
   const favoritesQuery = useQuery({
@@ -15,7 +21,7 @@ export function FavoritesPage() {
   });
 
   if (favoritesQuery.isLoading) {
-    return <Loader label="Loading your favorites..." />;
+    return <FavoritesPageSkeleton />;
   }
 
   const favorites = favoritesQuery.data || [];

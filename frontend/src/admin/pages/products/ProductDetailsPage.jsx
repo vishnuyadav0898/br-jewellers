@@ -71,7 +71,10 @@ export function ProductDetailsPage() {
               <img
                 src={product.coverImage || product.images?.[0]}
                 alt={product.name}
+                width="400"
+                height="450"
                 className="aspect-[4/4.5] w-full object-cover"
+                loading="lazy"
               />
             </div>
             <div className="space-y-5">
@@ -115,7 +118,10 @@ export function ProductDetailsPage() {
                     key={`${image}-${index}`}
                     src={image}
                     alt={`${product.name} gallery ${index + 1}`}
+                    width="120"
+                    height="120"
                     className="aspect-square rounded-lg border border-gold-100 bg-gold-50 object-cover"
+                    loading="lazy"
                   />
                 ))}
               </div>

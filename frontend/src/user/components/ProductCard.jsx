@@ -1,5 +1,5 @@
 import { Heart, Loader2, Gem, Minus, Plus } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { routes } from "../../config/routes";
@@ -18,7 +18,7 @@ const slugify = (text) =>
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
 
-export function ProductCard({ product, onAdded, onFavoriteChanged }) {
+export const ProductCard = memo(function ProductCard({ product, isInCart, onAdded, onFavoriteChanged, priority = false }) {
   const { formatFromInr } = useMoney();
   const { t } = useLocale();
   const { isAuthenticated, openAuthModal, user } = useSession();
@@ -27,13 +27,16 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
   const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  const shouldFetchCart = isInCart === undefined && Boolean(isAuthenticated && user?.id);
   const cartQuery = useQuery({
     queryKey: ["cart", user?.id],
     queryFn: () => storefrontService.getCart(user.id),
-    enabled: Boolean(isAuthenticated && user?.id),
+    enabled: shouldFetchCart,
   });
 
-  const cartItem = cartQuery.data?.items?.find((item) => item.productId === product.id);
+  const isItemInCart = isInCart !== undefined
+    ? isInCart
+    : Boolean(cartQuery.data?.items?.find((item) => item.productId === product.id));
 
   const displayDescription = product.description
     ? (product.description.length > 70
@@ -42,9 +45,15 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
     : "";
 
   return (
-    <article className="group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full max-w-[360px] mx-auto flex flex-col h-full">
+    <article className="content-auto group overflow-hidden rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] transition duration-300 hover:-translate-y-1 w-full max-w-[360px] mx-auto flex flex-col h-full">
       <div className="relative">
-        <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="block h-36 sm:h-44 w-full overflow-hidden bg-[#f9f0de]">
+        <Link 
+          to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} 
+          state={{ id: product.id }} 
+          tabIndex="-1"
+          aria-hidden="true"
+          className="block h-36 sm:h-44 w-full overflow-hidden bg-[#f9f0de]"
+        >
           {imageError || !product.images?.[0] ? (
             <div className="flex h-full w-full flex-col items-center justify-center gap-1 sm:gap-2 p-3 text-[#d5a957]/45">
               <Gem className="h-8 w-8 sm:h-10 sm:w-10 animate-pulse" />
@@ -54,8 +63,12 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
             <img
               src={product.images[0]}
               alt={product.name}
+              width="360"
+              height="176"
+              decoding={priority ? "sync" : "async"}
+              fetchPriority={priority ? "high" : "auto"}
+              loading={priority ? "eager" : "lazy"}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              loading="lazy"
               onError={() => setImageError(true)}
             />
           )}
@@ -125,7 +138,7 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
             >
               {t("productCard.viewDetails")}
             </Link>
-            {cartItem ? (
+            {isItemInCart ? (
               <Button
                 tone="secondary"
                 disabled
@@ -187,4 +200,4 @@ export function ProductCard({ product, onAdded, onFavoriteChanged }) {
       </div>
     </article>
   );
-}
+});

@@ -57,6 +57,7 @@ export const Input = forwardRef(
               onClick={togglePasswordVisibility}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#d3a347] transition-colors focus:outline-none focus:text-[#d3a347]"
               title={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />

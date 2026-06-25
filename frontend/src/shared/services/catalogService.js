@@ -555,7 +555,7 @@ export const catalogService = {
         name,
         slug: toTitleSlug(name),
         description: category?.description || "",
-        isActive: category?.isActive !== false,
+        isActive: category?.status ? category.status === "active" : category?.isActive !== false,
         productCount: category?.productCount || 0,
       };
     });
@@ -580,8 +580,8 @@ export const catalogService = {
   },
 
   async updateCategoryStatus(categoryId, isActive) {
-    await apiClient.patch(`/api/v1/category/${categoryId}`, {
-      isActive: Boolean(isActive),
+    await apiClient.patch(`/api/v1/category/${categoryId}/status`, {
+      status: isActive ? "active" : "inactive",
     });
     return true;
   },

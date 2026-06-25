@@ -31,6 +31,7 @@ export const Button = forwardRef(
           className
         )}
         {...props}
+        aria-busy={loading ? "true" : undefined}
         {...(isButton ? { disabled } : { "aria-disabled": disabled || undefined })}
       >
         {loading ? "Please wait..." : children}

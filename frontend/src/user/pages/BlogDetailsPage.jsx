@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Calendar, User, Clock, Share2 } from "lucide-react";
 import { useLocale } from "../../shared/localization";
-import { Loader } from "../../shared/components/Loader";
+import { BlogDetailsSkeleton } from "../../shared/components/Skeleton";
 import { storefrontService } from "../services/storefrontService";
 import { formatDate } from "../../shared/utils/formatters";
 import { Button } from "../../shared/components/Button";
 import { notify } from "../../shared/utils/notify";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function BlogDetailsPage() {
   const { id } = useParams();
@@ -17,15 +18,17 @@ export function BlogDetailsPage() {
     queryFn: () => storefrontService.getBlogById(id),
   });
 
-  if (blogQuery.isLoading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader label="Unveiling editorial masterwork..." />
-      </div>
-    );
-  }
-
   const blog = blogQuery.data;
+
+  useSEO({
+    title: blog?.title || "Blog Article",
+    description: blog?.subtitle || "Read this article on our jewellery journal.",
+    keywords: `${blog?.title || ""}, jewellery design, gemstones, BR Jewellers journal`,
+  });
+
+  if (blogQuery.isLoading) {
+    return <BlogDetailsSkeleton />;
+  }
 
   if (!blog) {
     return (
@@ -93,6 +96,9 @@ export function BlogDetailsPage() {
         <img
           src={blog.coverImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80"}
           alt={blog.title}
+          width="1200"
+          height="480"
+          fetchPriority="high"
           className="w-full h-full object-cover object-center"
         />
       </div>
@@ -149,6 +155,10 @@ export function BlogDetailsPage() {
                 <img
                   src={imgUrl}
                   alt={`Visual gallery item ${idx + 1}`}
+                  width="400"
+                  height="176"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
                 />
               </div>

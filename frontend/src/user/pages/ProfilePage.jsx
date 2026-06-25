@@ -4,13 +4,19 @@ import { Plus, MapPin, Check } from "lucide-react";
 import { Button } from "../../shared/components/Button";
 import { Input } from "../../shared/components/Input";
 import { Modal } from "../../shared/components/Modal";
-import { Loader } from "../../shared/components/Loader";
+import { ProfilePageSkeleton } from "../../shared/components/Skeleton";
 import { useSession } from "../../shared/hooks/useSession";
 import { storefrontService } from "../services/storefrontService";
 import { notify } from "../../shared/utils/notify";
 import { ProfileForm } from "../../shared/components/ProfileForm";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function ProfilePage() {
+  useSEO({
+    title: "My Profile",
+    description: "Manage your personal profile, saved shipping addresses, and security settings at BR Jewellers.",
+    keywords: "my profile, shipping address, account settings, BR Jewellers",
+  });
   const { user } = useSession();
   const queryClient = useQueryClient();
 
@@ -126,6 +132,10 @@ export function ProfilePage() {
     }
   };
 
+  if (addressesQuery.isLoading) {
+    return <ProfilePageSkeleton />;
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       <ProfileForm roleLabel="Customer profile" />
@@ -144,9 +154,7 @@ export function ProfilePage() {
           </Button>
         </div>
 
-        {addressesQuery.isLoading ? (
-          <Loader label="Loading addresses..." />
-        ) : !addressesQuery.data || addressesQuery.data.length === 0 ? (
+        {!addressesQuery.data || addressesQuery.data.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-[#eadcc0] rounded-[24px] bg-[#fffcf8]">
             <MapPin className="h-12 w-12 mx-auto text-[#d5a957]/50 mb-3" />
             <p className="text-stone-500 font-medium">No saved addresses yet.</p>

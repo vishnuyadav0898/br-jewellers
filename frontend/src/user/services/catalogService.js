@@ -21,38 +21,10 @@ export const catalogService = {
       banners: db.homeContent?.banners || [],
     }));
 
-    let activeCoupons = [];
-    try {
-      const res = await apiClient.get("/api/v1/coupons/list");
-      const raw = res.data || res || {};
-      const list = Array.isArray(raw.data) ? raw.data : (Array.isArray(raw) ? raw : []);
-      activeCoupons = list.filter((c) => c.isActive).slice(0, 3).map((c) => ({
-        id: c._id || c.id,
-        code: c.code,
-        name: c.name,
-        description: c.description,
-        discountPercent: c.discountType === "percentage" ? c.discountValue : 10,
-        isActive: c.isActive,
-      }));
-    } catch (e) {
-      console.warn("Failed to fetch coupons from backend for home snapshot:", e);
-      activeCoupons = await mockApiClient.query((db) =>
-        (db.coupons || []).filter((entry) => entry.isEnabled || entry.isActive).slice(0, 3).map((c) => ({
-          id: c._id || c.id,
-          code: c.code,
-          name: c.name,
-          description: c.description,
-          discountPercent: c.discountPercent || c.discountValue || 10,
-          isActive: c.isActive || c.isEnabled,
-        }))
-      );
-    }
-
     const user = useAppStore.getState().user;
 
     return {
       ...content,
-      activeCoupons,
       featuredProducts: products
         .filter((product) => product.featured === true)
         .map((product) => ({

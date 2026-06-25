@@ -59,9 +59,44 @@ export function AuthModal() {
 
   useEffect(() => {
     if (authModalOpen && (isLogin || isRegister)) {
-      const timer = setTimeout(() => {
+      const GSI_SRC = "https://accounts.google.com/gsi/client";
+
+      // Dynamically inject the GSI script only once
+      const loadGsi = () => {
+        return new Promise((resolve) => {
+          if (window.google?.accounts?.id) {
+            resolve();
+            return;
+          }
+          const existing = document.querySelector(`script[src="${GSI_SRC}"]`);
+          if (existing) {
+            // Script tag exists but hasn't loaded yet — wait for it
+            existing.addEventListener("load", resolve, { once: true });
+            return;
+          }
+          const script = document.createElement("script");
+          script.src = GSI_SRC;
+          script.async = true;
+          script.defer = true;
+          script.addEventListener("load", resolve, { once: true });
+          document.head.appendChild(script);
+        });
+      };
+
+      let cancelled = false;
+
+      const timer = setTimeout(async () => {
+        try {
+          await loadGsi();
+        } catch {
+          // GSI failed to load — Google button won't render, that's OK
+          return;
+        }
+
+        if (cancelled) return;
+
         const btnContainer = document.getElementById("google-signin-button");
-        if (btnContainer && window.google) {
+        if (btnContainer && window.google?.accounts?.id) {
           try {
             window.google.accounts.id.initialize({
               client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "430154217113-dcf7t5l7rskr1s1625f3c5f212351235.apps.googleusercontent.com",
@@ -89,11 +124,15 @@ export function AuthModal() {
               width: getSafeWidth(),
             });
           } catch (e) {
-            console.error("Google Auth init failed:", e);
+            // Silently handle — Google button is optional
           }
         }
       }, 200);
-      return () => clearTimeout(timer);
+
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
     }
   }, [authModalOpen, isLogin, isRegister, googleLogin]);
 
