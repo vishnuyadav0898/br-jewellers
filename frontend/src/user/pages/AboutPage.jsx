@@ -4,6 +4,37 @@ import { AboutPageSkeleton } from "../../shared/components/Skeleton";
 import { storefrontService } from "../services/storefrontService";
 import { useSEO } from "../../shared/hooks/useSEO";
 
+function LazyVideo({ src, className, ...props }) {
+  const [isInView, setIsInView] = useState(false);
+  const [videoElement, setVideoElement] = useState(null);
+
+  useEffect(() => {
+    if (!videoElement) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "150px" }
+    );
+    observer.observe(videoElement);
+    return () => observer.disconnect();
+  }, [videoElement]);
+
+  return (
+    <video
+      ref={setVideoElement}
+      className={className}
+      {...props}
+    >
+      {isInView && <source src={src} type="video/mp4" />}
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+
 export function AboutPage() {
   useSEO({
     title: "About Us",
@@ -113,10 +144,15 @@ export function AboutPage() {
 
       {/* 2. Premium Video Banner */}
       <div className="relative overflow-hidden rounded-[32px] border border-[#dfccab]/50 shadow-[0_24px_80px_rgba(32,21,15,0.15)] max-w-7xl mx-auto">
-        <video className="w-full h-auto aspect-video object-cover" autoPlay muted loop playsInline preload="metadata" aria-label="BR Jewellers Heritage Video">
-          <source src="https://brjeweller.com/wp-content/uploads/2023/08/video.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        <LazyVideo
+          src="https://brjeweller.com/wp-content/uploads/2023/08/video.mp4"
+          className="w-full h-auto aspect-video object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-label="BR Jewellers Heritage Video"
+        />
       </div>
 
       {/* 3. About the Founder Section */}

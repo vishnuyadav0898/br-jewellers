@@ -1,9 +1,10 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Header } from "../../user/components/Header";
 import { Footer } from "../../user/components/Footer";
 import { AuthModal } from "../components/AuthModal";
 import { PageSkeleton } from "../components/Skeleton";
+import { requestNotificationPermission, setupForegroundNotifications } from "../services/firebase";
 
 function LayoutLoader() {
   return (
@@ -14,6 +15,12 @@ function LayoutLoader() {
 }
 
 export function UserLayout() {
+  useEffect(() => {
+    requestNotificationPermission();
+    const unsubscribe = setupForegroundNotifications();
+    return () => unsubscribe();
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top_left,rgba(211,163,71,0.18),transparent_26%),linear-gradient(180deg,#fffaf1_0%,#f7eedf_100%)] text-[#1a120e]">
       <Header />

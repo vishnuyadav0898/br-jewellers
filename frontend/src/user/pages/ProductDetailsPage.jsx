@@ -320,7 +320,8 @@ export function ProductDetailsPage() {
                     width="500"
                     height="500"
                     className="w-full h-full object-cover"
-                    fetchpriority="high"
+                    loading="lazy"
+                    fetchpriority="auto"
                     onError={() => setBrokenImages((prev) => ({ ...prev, [selectedImage]: true }))}
                   />
                 )}
@@ -339,7 +340,8 @@ export function ProductDetailsPage() {
                   width="500"
                   height="500"
                   className="w-full h-full object-cover"
-                  fetchpriority="high"
+                  loading="lazy"
+                  fetchpriority="auto"
                   onError={() => setBrokenImages((prev) => ({ ...prev, 0: true }))}
                 />
               )}

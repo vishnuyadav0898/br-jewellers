@@ -50,7 +50,8 @@ export function BlogsPage() {
                 alt={blogs[0].title}
                 width="600"
                 height="384"
-                fetchpriority="high"
+                loading="lazy"
+                fetchpriority="auto"
                 className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
               />
             </div>
