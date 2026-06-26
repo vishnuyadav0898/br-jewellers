@@ -4,7 +4,8 @@ import { Header } from "../../user/components/Header";
 import { Footer } from "../../user/components/Footer";
 import { AuthModal } from "../components/AuthModal";
 import { PageSkeleton } from "../components/Skeleton";
-import { requestNotificationPermission, setupForegroundNotifications } from "../services/firebase";
+import { requestNotificationPermission, setupForegroundNotifications, syncTokenWithBackend } from "../services/firebase";
+import { useAppStore } from "../store/useAppStore";
 
 function LayoutLoader() {
   return (
@@ -15,11 +16,23 @@ function LayoutLoader() {
 }
 
 export function UserLayout() {
+  const user = useAppStore((state) => state.user);
+
   useEffect(() => {
-    requestNotificationPermission();
+    requestNotificationPermission().then(() => {
+      if (user) {
+        syncTokenWithBackend(user);
+      }
+    });
     const unsubscribe = setupForegroundNotifications();
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      syncTokenWithBackend(user);
+    }
+  }, [user]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top_left,rgba(211,163,71,0.18),transparent_26%),linear-gradient(180deg,#fffaf1_0%,#f7eedf_100%)] text-[#1a120e]">

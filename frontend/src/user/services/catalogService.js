@@ -14,9 +14,8 @@ const isProductInWishlist = (product, user) => {
 
 export const catalogService = {
   async getHomeSnapshot(userId = null) {
-    const [products, categories, content] = await Promise.all([
+    const [products, content] = await Promise.all([
       adminCatalogService.getProducts("", { featured: true }),
-      adminCatalogService.getCategories().catch(() => []),
       mockApiClient.query((db) => ({
         homeContent: db.homeContent || {},
         banners: db.homeContent?.banners || [],
@@ -35,7 +34,6 @@ export const catalogService = {
           reviewCount: 0,
           isFavorite: isProductInWishlist(product, user),
         })),
-      categories,
     };
   },
 

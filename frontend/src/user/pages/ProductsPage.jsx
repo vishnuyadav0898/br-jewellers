@@ -126,17 +126,26 @@ export function ProductsPage() {
       <div className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9e6c24]">Category</h3>
         <div className="flex flex-col gap-2">
-          {(categoriesQuery.data || []).map((cat) => (
-            <label key={cat.id || cat.name} className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer hover:text-gold-700 transition">
-              <input
-                type="checkbox"
-                checked={selectedCategories.includes(cat.name)}
-                onChange={() => toggleCheckbox(selectedCategories, setSelectedCategories, cat.name)}
-                className="rounded border-gold-300 text-gold-600 focus:ring-gold-500"
-              />
-              {cat.name}
-            </label>
-          ))}
+          {categoriesQuery.isLoading ? (
+            <div className="space-y-2 py-1 animate-pulse min-h-[104px]">
+              <div className="h-4 w-3/4 rounded bg-stone-200/80"></div>
+              <div className="h-4 w-2/3 rounded bg-stone-200/80"></div>
+              <div className="h-4 w-5/6 rounded bg-stone-200/80"></div>
+              <div className="h-4 w-1/2 rounded bg-stone-200/80"></div>
+            </div>
+          ) : (
+            (categoriesQuery.data || []).map((cat) => (
+              <label key={cat.id || cat.name} className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer hover:text-gold-700 transition">
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(cat.name)}
+                  onChange={() => toggleCheckbox(selectedCategories, setSelectedCategories, cat.name)}
+                  className="rounded border-gold-300 text-gold-600 focus:ring-gold-500"
+                />
+                {cat.name}
+              </label>
+            ))
+          )}
         </div>
       </div>
 

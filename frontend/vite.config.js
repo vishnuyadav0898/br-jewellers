@@ -23,6 +23,7 @@ export default defineConfig({
           "vendor-charts": ["recharts"],
           "vendor-xlsx": ["xlsx"],
           "vendor-icons": ["lucide-react"],
+          "vendor-firebase": ["firebase/app", "firebase/messaging"],
         },
       },
     },

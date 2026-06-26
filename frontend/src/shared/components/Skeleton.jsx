@@ -11,28 +11,37 @@ export function Skeleton({ className, ...props }) {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white flex flex-col h-full overflow-hidden w-full max-w-[360px] mx-auto">
+    <div className="rounded-[20px] sm:rounded-[30px] border border-[#e0d0ad] bg-white shadow-[0_18px_55px_rgba(40,24,13,0.07)] flex flex-col h-full overflow-hidden w-full max-w-[360px] mx-auto">
       {/* Product Image Skeleton */}
       <div className="h-36 sm:h-44 w-full bg-[#f9f0de] animate-pulse">
         <Skeleton className="h-full w-full rounded-none" />
       </div>
       
-      <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between space-y-3">
-        <div className="space-y-2">
+      <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between">
+        <div className="space-y-1">
           {/* Category Eyebrow Skeleton */}
           <Skeleton className="h-3 w-16" />
           
           {/* Title Skeleton */}
-          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-5 w-3/4 mt-0.5" />
           
           {/* Description Skeleton */}
-          <Skeleton className="h-4 w-5/6" />
+          <div className="space-y-1 mt-1">
+            <Skeleton className="h-3.5 w-5/6" />
+            <Skeleton className="h-3.5 w-2/3" />
+          </div>
         </div>
 
         {/* Pricing & Add to Cart */}
-        <div className="flex items-center justify-between pt-2 border-t border-stone-100">
-          <Skeleton className="h-6 w-20" />
-          <Skeleton className="h-9 sm:h-11 w-24 rounded-full" />
+        <div className="space-y-2 sm:space-y-3 pt-2 sm:pt-3 border-t border-stone-100 mt-2 sm:mt-3">
+          <div className="flex items-center justify-between gap-1">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
+            <Skeleton className="h-9 sm:h-11 rounded-full" />
+            <Skeleton className="h-9 sm:h-11 rounded-full" />
+          </div>
         </div>
       </div>
     </div>

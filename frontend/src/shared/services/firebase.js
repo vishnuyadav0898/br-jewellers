@@ -1,6 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { notify } from "../utils/notify";
+import { apiClient } from "./apiClient";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -24,24 +25,33 @@ try {
 }
 
 /**
- * Requests permission for notifications, registers the service worker, and returns the FCM token.
+ * Synchronizes the FCM registration token with the authenticated user profile in the backend.
  */
-export async function requestNotificationPermission() {
-  if (!messaging) {
-    console.warn("FCM messaging is not initialized. Check your Firebase credentials.");
-    return null;
-  }
-  
-  if (!("Notification" in window)) {
-    console.warn("This browser does not support desktop notifications.");
-    return null;
+export async function syncTokenWithBackend(user) {
+  if (!user || !user.id) return;
+  const token = localStorage.getItem("fcm_token");
+  if (!token) return;
+
+  const registrationKey = `fcm_registered_${user.id}`;
+  const alreadySyncedToken = localStorage.getItem(registrationKey);
+  if (alreadySyncedToken === token) {
+    console.log("FCM registration token already synced for user:", user.id);
+    return;
   }
 
-  if (!("serviceWorker" in navigator)) {
-    console.warn("This browser does not support service workers.");
-    return null;
+  try {
+    await apiClient.post("/api/v1/notifications/register-token", { fcmToken: token });
+    localStorage.setItem(registrationKey, token);
+    console.log("FCM registration token synced with backend for user:", user.id);
+  } catch (error) {
+    console.error("Failed to sync FCM registration token with backend:", error);
   }
+}
 
+/**
+ * Registers the Service Worker and retrieves the FCM registration device token.
+ */
+async function registerSWAndGetToken() {
   try {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
@@ -73,9 +83,55 @@ export async function requestNotificationPermission() {
       return token;
     }
   } catch (error) {
-    console.error("Error requesting notification permission:", error);
+    console.error("Error registering FCM Service Worker:", error);
   }
   return null;
+}
+
+/**
+ * Requests permission for notifications, registers the service worker, and returns the FCM token.
+ * This is deferred until the main page has fully loaded and the browser is idle to optimize performance.
+ */
+export async function requestNotificationPermission() {
+  if (!messaging) {
+    console.warn("FCM messaging is not initialized. Check your Firebase credentials.");
+    return null;
+  }
+  
+  if (!("Notification" in window)) {
+    console.warn("This browser does not support desktop notifications.");
+    return null;
+  }
+
+  if (!("serviceWorker" in navigator)) {
+    console.warn("This browser does not support service workers.");
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    const triggerRegistration = async () => {
+      const token = await registerSWAndGetToken();
+      resolve(token);
+    };
+
+    // If page is already loaded, schedule to execute on next idle frame
+    if (document.readyState === "complete") {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(triggerRegistration);
+      } else {
+        setTimeout(triggerRegistration, 1000);
+      }
+    } else {
+      // Wait for page load event, then schedule during idle time
+      window.addEventListener("load", () => {
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(triggerRegistration);
+        } else {
+          setTimeout(triggerRegistration, 1000);
+        }
+      });
+    }
+  });
 }
 
 /**

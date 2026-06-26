@@ -4,7 +4,7 @@ import { useAppStore } from "../../shared/store/useAppStore";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { PageSkeleton } from "../../shared/components/Skeleton";
-import { requestNotificationPermission, setupForegroundNotifications } from "../../shared/services/firebase";
+import { requestNotificationPermission, setupForegroundNotifications, syncTokenWithBackend } from "../../shared/services/firebase";
 
 function AdminLayoutLoader() {
   return (
@@ -17,12 +17,23 @@ function AdminLayoutLoader() {
 export function AdminLayout() {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
   const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
+  const user = useAppStore((state) => state.user);
 
   useEffect(() => {
-    requestNotificationPermission();
+    requestNotificationPermission().then(() => {
+      if (user) {
+        syncTokenWithBackend(user);
+      }
+    });
     const unsubscribe = setupForegroundNotifications();
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      syncTokenWithBackend(user);
+    }
+  }, [user]);
 
   return (
     <div className="h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(211,163,71,0.16),transparent_24%),linear-gradient(180deg,#fff9ef_0%,#f4ead7_100%)] text-[#1a120e]">
