@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Eye, EyeOff, Plus, Search, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -18,6 +18,7 @@ import { AdminPanel } from "../../components/AdminPanel";
 import { AdminStatusBadge } from "../../components/AdminStatusBadge";
 import { AdminTable } from "../../components/AdminTable";
 import { catalogService } from "../../services/catalogService";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
 
 const pageSize = 8;
 
@@ -37,7 +38,7 @@ export function ProductListPage() {
   const [selectedMaterial, setSelectedMaterial] = useState("");
   const [selectedPurity, setSelectedPurity] = useState("");
 
-  const deferredSearch = useDeferredValue(search);
+  const deferredSearch = useDebounce(search, 300);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.adminCategories,
@@ -149,7 +150,10 @@ export function ProductListPage() {
           <img
             src={row.coverImage || row.images?.[0]}
             alt={row.name}
+            width="56"
+            height="56"
             className="h-14 w-14 rounded-lg border border-gold-100 bg-gold-50 object-cover"
+            loading="lazy"
           />
           <div>
             <Link

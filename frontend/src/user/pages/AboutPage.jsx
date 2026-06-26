@@ -1,9 +1,46 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader } from "../../shared/components/Loader";
+import { AboutPageSkeleton } from "../../shared/components/Skeleton";
 import { storefrontService } from "../services/storefrontService";
+import { useSEO } from "../../shared/hooks/useSEO";
+
+function LazyVideo({ src, className, ...props }) {
+  const [isInView, setIsInView] = useState(false);
+  const [videoElement, setVideoElement] = useState(null);
+
+  useEffect(() => {
+    if (!videoElement) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "150px" }
+    );
+    observer.observe(videoElement);
+    return () => observer.disconnect();
+  }, [videoElement]);
+
+  return (
+    <video
+      ref={setVideoElement}
+      className={className}
+      {...props}
+    >
+      {isInView && <source src={src} type="video/mp4" />}
+      Your browser does not support the video tag.
+    </video>
+  );
+}
 
 export function AboutPage() {
+  useSEO({
+    title: "About Us",
+    description: "Learn about the heritage, craftsmanship, and timeline of BR Jewellers. We design premium fine jewellery with passion.",
+    keywords: "about BR Jewellers, jewellery heritage, artisan craftsmanship, history of BR Jewellers",
+  });
   const aboutQuery = useQuery({
     queryKey: ["content-page", "about"],
     queryFn: () => storefrontService.getContentPage("about"),
@@ -59,7 +96,7 @@ export function AboutPage() {
   }, [timeline]);
 
   if (aboutQuery.isLoading) {
-    return <Loader label="Loading About BR Jewellers..." />;
+    return <AboutPageSkeleton />;
   }
   const title = page.title || "About BR Jewellers";
   const body = page.body || "";
@@ -107,10 +144,15 @@ export function AboutPage() {
 
       {/* 2. Premium Video Banner */}
       <div className="relative overflow-hidden rounded-[32px] border border-[#dfccab]/50 shadow-[0_24px_80px_rgba(32,21,15,0.15)] max-w-7xl mx-auto">
-        <video className="w-full h-auto aspect-video object-cover" autoPlay muted loop playsInline preload="metadata">
-          <source src="https://brjeweller.com/wp-content/uploads/2023/08/video.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        <LazyVideo
+          src="https://brjeweller.com/wp-content/uploads/2023/08/video.mp4"
+          className="w-full h-auto aspect-video object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-label="BR Jewellers Heritage Video"
+        />
       </div>
 
       {/* 3. About the Founder Section */}
@@ -129,12 +171,12 @@ export function AboutPage() {
           <div className="grid grid-cols-2 gap-4">
             {founderImage && (
               <div className="relative overflow-hidden rounded-[20px] border border-white/10 aspect-[3/4] shadow-2xl">
-                <img src={founderImage} alt={founderName} className="w-full h-full object-cover" loading="lazy" />
+                <img src={founderImage} alt={founderName} width="300" height="400" className="w-full h-full object-cover" loading="lazy" />
               </div>
             )}
             {founderOmImage && (
               <div className="relative overflow-hidden rounded-[20px] border border-white/10 aspect-[3/4] shadow-2xl mt-6">
-                <img src={founderOmImage} alt={`${founderName} Workshop`} className="w-full h-full object-cover" loading="lazy" />
+                <img src={founderOmImage} alt={`${founderName} Workshop`} width="300" height="400" className="w-full h-full object-cover" loading="lazy" />
               </div>
             )}
           </div>
@@ -149,40 +191,40 @@ export function AboutPage() {
             <svg viewBox="0 0 1600 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" className="w-full h-auto max-w-[240px] md:max-w-[300px]">
               <defs>
                 <linearGradient id="logo-gold" x1="38" y1="32" x2="295" y2="274" gradientUnits="userSpaceOnUse">
-                  <stop offset="0" stop-color="#6F4B16" />
-                  <stop offset="0.24" stop-color="#B8862B" />
-                  <stop offset="0.48" stop-color="#F6E6B0" />
-                  <stop offset="0.68" stop-color="#D4A449" />
-                  <stop offset="1" stop-color="#7A531B" />
+                  <stop offset="0" stopColor="#6F4B16" />
+                  <stop offset="0.24" stopColor="#B8862B" />
+                  <stop offset="0.48" stopColor="#F6E6B0" />
+                  <stop offset="0.68" stopColor="#D4A449" />
+                  <stop offset="1" stopColor="#7A531B" />
                 </linearGradient>
                 <linearGradient id="logo-wordmarkGold" x1="350" y1="94" x2="1200" y2="276" gradientUnits="userSpaceOnUse">
-                  <stop offset="0" stop-color="#8C6422" />
-                  <stop offset="0.35" stop-color="#F4E3AF" />
-                  <stop offset="0.62" stop-color="#D9A94C" />
-                  <stop offset="1" stop-color="#76501A" />
+                  <stop offset="0" stopColor="#8C6422" />
+                  <stop offset="0.35" stopColor="#F4E3AF" />
+                  <stop offset="0.62" stopColor="#D9A94C" />
+                  <stop offset="1" stopColor="#76501A" />
                 </linearGradient>
               </defs>
               <g transform="translate(36 28)">
-                <path d="M154 22L180 48L154 74L128 48L154 22Z" stroke="url(#logo-gold)" stroke-width="8" />
+                <path d="M154 22L180 48L154 74L128 48L154 22Z" stroke="url(#logo-gold)" strokeWidth="8" />
                 <path d="M154 38L165 49L154 60L143 49L154 38Z" fill="url(#logo-gold)" opacity="0.32" />
-                <path d="M248 36V60" stroke="url(#logo-gold)" stroke-width="5" stroke-linecap="round" />
-                <path d="M236 48H260" stroke="url(#logo-gold)" stroke-width="5" stroke-linecap="round" />
-                <path d="M74 84C103 51 142 34 188 34C236 34 276 52 307 88" stroke="url(#logo-gold)" stroke-width="7" stroke-linecap="round" opacity="0.85" />
-                <path d="M64 214C88 260 131 286 188 286C241 286 286 262 314 214" stroke="url(#logo-gold)" stroke-width="7" stroke-linecap="round" opacity="0.58" />
-                <path d="M108 92V252" stroke="url(#logo-gold)" stroke-width="15" stroke-linecap="round" />
-                <path d="M108 92H152C194 92 214 106 214 132C214 161 191 176 146 176H108" stroke="url(#logo-gold)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M108 176H158C204 176 228 195 228 226C228 258 202 278 151 278H108" stroke="url(#logo-gold)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M144 92H194C246 92 276 117 276 154C276 192 247 214 197 214H144" stroke="url(#logo-gold)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M198 214L278 286" stroke="url(#logo-gold)" stroke-width="15" stroke-linecap="round" />
-                <path d="M108 108V242" stroke="#FFF6D9" stroke-width="3" stroke-linecap="round" opacity="0.35" />
-                <path d="M145 105H180C203 105 214 114 214 126" stroke="#FFF4CF" stroke-width="3" stroke-linecap="round" opacity="0.28" />
-                <path d="M153 188H183C205 188 216 196 217 210" stroke="#FFF4CF" stroke-width="3" stroke-linecap="round" opacity="0.24" />
+                <path d="M248 36V60" stroke="url(#logo-gold)" strokeWidth="5" strokeLinecap="round" />
+                <path d="M236 48H260" stroke="url(#logo-gold)" strokeWidth="5" strokeLinecap="round" />
+                <path d="M74 84C103 51 142 34 188 34C236 34 276 52 307 88" stroke="url(#logo-gold)" strokeWidth="7" strokeLinecap="round" opacity="0.85" />
+                <path d="M64 214C88 260 131 286 188 286C241 286 286 262 314 214" stroke="url(#logo-gold)" strokeWidth="7" strokeLinecap="round" opacity="0.58" />
+                <path d="M108 92V252" stroke="url(#logo-gold)" strokeWidth="15" strokeLinecap="round" />
+                <path d="M108 92H152C194 92 214 106 214 132C214 161 191 176 146 176H108" stroke="url(#logo-gold)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M108 176H158C204 176 228 195 228 226C228 258 202 278 151 278H108" stroke="url(#logo-gold)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M144 92H194C246 92 276 117 276 154C276 192 247 214 197 214H144" stroke="url(#logo-gold)" strokeWidth="15" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M198 214L278 286" stroke="url(#logo-gold)" strokeWidth="15" strokeLinecap="round" />
+                <path d="M108 108V242" stroke="#FFF6D9" strokeWidth="3" strokeLinecap="round" opacity="0.35" />
+                <path d="M145 105H180C203 105 214 114 214 126" stroke="#FFF4CF" strokeWidth="3" strokeLinecap="round" opacity="0.28" />
+                <path d="M153 188H183C205 188 216 196 217 210" stroke="#FFF4CF" strokeWidth="3" strokeLinecap="round" opacity="0.24" />
               </g>
-              <text x="376" y="194" fill="url(#logo-wordmarkGold)" font-family="'Cormorant Garamond', Georgia, serif" font-size="78" letter-spacing="0.34em">BR</text>
-              <path d="M378 216H506" stroke="url(#logo-wordmarkGold)" stroke-width="3" stroke-linecap="round" opacity="0.62" />
-              <text x="372" y="310" fill="url(#logo-wordmarkGold)" font-family="'Cormorant Garamond', Georgia, serif" font-size="114" font-weight="600" letter-spacing="0.04em">Jewellers</text>
-              <path d="M1348 134V154" stroke="url(#logo-wordmarkGold)" stroke-width="4" stroke-linecap="round" opacity="0.75" />
-              <path d="M1338 144H1358" stroke="url(#logo-wordmarkGold)" stroke-width="4" stroke-linecap="round" opacity="0.75" />
+              <text x="376" y="194" fill="url(#logo-wordmarkGold)" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="78" letterSpacing="0.34em">BR</text>
+              <path d="M378 216H506" stroke="url(#logo-wordmarkGold)" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
+              <text x="372" y="310" fill="url(#logo-wordmarkGold)" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="114" fontWeight="600" letterSpacing="0.04em">Jewellers</text>
+              <path d="M1348 134V154" stroke="url(#logo-wordmarkGold)" strokeWidth="4" strokeLinecap="round" opacity="0.75" />
+              <path d="M1338 144H1358" stroke="url(#logo-wordmarkGold)" strokeWidth="4" strokeLinecap="round" opacity="0.75" />
             </svg>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B9852E] text-center mt-2">Established 2009</div>
           </div>
@@ -212,7 +254,7 @@ export function AboutPage() {
           </div>
           {whatWeDoImage && (
             <div className="relative overflow-hidden rounded-[24px] border border-stone-200/40 aspect-[16/10] shadow-lg">
-              <img src={whatWeDoImage} alt={whatWeDoTitle} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
+              <img src={whatWeDoImage} alt={whatWeDoTitle} width="640" height="400" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
             </div>
           )}
         </div>
@@ -231,7 +273,7 @@ export function AboutPage() {
               <div key={v.id || v.title} className="relative overflow-hidden rounded-[28px] border border-[#dfccab] bg-[#1d1613] p-6 text-center space-y-4 flex flex-col items-center justify-between shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300">
                 {v.image && (
                   <div className="w-full aspect-[4/3] rounded-[20px] overflow-hidden border border-white/5 shadow-inner">
-                    <img src={v.image} alt={v.title} className="w-full h-full object-cover" loading="lazy" />
+                    <img src={v.image} alt={v.title} width="400" height="300" className="w-full h-full object-cover" loading="lazy" />
                   </div>
                 )}
                 <div className="space-y-2 mt-2">

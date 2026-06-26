@@ -3,13 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="BR Jewellers admin demo portal" />
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <title>BR Jewellers Admin</title>
+    <meta name="description" content="BR Jewellers | Premium Fine Jewellery & Diamonds. Explore our handcrafted gold, silver, and platinum collection." />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preconnect to API server for faster product image loading -->
+    <link rel="preconnect" href="http://localhost:5000" />
+
+    <!-- Load fonts non-render-blocking -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    </noscript>
+
+    <!-- Google Sign-In SDK is now lazy-loaded inside AuthModal.jsx — no longer needed here -->
+
+    <title>BR Jewellers | Premium Fine Jewellery & Diamonds</title>
   </head>
   <body class="bg-obsidian text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-  

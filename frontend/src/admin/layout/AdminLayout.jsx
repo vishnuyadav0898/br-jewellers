@@ -1,14 +1,15 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { useAppStore } from "../../shared/store/useAppStore";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { Loader } from "../../shared/components/Loader";
+import { PageSkeleton } from "../../shared/components/Skeleton";
+import { requestNotificationPermission, setupForegroundNotifications, syncTokenWithBackend } from "../../shared/services/firebase";
 
 function AdminLayoutLoader() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <Loader label="Loading admin view..." />
+      <PageSkeleton />
     </div>
   );
 }
@@ -16,6 +17,23 @@ function AdminLayoutLoader() {
 export function AdminLayout() {
   const sidebarOpen = useAppStore((state) => state.sidebarOpen);
   const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
+  const user = useAppStore((state) => state.user);
+
+  useEffect(() => {
+    requestNotificationPermission().then(() => {
+      if (user) {
+        syncTokenWithBackend(user);
+      }
+    });
+    const unsubscribe = setupForegroundNotifications();
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      syncTokenWithBackend(user);
+    }
+  }, [user]);
 
   return (
     <div className="h-screen overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(211,163,71,0.16),transparent_24%),linear-gradient(180deg,#fff9ef_0%,#f4ead7_100%)] text-[#1a120e]">

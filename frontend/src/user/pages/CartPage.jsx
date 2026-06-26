@@ -5,7 +5,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { EmptyState } from "../../shared/components/EmptyState";
 import { Input } from "../../shared/components/Input";
-import { Loader } from "../../shared/components/Loader";
 import { Button } from "../../shared/components/Button";
 import { Modal } from "../../shared/components/Modal";
 import { useMoney } from "../../shared/hooks/useMoney";
@@ -15,9 +14,15 @@ import { useAppStore } from "../../shared/store/useAppStore";
 import { notify } from "../../shared/utils/notify";
 import { storefrontService } from "../services/storefrontService";
 import { Skeleton, CartItemSkeleton } from "../../shared/components/Skeleton";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 
 export function CartPage() {
+  useSEO({
+    title: "Shopping Cart",
+    description: "Review your shopping cart, apply promotional coupons, and proceed to checkout at BR Jewellers.",
+    keywords: "shopping cart, checkout jewellery, purchase gold, purchase diamonds",
+  });
   const { t } = useLocale();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -299,6 +304,8 @@ export function CartPage() {
               <img
                 src={item.image}
                 alt={item.name}
+                width="96"
+                height="112"
                 className="h-28 w-24 rounded-[22px] object-cover bg-[#f5ead2]"
                 loading="lazy"
                 onError={(e) => {

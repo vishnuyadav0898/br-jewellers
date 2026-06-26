@@ -5,6 +5,7 @@ import { ProtectedRoute } from "../shared/components/ProtectedRoute";
 import { PermissionGuard } from "../shared/components/PermissionGuard";
 import { UserLayout } from "../shared/layout/UserLayout";
 import { AdminLayout } from "../admin/layout/AdminLayout";
+import { PerformanceProfiler } from "../shared/components/PerformanceProfiler";
 
 const HomePage = lazy(() => import("../user/pages/HomePage").then((module) => ({ default: module.HomePage })));
 const AboutPage = lazy(() =>
@@ -126,16 +127,16 @@ export function AppRoutes() {
       ))}
 
       <Route path="/" element={<UserLayout />}>
-        <Route index element={<HomePage />} />
+        <Route index element={<PerformanceProfiler id="HomePage"><HomePage /></PerformanceProfiler>} />
         <Route path="about" element={<AboutPage />} />
         <Route path="contact" element={<ContactPage />} />
         <Route path="blogs" element={<BlogsPage />} />
         <Route path="blogs/:id" element={<BlogDetailsPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="products/:slug" element={<ProductDetailsPage />} />
+        <Route path="products" element={<PerformanceProfiler id="ProductsPage"><ProductsPage /></PerformanceProfiler>} />
+        <Route path="products/:slug" element={<PerformanceProfiler id="ProductDetailsPage"><ProductDetailsPage /></PerformanceProfiler>} />
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
-          <Route path="cart" element={<CartPage />} />
-          <Route path="favorites" element={<FavoritesPage />} />
+          <Route path="cart" element={<PerformanceProfiler id="CartPage"><CartPage /></PerformanceProfiler>} />
+          <Route path="favorites" element={<PerformanceProfiler id="FavoritesPage"><FavoritesPage /></PerformanceProfiler>} />
           <Route key="orders-list" path="orders" element={<OrdersPage />} />
           <Route path="orders/:orderId/tracking" element={<UserOrderTrackingPage />} />
           <Route path="returns" element={<ReturnsPage />} />
@@ -153,11 +154,11 @@ export function AppRoutes() {
             <Route key={entry.from} path={entry.from} element={<Navigate to={entry.to} replace />} />
           ))}
 
-          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="dashboard" element={<PerformanceProfiler id="AdminDashboard"><AdminDashboardPage /></PerformanceProfiler>} />
 
           {/* Product Module Routes */}
           <Route element={<PermissionGuard module="Product" isRoute />}>
-            <Route path="products/list" element={<ProductListPage />} />
+            <Route path="products/list" element={<PerformanceProfiler id="AdminProductList"><ProductListPage /></PerformanceProfiler>} />
             <Route path="products/:productId" element={<AdminProductDetailsPage />} />
             
             <Route element={<PermissionGuard module="Product" action="Add" isRoute />}>

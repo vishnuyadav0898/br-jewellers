@@ -66,7 +66,7 @@ export function ProfileForm({ roleLabel }) {
       >
         <div className="md:col-span-2 flex items-center gap-4 rounded-[28px] bg-[#f9f1df] p-4">
           {profileForm.avatar ? (
-            <img src={profileForm.avatar} alt={profileForm.name} className="h-20 w-20 rounded-3xl object-cover" />
+            <img src={profileForm.avatar} alt={profileForm.name} width="80" height="80" className="h-20 w-20 rounded-3xl object-cover" loading="lazy" />
           ) : (
             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[#19110d] text-xl font-semibold text-[#f6e8c8]">
               {profileForm.name?.slice(0, 2).toUpperCase()}

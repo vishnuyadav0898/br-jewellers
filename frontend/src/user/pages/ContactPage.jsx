@@ -2,13 +2,19 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../shared/components/Button";
 import { Input } from "../../shared/components/Input";
-import { Loader } from "../../shared/components/Loader";
+import { ContactPageSkeleton } from "../../shared/components/Skeleton";
 import { notify } from "../../shared/utils/notify";
 import { contactSchema, getValidationErrors } from "../../shared/utils/validation";
 import { formatDate } from "../../shared/utils/formatters";
 import { storefrontService } from "../services/storefrontService";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function ContactPage() {
+  useSEO({
+    title: "Contact Us",
+    description: "Get in touch with BR Jewellers customer support. Find our location, phone number, and email or send us a message directly.",
+    keywords: "contact BR Jewellers, customer service, support email, store address",
+  });
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -24,7 +30,7 @@ export function ContactPage() {
     setErrors((current) => (current[field] ? { ...current, [field]: undefined } : current));
 
   if (contactQuery.isLoading) {
-    return <Loader label="Loading contact details..." />;
+    return <ContactPageSkeleton />;
   }
 
   const page = contactQuery.data || {};

@@ -1,13 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/components/EmptyState";
-import { Loader } from "../../shared/components/Loader";
+import { OrdersPageSkeleton } from "../../shared/components/Skeleton";
 import { useMoney } from "../../shared/hooks/useMoney";
 import { useLocale } from "../../shared/localization";
 import { useSession } from "../../shared/hooks/useSession";
 import { formatDate, getStatusTone } from "../../shared/utils/formatters";
 import { storefrontService } from "../services/storefrontService";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function ReturnsPage() {
+  useSEO({
+    title: "My Returns",
+    description: "Manage and monitor your refund and return requests for BR Jewellers purchases.",
+    keywords: "my returns, refund status, jewellery returns, customer returns",
+  });
   const { t } = useLocale();
   const { user } = useSession();
   const { formatFromInr, language } = useMoney();
@@ -18,7 +24,7 @@ export function ReturnsPage() {
   });
 
   if (refundQuery.isLoading) {
-    return <Loader label={t("common.loading")} />;
+    return <OrdersPageSkeleton />;
   }
 
   const refundData = refundQuery.data || [];

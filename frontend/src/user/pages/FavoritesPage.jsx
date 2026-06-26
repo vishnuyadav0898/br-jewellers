@@ -1,11 +1,18 @@
+import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "../../shared/components/EmptyState";
-import { Loader } from "../../shared/components/Loader";
+import { FavoritesPageSkeleton } from "../../shared/components/Skeleton";
 import { useSession } from "../../shared/hooks/useSession";
 import { storefrontService } from "../services/storefrontService";
 import { ProductCard } from "../components/ProductCard";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function FavoritesPage() {
+  useSEO({
+    title: "My Favorites",
+    description: "Manage your curated collection of favorite luxury jewellery items, engagement rings, and gold sets at BR Jewellers.",
+    keywords: "favorite jewellery, luxury wishlist, curated jewellery, saved rings, BR Jewellers",
+  });
   const queryClient = useQueryClient();
   const { user } = useSession();
   const favoritesQuery = useQuery({
@@ -14,11 +21,28 @@ export function FavoritesPage() {
     enabled: Boolean(user?.id),
   });
 
+  const cartQuery = useQuery({
+    queryKey: ["cart", user?.id],
+    queryFn: () => storefrontService.getCart(user.id),
+    enabled: Boolean(user?.id),
+  });
+  const cartItems = cartQuery.data?.items || [];
+
+
   if (favoritesQuery.isLoading) {
-    return <Loader label="Loading your favorites..." />;
+    return <FavoritesPageSkeleton />;
   }
 
   const favorites = favoritesQuery.data || [];
+
+  const handleCartAdded = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+  }, [queryClient]);
+
+  const handleFavoriteChanged = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+  }, [queryClient, user?.id]);
+
 
   if (!favorites.length) {
     return (
@@ -44,8 +68,9 @@ export function FavoritesPage() {
           <ProductCard
             key={product.id}
             product={product}
-            onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-            onFavoriteChanged={() => queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] })}
+            isInCart={cartItems.some((item) => item.productId === product.id)}
+            onAdded={handleCartAdded}
+            onFavoriteChanged={handleFavoriteChanged}
           />
         ))}
       </div>

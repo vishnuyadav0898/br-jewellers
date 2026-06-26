@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../shared/components/Button";
 import { Input } from "../../../shared/components/Input";
@@ -15,6 +15,7 @@ import { AdminStatusBadge } from "../../components/AdminStatusBadge";
 import { AdminTable } from "../../components/AdminTable";
 import { PermissionGuard } from "../../../shared/components/PermissionGuard";
 import { ordersService } from "../../services/ordersService";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
 
 const pageSize = 6;
 
@@ -25,7 +26,7 @@ export function AllOrdersPage() {
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingOrder, setUpdatingOrder] = useState(null);
-  const deferredSearch = useDeferredValue(search);
+  const deferredSearch = useDebounce(search, 300);
   const ordersQuery = useQuery({
     queryKey: queryKeys.adminOrders("all"),
     queryFn: () => ordersService.getOrders("all"),
@@ -206,7 +207,7 @@ export function AllOrdersPage() {
             <div className="space-y-3">
               {selectedOrder.items.map((item) => (
                 <article key={`${selectedOrder.id}-${item.productId}`} className="flex gap-4 rounded-[22px] border border-[#eadcc0] bg-[#fffaf1] p-4">
-                  <img src={item.image} alt={item.name} className="h-20 w-20 rounded-[16px] object-cover" />
+                  <img src={item.image} alt={item.name} width="80" height="80" className="h-20 w-20 rounded-[16px] object-cover" loading="lazy" />
                   <div className="flex-1">
                     <div className="font-semibold text-[#1d130f]">{item.name}</div>
                     <div className="mt-1 text-sm text-stone-500">

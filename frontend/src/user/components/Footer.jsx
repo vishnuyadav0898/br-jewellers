@@ -34,31 +34,34 @@ export function Footer() {
                 <p className="text-[10px] uppercase tracking-[0.2em] text-[#d5a957]">Modern Heirlooms</p>
               </div>
             </Link>
-            <p className="text-sm leading-6 text-[#eadcc0]/70">
+            <p className="text-sm leading-6 text-[#eadcc0]/85">
               Crafting premium luxury jewellery with custom-cut gemstones, solid gold, and high-fidelity mock-first architecture.
             </p>
             <div className="flex gap-4">
               <a
                 href="https://instagram.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="group flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 transition hover:bg-[#9e6c24] hover:text-[#130d0a]"
+                aria-label="Instagram"
               >
                 <Instagram className="h-5 w-5 transition group-hover:scale-110" />
               </a>
               <a
                 href="https://facebook.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="group flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 transition hover:bg-[#9e6c24] hover:text-[#130d0a]"
+                aria-label="Facebook"
               >
                 <Facebook className="h-5 w-5 transition group-hover:scale-110" />
               </a>
               <a
                 href="https://twitter.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="group flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 transition hover:bg-[#9e6c24] hover:text-[#130d0a]"
+                aria-label="Twitter"
               >
                 <Twitter className="h-5 w-5 transition group-hover:scale-110" />
               </a>
@@ -70,22 +73,22 @@ export function Footer() {
             <h3 className="font-display text-lg font-semibold tracking-wide text-[#fffaf2]">Collections</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to={routes.appProducts} className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to={routes.appProducts} className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Browse All Jewellery
                 </Link>
               </li>
               <li>
-                <Link to={routes.appProducts} className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to={routes.appProducts} className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Fine Rings
                 </Link>
               </li>
               <li>
-                <Link to={routes.appProducts} className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to={routes.appProducts} className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Gold Necklaces
                 </Link>
               </li>
               <li>
-                <Link to={routes.appProducts} className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to={routes.appProducts} className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Gemstone Earrings
                 </Link>
               </li>
@@ -97,22 +100,22 @@ export function Footer() {
             <h3 className="font-display text-lg font-semibold tracking-wide text-[#fffaf2]">Customer Care</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/about" className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to="/about" className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to="/contact" className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Contact & Support
                 </Link>
               </li>
               <li>
-                <Link to="/orders" className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to="/orders" className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Track My Order
                 </Link>
               </li>
               <li>
-                <Link to="/returns" className="text-[#eadcc0]/70 transition hover:text-[#f4d994]">
+                <Link to="/returns" className="text-[#eadcc0]/90 transition hover:text-[#f4d994]">
                   Returns & Refunds
                 </Link>
               </li>
@@ -122,7 +125,7 @@ export function Footer() {
           {/* Newsletter */}
           <div className="space-y-4">
             <h3 className="font-display text-lg font-semibold tracking-wide text-[#fffaf2]">Newsletter</h3>
-            <p className="text-sm leading-6 text-[#eadcc0]/70">
+            <p className="text-sm leading-6 text-[#eadcc0]/85">
               Subscribe to receive updates on new curated drops, exclusive member rates, and design system upgrades.
             </p>
             <form onSubmit={handleSubscribe} className="flex gap-2">
@@ -132,10 +135,12 @@ export function Footer() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                aria-label="Email address for newsletter"
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#fffaf2] placeholder-[#eadcc0]/40 outline-none transition focus:border-[#9e6c24]"
               />
               <button
                 type="submit"
+                aria-label="Subscribe to newsletter"
                 className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#9e6c24] to-[#f4d994] text-[#130d0a] shadow-lg shadow-[#9e6c24]/10 transition hover:scale-105"
               >
                 <ArrowRight className="h-5 w-5" />
@@ -146,10 +151,10 @@ export function Footer() {
 
         {/* Sub-footer */}
         <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-white/5 pt-8 md:flex-row">
-          <p className="text-xs text-[#eadcc0]/50">
+          <p className="text-xs text-[#eadcc0]/80">
             &copy; {new Date().getFullYear()} BR Jewellers. All rights reserved.
           </p>
-          <div className="flex items-center gap-2 text-xs text-[#eadcc0]/50">
+          <div className="flex items-center gap-2 text-xs text-[#eadcc0]/80">
             <span>Security by</span>
             <span className="flex items-center gap-1 font-semibold text-[#f4d994]">
               <ShieldCheck className="h-4 w-4" /> Secure SSL

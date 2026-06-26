@@ -5,6 +5,7 @@ import { ordersService } from "./ordersService";
 import { contentService } from "./contentService";
 import { addressService } from "./addressService";
 import { blogsService } from "../../shared/services/blogsService";
+import { couponsService } from "../../shared/services/couponsService";
 
 export const storefrontService = {
   ...catalogService,
@@ -14,4 +15,5 @@ export const storefrontService = {
   ...contentService,
   ...addressService,
   ...blogsService,
+  ...couponsService,
 };

@@ -1,11 +1,11 @@
 import { Heart, ShoppingBag, Star, Loader2, Minus, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { Button } from "../../shared/components/Button";
 import { EmptyState } from "../../shared/components/EmptyState";
-import { Loader } from "../../shared/components/Loader";
+import { ProductDetailsSkeleton } from "../../shared/components/Skeleton";
 import { useMoney } from "../../shared/hooks/useMoney";
 import { useSession } from "../../shared/hooks/useSession";
 import { formatDate } from "../../shared/utils/formatters";
@@ -13,6 +13,7 @@ import { notify } from "../../shared/utils/notify";
 import { formatCurrencyValue } from "../../shared/utils/currency";
 import { storefrontService } from "../services/storefrontService";
 import { ProductCard } from "../components/ProductCard";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 const slugify = (text) =>
   String(text || "")
@@ -52,6 +53,16 @@ export function ProductDetailsPage() {
     setPriceKey((prev) => prev + 1);
   }, [selectedColor, selectedSize, selectedMaterial, selectedPurity]);
 
+  const handleRelatedProductAdded = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
+  }, [queryClient]);
+
+  const handleRelatedProductFavoriteChanged = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] });
+    queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+  }, [queryClient, productIdentifier, user?.id]);
+
+
   const cartQuery = useQuery({
     queryKey: ["cart", user?.id],
     queryFn: () => storefrontService.getCart(user.id),
@@ -63,12 +74,19 @@ export function ProductDetailsPage() {
     queryFn: () => storefrontService.getProductById(productIdentifier),
   });
 
+  const product = productQuery.data?.product;
+
+  useSEO({
+    title: product?.name || "Product Details",
+    description: product?.shortDescription || product?.description || "Read more about this exquisite jewellery item.",
+    keywords: `${product?.name || ""}, ${product?.category || ""}, ${product?.gemstone || ""}, jewellery, BR Jewellers`,
+  });
+
   useEffect(() => {
-    if (!productQuery.data?.product) {
+    if (!product) {
       return;
     }
 
-    const { product } = productQuery.data;
     setSelectedImage(0);
 
     // Try to find the default variant or first available variant to pre-populate options
@@ -79,13 +97,13 @@ export function ProductDetailsPage() {
     setSelectedSize(defaultAttrs.size || product.sizes?.[0] || "");
     setSelectedMaterial(defaultAttrs.material || "");
     setSelectedPurity(defaultAttrs.purity || "");
-  }, [productQuery.data?.product]);
+  }, [product]);
 
   if (productQuery.isLoading) {
-    return <Loader label="Loading product details..." />;
+    return <ProductDetailsSkeleton />;
   }
 
-  if (productQuery.isError || !productQuery.data?.product) {
+  if (productQuery.isError || !product) {
     return (
       <EmptyState
         title="Product not found"
@@ -94,7 +112,7 @@ export function ProductDetailsPage() {
     );
   }
 
-  const { product, reviews, relatedProducts } = productQuery.data;
+  const { reviews, relatedProducts } = productQuery.data;
 
   // Extract unique attribute choices from variants for selectors
   const uniqueMaterials = product.variants?.length
@@ -280,6 +298,8 @@ export function ProductDetailsPage() {
                       <img
                         src={image}
                         alt={`${product.name} view ${index + 1}`}
+                        width="80"
+                        height="80"
                         className="h-full w-full object-cover"
                         loading="lazy"
                         onError={() => setBrokenImages((prev) => ({ ...prev, [index]: true }))}
@@ -297,8 +317,11 @@ export function ProductDetailsPage() {
                   <img
                     src={product.images[selectedImage]}
                     alt={product.name}
+                    width="500"
+                    height="500"
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    fetchpriority="auto"
                     onError={() => setBrokenImages((prev) => ({ ...prev, [selectedImage]: true }))}
                   />
                 )}
@@ -314,8 +337,11 @@ export function ProductDetailsPage() {
                 <img
                   src={product.images?.[0] || product.coverImage}
                   alt={product.name}
+                  width="500"
+                  height="500"
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  fetchpriority="auto"
                   onError={() => setBrokenImages((prev) => ({ ...prev, 0: true }))}
                 />
               )}
@@ -615,11 +641,9 @@ export function ProductDetailsPage() {
               <ProductCard
                 key={relatedProduct.id}
                 product={relatedProduct}
-                onAdded={() => queryClient.invalidateQueries({ queryKey: ["cart"] })}
-                onFavoriteChanged={() => {
-                  queryClient.invalidateQueries({ queryKey: ["product", productIdentifier] });
-                  queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
-                }}
+                isInCart={cartQuery.data?.items?.some((item) => item.productId === relatedProduct.id)}
+                onAdded={handleRelatedProductAdded}
+                onFavoriteChanged={handleRelatedProductFavoriteChanged}
               />
             ))}
           </div>

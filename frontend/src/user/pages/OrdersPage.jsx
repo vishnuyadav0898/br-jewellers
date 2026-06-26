@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "../../shared/components/Button";
 import { routes } from "../../config/routes";
 import { EmptyState } from "../../shared/components/EmptyState";
-import { Loader } from "../../shared/components/Loader";
+import { OrdersPageSkeleton } from "../../shared/components/Skeleton";
 import { Modal } from "../../shared/components/Modal";
 import { Input } from "../../shared/components/Input";
 import { useMoney } from "../../shared/hooks/useMoney";
@@ -14,8 +14,14 @@ import { notify } from "../../shared/utils/notify";
 import { getValidationErrors, returnRequestSchema } from "../../shared/utils/validation";
 import { formatDate, getStatusTone } from "../../shared/utils/formatters";
 import { storefrontService } from "../services/storefrontService";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function OrdersPage() {
+  useSEO({
+    title: "My Orders",
+    description: "Track your luxury purchases, view order details, invoice breakdown, and request returns at BR Jewellers.",
+    keywords: "my orders, purchase history, track package, order invoice, BR Jewellers",
+  });
   const { t } = useLocale();
   const queryClient = useQueryClient();
   const { user } = useSession();
@@ -35,7 +41,7 @@ export function OrdersPage() {
   });
 
   if (ordersQuery.isLoading || refundQuery.isLoading) {
-    return <Loader label={t("common.loading")} />;
+    return <OrdersPageSkeleton />;
   }
 
   const orders = ordersQuery.data || [];

@@ -399,7 +399,7 @@ export function ProductFormPage() {
               <ArrayEditor label="Images" required values={form.images} placeholder="https://..." error={errors.images} onChange={(items) => updateField("images", items)} />
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {[form.coverImage, ...form.images].filter(Boolean).slice(0, 8).map((image, index) => (
-                  <img key={`${image}-${index}`} src={image} alt={`Preview ${index + 1}`} className="w-full aspect-square rounded-lg border border-gold-100 bg-gold-50 object-cover" />
+                  <img key={`${image}-${index}`} src={image} alt={`Preview ${index + 1}`} width="200" height="200" className="w-full aspect-square rounded-lg border border-gold-100 bg-gold-50 object-cover" loading="lazy" />
                 ))}
               </div>
             </div>

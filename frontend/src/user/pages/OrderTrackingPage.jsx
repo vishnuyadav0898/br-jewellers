@@ -2,14 +2,20 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { routes } from "../../config/routes";
 import { EmptyState } from "../../shared/components/EmptyState";
-import { Loader } from "../../shared/components/Loader";
+import { OrdersPageSkeleton } from "../../shared/components/Skeleton";
 import { useMoney } from "../../shared/hooks/useMoney";
 import { useSession } from "../../shared/hooks/useSession";
 import { formatDate, formatDateTime } from "../../shared/utils/formatters";
 import { storefrontService } from "../services/storefrontService";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function OrderTrackingPage() {
   const { orderId } = useParams();
+  useSEO({
+    title: `Track Order #${orderId || ""}`,
+    description: "Track shipment shipping details and timeline for your order at BR Jewellers.",
+    keywords: "track order, shipping status, order delivery, BR Jewellers tracking",
+  });
   const { user } = useSession();
   const { formatFromInr, language } = useMoney();
   const trackingQuery = useQuery({
@@ -19,7 +25,7 @@ export function OrderTrackingPage() {
   });
 
   if (trackingQuery.isLoading) {
-    return <Loader label="Loading tracking timeline..." />;
+    return <OrdersPageSkeleton />;
   }
 
   if (trackingQuery.isError || !trackingQuery.data) {
@@ -108,7 +114,7 @@ export function OrderTrackingPage() {
             <div className="mt-3 space-y-3">
               {order.items.map((item) => (
                 <div key={`${order.id}-${item.productId}`} className="flex items-center gap-3 text-sm text-[#ebddc2]">
-                  <img src={item.image} alt={item.name} className="h-14 w-12 rounded-[14px] object-cover" loading="lazy" />
+                  <img src={item.image} alt={item.name} width="48" height="56" className="h-14 w-12 rounded-[14px] object-cover" loading="lazy" decoding="async" />
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-[#f8efdc]">{item.name}</div>
                     <div>Qty {item.quantity}</div>

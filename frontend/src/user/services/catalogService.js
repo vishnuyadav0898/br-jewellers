@@ -14,45 +14,18 @@ const isProductInWishlist = (product, user) => {
 
 export const catalogService = {
   async getHomeSnapshot(userId = null) {
-    const products = await adminCatalogService.getProducts("", { featured: true });
-    const categories = await adminCatalogService.getCategories().catch(() => []);
-    const content = await mockApiClient.query((db) => ({
-      homeContent: db.homeContent || {},
-      banners: db.homeContent?.banners || [],
-    }));
-
-    let activeCoupons = [];
-    try {
-      const res = await apiClient.get("/api/v1/coupons/list");
-      const raw = res.data || res || {};
-      const list = Array.isArray(raw.data) ? raw.data : (Array.isArray(raw) ? raw : []);
-      activeCoupons = list.filter((c) => c.isActive).slice(0, 3).map((c) => ({
-        id: c._id || c.id,
-        code: c.code,
-        name: c.name,
-        description: c.description,
-        discountPercent: c.discountType === "percentage" ? c.discountValue : 10,
-        isActive: c.isActive,
-      }));
-    } catch (e) {
-      console.warn("Failed to fetch coupons from backend for home snapshot:", e);
-      activeCoupons = await mockApiClient.query((db) =>
-        (db.coupons || []).filter((entry) => entry.isEnabled || entry.isActive).slice(0, 3).map((c) => ({
-          id: c._id || c.id,
-          code: c.code,
-          name: c.name,
-          description: c.description,
-          discountPercent: c.discountPercent || c.discountValue || 10,
-          isActive: c.isActive || c.isEnabled,
-        }))
-      );
-    }
+    const [products, content] = await Promise.all([
+      adminCatalogService.getProducts("", { featured: true }),
+      mockApiClient.query((db) => ({
+        homeContent: db.homeContent || {},
+        banners: db.homeContent?.banners || [],
+      })),
+    ]);
 
     const user = useAppStore.getState().user;
 
     return {
       ...content,
-      activeCoupons,
       featuredProducts: products
         .filter((product) => product.featured === true)
         .map((product) => ({
@@ -61,7 +34,6 @@ export const catalogService = {
           reviewCount: 0,
           isFavorite: isProductInWishlist(product, user),
         })),
-      categories,
     };
   },
 

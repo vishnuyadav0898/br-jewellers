@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Pencil, Plus, Search, Trash2, Shield } from "lucide-react";
@@ -17,6 +17,7 @@ import { AdminPanel } from "../../components/AdminPanel";
 import { AdminStatusBadge } from "../../components/AdminStatusBadge";
 import { AdminTable } from "../../components/AdminTable";
 import { usersService } from "../../services/usersService";
+import { useDebounce } from "../../../shared/hooks/useDebounce";
 
 const pageSize = 8;
 const defaultForm = {
@@ -37,7 +38,7 @@ export function UserListPage() {
   const [saving, setSaving] = useState(false);
   const [deletingUser, setDeletingUser] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const deferredSearch = useDeferredValue(search);
+  const deferredSearch = useDebounce(search, 300);
 
   const usersQuery = useQuery({
     queryKey: [...queryKeys.adminUsers, role],
@@ -207,7 +208,7 @@ export function UserListPage() {
                   header: "Name",
                   render: (row) => (
                     <div className="flex items-center gap-3">
-                      <img src={row.avatar} alt={row.name} className="h-11 w-11 rounded-full bg-gold-50" />
+                      <img src={row.avatar} alt={row.name} width="44" height="44" className="h-11 w-11 rounded-full bg-gold-50" loading="lazy" />
                       <Link to={routes.adminUserDetails(row.id)} className="font-semibold text-espresso hover:underline hover:text-gold-700">
                         {row.name}
                       </Link>

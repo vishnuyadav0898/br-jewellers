@@ -25,6 +25,6 @@ router.delete("/:id", checkPermission("Coupon", "Delete"), deleteCoupon);
 
 router.post("/assign", checkPermission("Coupon", "Assign"), validate(couponValidation.assign), assignCoupon);
 router.delete("/assign/:assignmentId", checkPermission("Coupon", "Assign"), removeAssignedCoupon);
-router.get("/assigned", checkPermission("Coupon", "View"), getAssignedCoupons);
+router.get("/assigned", getAssignedCoupons);
 
 export default router;

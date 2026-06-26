@@ -1,12 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useLocale } from "../../shared/localization";
-import { Loader } from "../../shared/components/Loader";
+import { BlogsPageSkeleton } from "../../shared/components/Skeleton";
 import { storefrontService } from "../services/storefrontService";
 import { formatDate } from "../../shared/utils/formatters";
 import { BookOpen, User, Calendar } from "lucide-react";
+import { useSEO } from "../../shared/hooks/useSEO";
 
 export function BlogsPage() {
+  useSEO({
+    title: "Blog & Editorial",
+    description: "Read jewellery buying guides, gemstone education, diamond trends, and design craftsmanship stories at the BR Jewellers blog.",
+    keywords: "jewellery blog, diamond guides, gold purity tips, jewellery fashion trends, BR Jewellers articles",
+  });
   const { language } = useLocale();
   const blogsQuery = useQuery({
     queryKey: ["user-blogs"],
@@ -14,7 +20,7 @@ export function BlogsPage() {
   });
 
   if (blogsQuery.isLoading) {
-    return <Loader label="Loading editorial journal..." />;
+    return <BlogsPageSkeleton />;
   }
 
   const blogs = blogsQuery.data || [];
@@ -42,6 +48,10 @@ export function BlogsPage() {
               <img
                 src={blogs[0].coverImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80"}
                 alt={blogs[0].title}
+                width="600"
+                height="384"
+                loading="lazy"
+                fetchpriority="auto"
                 className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
               />
             </div>
@@ -81,6 +91,10 @@ export function BlogsPage() {
                 <img
                   src={blog.coverImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80"}
                   alt={blog.title}
+                  width="400"
+                  height="224"
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                 />
               </div>
