@@ -203,6 +203,72 @@ export function ProductDetailsPage() {
           </div>
         </AdminPanel>
       ) : null}
+
+      {/* Reviews Section */}
+      <AdminProductReviews productId={productKey} />
     </div>
+  );
+}
+
+function AdminProductReviews({ productId }) {
+  const { data: reviewsData, isLoading, refetch } = useQuery({
+    queryKey: ["admin", "productReviews", productId],
+    queryFn: () => catalogService.getReviews(productId, { limit: 50 }),
+  });
+
+  const handleDelete = async (reviewId) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+    try {
+      await catalogService.deleteReview(productId, reviewId);
+      refetch();
+    } catch (err) {
+      alert("Failed to delete review: " + err.message);
+    }
+  };
+
+  const reviews = reviewsData?.reviews || [];
+
+  if (isLoading) return <Loader label="Loading reviews..." />;
+
+  return (
+    <AdminPanel>
+      <h2 className="font-display text-3xl text-espresso mb-5">
+        Reviews
+        <span className="ml-3 text-base font-normal text-stone-500">
+          {reviews.length} review{reviews.length !== 1 && "s"}
+        </span>
+      </h2>
+      
+      {reviews.length === 0 ? (
+        <div className="text-stone-500 text-sm">No reviews for this product yet.</div>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review) => (
+            <div key={review._id || review.id} className="border border-gold-100 rounded-xl p-4 bg-white/50 flex flex-col sm:flex-row justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-semibold text-espresso">{review.user?.name || "Unknown User"}</span>
+                  <span className="text-stone-400 text-xs text-amber-500 font-medium">{review.rating} ★</span>
+                </div>
+                <h4 className="font-semibold text-stone-800 text-sm">{review.title}</h4>
+                <p className="text-sm text-stone-600 mt-1">{review.comment}</p>
+                {review.images?.length > 0 && (
+                  <div className="flex gap-2 mt-3">
+                    {review.images.map((img, i) => (
+                      <img key={i} src={img} alt="Review" className="w-16 h-16 object-cover rounded-md border border-stone-200" />
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="shrink-0">
+                <Button tone="danger" size="sm" onClick={() => handleDelete(review._id || review.id)}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </AdminPanel>
   );
 }

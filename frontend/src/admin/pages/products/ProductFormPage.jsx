@@ -6,6 +6,8 @@ import { routes } from "../../../config/routes";
 import { Button } from "../../../shared/components/Button";
 import { EmptyState } from "../../../shared/components/EmptyState";
 import { Input } from "../../../shared/components/Input";
+import { TagInput } from "../../../shared/components/TagInput";
+import { ImageUpload } from "../../../shared/components/ImageUpload";
 import { Loader } from "../../../shared/components/Loader";
 import { queryKeys } from "../../../shared/constants/queryKeys";
 import { getValidationErrors, productSchema } from "../../../shared/utils/validation";
@@ -56,7 +58,6 @@ const emptyVariant = () => {
     color: "",
     purity: "",
     size: "",
-    stock: "0",
     price: {
       INR: "",
       USD: "",
@@ -108,7 +109,6 @@ const mapProductToForm = (product) => ({
           color: variant.color || "",
           purity: variant.purity || "",
           size: variant.size || "",
-          stock: String(variant.stock ?? 0),
           price: {
             INR: String(variant.price?.INR ?? ""),
             USD: String(variant.price?.USD ?? ""),
@@ -146,38 +146,7 @@ const compactPayload = (form) => ({
   }),
 });
 
-function ArrayEditor({ label, required, values, placeholder, error, onChange }) {
-  const update = (index, value) => onChange(values.map((item, itemIndex) => (itemIndex === index ? value : item)));
-  const remove = (index) => onChange(values.length > 1 ? values.filter((_, itemIndex) => itemIndex !== index) : [""]);
-
-  return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium text-stone-700">
-        {label}
-        {required ? <span className="ml-1 text-rose-500">*</span> : null}
-      </div>
-      <div className="space-y-2">
-        {values.map((value, index) => (
-          <div key={index} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-            <Input
-              value={value}
-              placeholder={placeholder}
-              error={index === 0 ? error : undefined}
-              onChange={(event) => update(index, event.target.value)}
-            />
-            <Button type="button" tone="secondary" size="sm" onClick={() => remove(index)}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-      </div>
-      <Button type="button" tone="secondary" size="sm" onClick={() => onChange([...values, ""])}>
-        <Plus className="h-4 w-4" />
-        Add {label.toLowerCase()}
-      </Button>
-    </div>
-  );
-}
+// Removed ArrayEditor component
 
 export function ProductFormPage() {
   const navigate = useNavigate();
@@ -246,6 +215,48 @@ export function ProductFormPage() {
   };
   const removeVariant = (index) =>
     updateField("variants", form.variants.length > 1 ? form.variants.filter((_, itemIndex) => itemIndex !== index) : [emptyVariant()]);
+
+  const handleNextStep = () => {
+    let fieldsToValidate = {};
+    if (step === 0) {
+      fieldsToValidate = {
+        name: form.name,
+        gemstone: form.gemstone,
+        category: form.category,
+        description: form.description,
+        priceRange: form.priceRange,
+      };
+    } else if (step === 1) {
+      fieldsToValidate = {
+        coverImage: form.coverImage,
+      };
+    }
+
+    if (Object.keys(fieldsToValidate).length > 0) {
+      const parsed = productSchema.safeParse(compactPayload(form));
+      if (!parsed.success) {
+        const stepErrors = getValidationErrors(parsed.error);
+        const currentStepErrors = {};
+        let hasError = false;
+        
+        Object.keys(fieldsToValidate).forEach(key => {
+          if (stepErrors[key]) {
+            currentStepErrors[key] = stepErrors[key];
+            hasError = true;
+          }
+        });
+        
+        if (hasError) {
+          setErrors(prev => ({ ...prev, ...currentStepErrors }));
+          notify.error("Please fix the highlighted fields before proceeding.");
+          return;
+        }
+      }
+    }
+    
+    setErrors({});
+    setStep((current) => Math.min(current + 1, steps.length - 1));
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -394,13 +405,50 @@ export function ProductFormPage() {
         {step === 1 ? (
           <AdminPanel>
             <h2 className="font-display text-3xl text-espresso">Media</h2>
-            <div className="mt-5 space-y-5">
-              <Input label="Cover image URL" required error={errors.coverImage} value={form.coverImage} onChange={(event) => updateField("coverImage", event.target.value)} />
-              <ArrayEditor label="Images" required values={form.images} placeholder="https://..." error={errors.images} onChange={(items) => updateField("images", items)} />
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {[form.coverImage, ...form.images].filter(Boolean).slice(0, 8).map((image, index) => (
-                  <img key={`${image}-${index}`} src={image} alt={`Preview ${index + 1}`} width="200" height="200" className="w-full aspect-square rounded-lg border border-gold-100 bg-gold-50 object-cover" loading="lazy" />
-                ))}
+            <div className="mt-5 grid gap-6 md:grid-cols-2">
+              <ImageUpload 
+                label="Cover image" 
+                required 
+                error={errors.coverImage} 
+                value={form.coverImage} 
+                onChange={(url) => updateField("coverImage", url)} 
+              />
+              
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-stone-700 block">Additional Images</span>
+                <div className="grid grid-cols-2 gap-4">
+                  {form.images.filter(Boolean).map((image, index) => (
+                    <div key={index} className="relative group rounded-xl border border-gold-100 overflow-hidden w-full aspect-[4/3] max-w-[300px]">
+                      <img 
+                        src={image} 
+                        alt={`Additional preview ${index}`} 
+                        className="w-full h-full object-cover bg-stone-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const newImages = form.images.filter(Boolean);
+                          newImages.splice(index, 1);
+                          updateField("images", newImages);
+                          await catalogService.deleteImage(image);
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-full transition-colors"
+                        title="Remove image"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <ImageUpload 
+                    multiple={true}
+                    value={""}
+                    onChange={(urls) => {
+                      if (Array.isArray(urls)) {
+                        updateField("images", [...form.images.filter(Boolean), ...urls]);
+                      }
+                    }} 
+                  />
+                </div>
               </div>
             </div>
           </AdminPanel>
@@ -410,8 +458,8 @@ export function ProductFormPage() {
           <AdminPanel>
             <h2 className="font-display text-3xl text-espresso">Tags and occasions</h2>
             <div className="mt-5 grid gap-6 md:grid-cols-2">
-              <ArrayEditor label="Tags" values={form.tags} placeholder="rose gold" error={errors.tags} onChange={(items) => updateField("tags", items)} />
-              <ArrayEditor label="Occasions" values={form.occasions} placeholder="Wedding" error={errors.occasions} onChange={(items) => updateField("occasions", items)} />
+              <TagInput label="Tags" values={form.tags} placeholder="Type and press enter or comma" error={errors.tags} onChange={(items) => updateField("tags", items)} />
+              <TagInput label="Occasions" values={form.occasions} placeholder="Wedding, Anniversary" error={errors.occasions} onChange={(items) => updateField("occasions", items)} />
             </div>
           </AdminPanel>
         ) : null}
@@ -479,7 +527,6 @@ export function ProductFormPage() {
                       </select>
                     </label>
                     <Input label="Size" required value={variant.size} onChange={(event) => updateVariant(index, "size", event.target.value)} />
-                    <Input label="Stock" type="number" required value={variant.stock} onChange={(event) => updateVariant(index, "stock", event.target.value)} />
                     <Input label="INR price" type="number" required value={variant.price.INR} onChange={(event) => updateVariant(index, "INR", event.target.value)} />
                     <Input label="USD price" type="number" required value={variant.price.USD} onChange={(event) => updateVariant(index, "USD", event.target.value)} />
                   </div>
@@ -501,7 +548,7 @@ export function ProductFormPage() {
                 Cancel
               </Button>
               {step < steps.length - 1 ? (
-                <Button type="button" onClick={() => setStep((current) => Math.min(current + 1, steps.length - 1))}>
+                <Button type="button" onClick={handleNextStep}>
                   Next
                   <ChevronRight className="h-4 w-4" />
                 </Button>

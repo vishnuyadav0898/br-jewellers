@@ -188,6 +188,8 @@ export const normalizeApiProduct = (product = {}) => {
     variants,
     isActive: product.isActive !== false,
     status: product.isActive === false ? "Inactive" : "Active",
+    averageRating: product.averageRating || 0,
+    numReviews: product.numReviews || 0,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
@@ -544,10 +546,40 @@ export const catalogService = {
     return res;
   },
 
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await apiClient.request("/api/v1/upload/image", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      auth: true,
+    });
+    return res?.data?.url || null;
+  },
+
+  async deleteImage(url) {
+    if (!url) return;
+    try {
+      await apiClient.request("/api/v1/upload/image", {
+        method: "DELETE",
+        body: { url },
+        auth: true,
+      });
+      return true;
+    } catch (error) {
+      console.error("Failed to delete image:", error);
+      return false;
+    }
+  },
+
   async getCategories() {
     const categories = await apiClient.request("/api/v1/category/list");
 
-    return (Array.isArray(categories) ? categories : []).map((category) => {
+    return (Array.isArray(categories) ? categories : categories?.data || []).map((category) => {
       const name = typeof category === "string" ? category : category?.name;
       const id = typeof category === "string" ? category : category?._id || category?.id || name;
       return {
@@ -558,6 +590,37 @@ export const catalogService = {
         isActive: category?.status ? category.status === "active" : category?.isActive !== false,
         productCount: category?.productCount || 0,
       };
+    });
+  },
+
+  async getReviews(productId, params = {}) {
+    let url = `/api/v1/reviews/${productId}`;
+    const query = new URLSearchParams();
+    if (params.page) query.append("page", params.page);
+    if (params.limit) query.append("limit", params.limit);
+    if (query.toString()) url += `?${query.toString()}`;
+    
+    return apiClient.request(url);
+  },
+
+  async submitReview(productId, data) {
+    return apiClient.request(`/api/v1/reviews/${productId}`, {
+      method: "POST",
+      body: data,
+      auth: true,
+    });
+  },
+
+  async checkReviewEligibility(productId) {
+    return apiClient.request(`/api/v1/reviews/${productId}/can-review`, {
+      auth: true,
+    });
+  },
+
+  async deleteReview(productId, reviewId) {
+    return apiClient.request(`/api/v1/reviews/${productId}/${reviewId}`, {
+      method: "DELETE",
+      auth: true,
     });
   },
 

@@ -14,6 +14,8 @@ import permissionRoutes from "./permission.routes.js";
 import couponRoutes from "./coupon.routes.js";
 import returnRoutes from "./return.routes.js";
 import notificationRoutes from "./notification.routes.js";
+import uploadRoutes from "./upload.routes.js";
+import reviewRoutes from "./review.routes.js";
 
 const router = Router();
 
@@ -31,5 +33,7 @@ router.use("/api/v1/permissions", permissionRoutes);
 router.use("/api/v1/coupons", couponRoutes);
 router.use("/api/v1/returns", returnRoutes);
 router.use("/api/v1/notifications", notificationRoutes);
+router.use("/api/v1/upload", uploadRoutes);
+router.use("/api/v1/reviews", reviewRoutes);
 
 export default router;

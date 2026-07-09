@@ -1,6 +1,7 @@
 import models from "../models/index.js";
 import { hashPassword } from "../utils/hash.js";
 import ResponseHandler from "../utils/responseHandler.js";
+import { StorageService } from "../services/storage.service.js";
 
 export const userMe = async (req, res, next) => {
   try {
@@ -79,17 +80,22 @@ export const updateUser = async (req, res, next) => {
   try {
     const data = { ...req.body };
 
+    const existingUser = await models.User.findById(req.params.id);
+    if (!existingUser) {
+      return ResponseHandler.notFound(res, "User not found");
+    }
+
     if (data.password) {
       data.password = await hashPassword(data.password);
+    }
+
+    if (data.image && existingUser.image && data.image !== existingUser.image) {
+      await StorageService.deleteFile(existingUser.image);
     }
 
     const user = await models.User.findByIdAndUpdate(req.params.id, data, {
       returnDocument: "after",
     }).select("-password");
-
-    if (!user) {
-      return ResponseHandler.notFound(res, "User not found");
-    }
 
     return ResponseHandler.success(res, "User updated");
   } catch (err) {
@@ -105,6 +111,10 @@ export const deleteUser = async (req, res, next) => {
       return ResponseHandler.notFound(res, "User not found");
     }
 
+    if (user.image) {
+      await StorageService.deleteFile(user.image);
+    }
+
     return ResponseHandler.success(res, "User deleted");
   } catch (err) {
     return ResponseHandler.handleErrors(err, req, res, next);
@@ -118,6 +128,10 @@ export const updatePassword = async (req, res, next) => {
     const user = await models.User.findById(req.user.id);
     if (!user) {
       return ResponseHandler.notFound(res, "User not found");
+    }
+
+    if (!user.password) {
+      return ResponseHandler.badRequest(res, "This account uses Google Login and does not have a password to update.");
     }
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
