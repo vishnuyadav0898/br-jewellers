@@ -42,6 +42,8 @@ const options = {
       { name: "Coupon", description: "Coupon and Discount module" },
       { name: "Returns", description: "Order Return & Refund Module" },
       { name: "Notifications", description: "Push and In-App Notification Management" },
+      { name: "Upload", description: "MinIO Storage Management" },
+      { name: "Reviews", description: "Product Rating and Reviews" },
     ],
     components: {
       securitySchemes: {

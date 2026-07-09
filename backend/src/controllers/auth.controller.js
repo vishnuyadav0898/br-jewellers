@@ -57,6 +57,10 @@ export const login = async (req, res, next) => {
       return ResponseHandler.error(res, "Invalid credentials", 401);
     }
 
+    if (!user.password) {
+      return ResponseHandler.error(res, "This account uses Google Login. Please sign in with Google.", 400);
+    }
+
     const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
       return ResponseHandler.error(res, "Invalid credentials", 401);

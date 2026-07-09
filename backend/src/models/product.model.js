@@ -92,6 +92,14 @@ const productSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
     variants: [variantSchema],
   },
   {

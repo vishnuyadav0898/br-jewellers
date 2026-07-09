@@ -192,7 +192,6 @@ export const productSchema = z
           color: requiredString("Color", 2),
           purity: requiredString("Purity", 2),
           size: requiredString("Size"),
-          stock: numericField("Stock", { integer: true, min: 0 }),
           price: z.object({
             INR: numericField("INR price", { min: 0 }),
             USD: numericField("USD price", { min: 0 }),

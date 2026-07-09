@@ -18,6 +18,8 @@ const slugify = (text) =>
     .replace(/[^\w\-]+/g, "")
     .replace(/\-\-+/g, "-");
 
+import { DiamondRating } from "../../shared/components/DiamondRating";
+
 export const ProductCard = memo(function ProductCard({ product, isInCart, onAdded, onFavoriteChanged, priority = false }) {
   const { formatFromInr } = useMoney();
   const { t } = useLocale();
@@ -115,7 +117,15 @@ export const ProductCard = memo(function ProductCard({ product, isInCart, onAdde
       </div>
       <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between">
         <div className="space-y-1">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.24em] text-[#9e6c24]">{product.category}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.24em] text-[#9e6c24]">{product.category}</p>
+            {product.numReviews > 0 && (
+              <div className="flex items-center gap-1">
+                <DiamondRating rating={product.averageRating} size="sm" />
+                <span className="text-[10px] text-stone-500">({product.numReviews})</span>
+              </div>
+            )}
+          </div>
           <Link to={routes.appProductDetails(product.slug || slugify(product.name) || product.id)} state={{ id: product.id }} className="mt-0.5 block font-display text-sm sm:text-base lg:text-lg text-[#1b120f] transition hover:text-[#8a5d18] line-clamp-1">
             {product.name}
           </Link>
